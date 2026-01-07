@@ -5,30 +5,15 @@ __pycache__/
 *.so
 .Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
 *.egg-info/
-.installed.cfg
 *.egg
-MANIFEST
 
 # Virtual Environments
 venv/
 .venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 
 # IDE
 .vscode/
@@ -37,7 +22,7 @@ venv.bak/
 *.swo
 *~
 
-# System
+# System files
 .DS_Store
 .DS_Store?
 ._*
@@ -45,47 +30,35 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+[Tt]humbs.db
 
-# Project specific
+# Project specific - uploads and OCR results
 frontend/uploads/
-*.env
+frontend/uploads/*.jpg
+frontend/uploads/*.png
+frontend/uploads/*.jpeg
+frontend/uploads/result_*.json
+frontend/uploads/result_*.xlsx
+
+# Environment variables
+.env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
+
+# Dependency directories
+node_modules/
 
 # Coverage
 coverage/
 *.lcov
 
-# Dependency directories
-node_modules/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Output of 'npm pack'
-*.tgz
-
-# dotenv environment variable files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
 # Docker
-*.dockerignore
 docker-compose.override.yml
 
 # Temporary files
@@ -93,19 +66,9 @@ docker-compose.override.yml
 *.temp
 temp/
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
 # Backups
 *.bak
 *.backup
 
 # OS generated files
-[Tt]humbs.db
 *~
-
-# Project specific - OCR results
-*.xlsx
-*.json
