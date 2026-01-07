@@ -1,0 +1,66 @@
+# OCR工业图片识别系统 - 简化版Dockerfile
+# 使用更稳定的基础镜像和简化的依赖
+
+# 使用Python 3.9的官方镜像
+FROM python:3.9-slim
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=backend/app.py \
+    FLASK_ENV=production \
+    PORT=5000 \
+    OCR_USE_MOCK=true
+# 容器中默认使用模拟OCR，避免复杂的PaddleOCR依赖
+
+# 安装系统依赖（最小化）
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libgomp1 \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制后端依赖文件
+COPY backend/requirements.txt /app/backend/requirements.txt
+
+# 安装Python依赖（使用国内镜像加速）
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/backend/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 复制项目文件
+COPY . /app/
+
+# 创建必要的目录
+RUN mkdir -p /app/frontend/uploads && \
+    mkdir -p /app/frontend/static && \
+    chmod -R 755 /app/frontend/uploads
+
+# 创建.env文件（使用示例配置）
+RUN if [ ! -f /app/backend/.env ]; then \
+    cp /app/backend/.env.example /app/backend/.env; \
+    fi
+
+# 暴露端口
+EXPOSE 5000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/ || exit 1
+
+# 启动命令
+CMD ["python", "/app/backend/run.py", "--host=0.0.0.0", "--port=5000"]
+
+# 构建说明：
+# 1. 构建镜像: docker build -t ocr-industrial-system -f Dockerfile.simple .
+# 2. 运行容器: docker run -p 5000:5000 -v ./frontend/uploads:/app/frontend/uploads ocr-industrial-system
+# 3. 访问应用: http://localhost:5000/../frontend/index.html

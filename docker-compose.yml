@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # OCR后端服务
+  ocr-backend:
+    build: .
+    container_name: ocr-industrial-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=backend/app.py
+      - PORT=5000
+      - DEBUG=false
+      - OCR_USE_MOCK=true  # 容器中使用模拟OCR，生产环境可设置为false并使用真实API
+      - ENABLE_CORS=true
+    volumes:
+      # 挂载上传目录以持久化数据
+      - ./frontend/uploads:/app/frontend/uploads
+      # 挂载配置文件（可选）
+      - ./backend/.env:/app/backend/.env:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ocr-network
+
+  # Nginx反向代理（可选，用于更好的前端服务和负载均衡）
+  nginx:
+    image: nginx:alpine
+    container_name: ocr-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx配置
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # 前端静态文件
+      - ./frontend:/usr/share/nginx/html/frontend:ro
+      # SSL证书（如果需要HTTPS）
+      # - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ocr-backend
+    restart: unless-stopped
+    networks:
+      - ocr-network
+
+# 网络配置
+networks:
+  ocr-network:
+    driver: bridge
+
+# 卷配置（用于数据持久化）
+volumes:
+  uploads-data:
+    driver: local
