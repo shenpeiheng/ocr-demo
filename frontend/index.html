@@ -3,226 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCR工业图片识别系统</title>
+    <title>OCR识别系统</title>
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">    
 </head>
 <body>
     <div class="container">
-        <!-- 头部 -->
-        <header class="header">
-            <div class="logo">
-                <i class="fas fa-industry"></i>
-                <h1>OCR工业图片识别系统</h1>
+        <!-- 管理系统风格头部 -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-logo">
+                    <img src="static/images/logo.png" alt="OCR系统Logo" class="logo-image">
+                    <span class="admin-logo-text">OCR识别系统</span>
+                </div>
+                
+                <nav class="admin-nav">
+                    <a href="#" class="nav-item active">
+                        <i class="fas fa-home"></i>
+                        <span>首页</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-upload"></i>
+                        <span>图片上传</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-history"></i>
+                        <span>历史记录</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>数据分析</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>系统设置</span>
+                    </a>
+                </nav>
+                
+                <div class="admin-user-info">
+                    <div class="user-notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">管理员</span>
+                            <span class="user-role">系统管理员</span>
+                        </div>
+                        <button class="user-menu-btn">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <!--<p class="subtitle">上传工业图纸图片，智能识别文字内容并提取坐标信息</p> -->
         </header>
 
-        <!-- 主要内容区域 -->
-        <main class="main-content">
-            <div class="content-wrapper">
-                <!-- 左侧：上传和处理区域 -->
-                <div class="left-panel">
-                    <div class="upload-section card">
-                        <h2><i class="fas fa-cloud-upload-alt"></i> 上传图片</h2>
-                        <div class="upload-area" id="uploadArea">
-                            <i class="fas fa-file-image upload-icon"></i>
-                            <p class="upload-text">拖放图片文件到这里，或点击选择文件</p>
-                            <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF 格式</p>
-                            <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.gif" hidden>
-                            <button class="btn btn-primary" id="selectFileBtn">
-                                <i class="fas fa-folder-open"></i> 选择文件
-                            </button>
-                        </div>
-                        <div class="file-info" id="fileInfo" style="display: none;">
-                            <div class="file-preview">
-                                <img id="imagePreview" src="" alt="图片预览">
-                            </div>
-                            <div class="file-details">
-                                <h4>文件信息</h4>
-                                <p><strong>文件名:</strong> <span id="fileName">-</span></p>
-                                <p><strong>文件大小:</strong> <span id="fileSize">-</span></p>
-                                <p><strong>图片尺寸:</strong> <span id="imageDimensions">-</span></p>
-                                <p><strong>上传状态:</strong> <span id="uploadStatus">-</span></p>
-                            </div>
-                        </div>
-                        <div class="upload-actions">
-                            <button class="btn btn-success" id="uploadBtn" disabled>
-                                <i class="fas fa-upload"></i> 上传图片
-                            </button>
-                            <button class="btn btn-process" id="processBtn" disabled>
-                                <i class="fas fa-cogs"></i> 开始识别
-                            </button>
-                        </div>
+        <!-- 主体布局 -->
+        <div class="main-layout">
+            <!-- 左侧固定菜单栏 -->
+            <aside class="sidebar">
+                <!--<div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <img src="static/images/logo.png" alt="OCR系统Logo" class="sidebar-logo-image">
+                        <span>OCR系统</span>
                     </div>
-
-                    <div class="processing-section card">
-                        <h2><i class="fas fa-spinner"></i> 处理状态</h2>
-                        <div class="progress-container">
-                            <div class="progress-bar" id="progressBar">
-                                <div class="progress-fill" id="progressFill"></div>
+                </div>-->
+                
+                <nav class="sidebar-menu">
+                    <div class="menu-section">
+                        <!--<div class="menu-section-title">系统菜单</div>-->
+                        <a href="#" class="menu-item active">
+                            <div class="menu-icon">
+                                <i class="fas fa-home"></i>
                             </div>
-                            <div class="progress-text" id="progressText">等待上传图片...</div>
-                        </div>
-                        <div class="status-messages" id="statusMessages">
-                            <div class="status-item" id="statusUpload">
-                                <i class="fas fa-check-circle status-icon"></i>
-                                <span>上传图片</span>
+                            <div class="menu-text">首页</div>
+                            <div class="menu-badge">3</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-upload"></i>
                             </div>
-                            <div class="status-item" id="statusProcess">
-                                <i class="fas fa-circle status-icon"></i>
-                                <span>OCR识别处理</span>
+                            <div class="menu-text">图片上传</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-history"></i>
                             </div>
-                            <div class="status-item" id="statusResults">
-                                <i class="fas fa-circle status-icon"></i>
-                                <span>生成结果</span>
+                            <div class="menu-text">历史记录</div>
+                            <div class="menu-badge">12</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-chart-bar"></i>
                             </div>
-                        </div>
+                            <div class="menu-text">数据分析</div>
+                        </a>
+                    </div>
+                    
+                    <div class="menu-section">
+                        <div class="menu-section-title">系统管理</div>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-cog"></i>
+                            </div>
+                            <div class="menu-text">系统设置</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="menu-text">用户管理</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="menu-text">数据管理</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="menu-text">权限管理</div>
+                        </a>
+                    </div>
+                    
+                    <div class="menu-section">
+                        <div class="menu-section-title">工具</div>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="menu-text">批量导出</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="menu-text">高级搜索</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="menu-text">性能监控</div>
+                        </a>
+                    </div>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <div class="system-status">
+                        <div class="status-indicator online"></div>
+                        <span>系统在线</span>
                     </div>
                 </div>
+            </aside>
 
-                <!-- 右侧：结果展示区域 -->
-                <div class="right-panel">
-                    <div class="results-section card">
-                        <h2><i class="fas fa-chart-bar"></i> 识别结果</h2>
-                        <div class="results-summary" id="resultsSummary">
-                            <div class="summary-item">
-                                <div class="summary-value" id="totalItems">0</div>
-                                <div class="summary-label">识别项数</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-value" id="avgConfidence">0%</div>
-                                <div class="summary-label">平均置信度</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-value" id="dimensionCount">0</div>
-                                <div class="summary-label">尺寸标注</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-value" id="processingTime">0s</div>
-                                <div class="summary-label">处理时间</div>
-                            </div>
-                        </div>
-
-                        <div class="results-tabs">
-                            <div class="tab-buttons">
-                                <button class="tab-btn active" data-tab="textResults">
-                                    <i class="fas fa-font"></i> 文本内容
-                                </button>
-                                <button class="tab-btn" data-tab="coordinateResults">
-                                    <i class="fas fa-map-marker-alt"></i> 坐标信息
-                                </button>
-                                <button class="tab-btn" data-tab="visualization">
-                                    <i class="fas fa-eye"></i> 可视化
-                                </button>
-                            </div>
-
-                            <div class="tab-content">
-                                <!-- 文本内容标签页 -->
-                                <div class="tab-pane active" id="textResults">
-                                    <div class="table-container">
-                                        <table class="results-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>序号</th>
-                                                    <th>文本内容</th>
-                                                    <th>置信度</th>
-                                                    <th>类型</th>
-                                                    <th>操作</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="textResultsBody">
-                                                <tr>
-                                                    <td colspan="5" class="empty-message">暂无识别结果</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+            <!-- 主要内容区域 -->
+            <main class="main-content-area">
+                <div class="content-grid">
+                    <!-- 左侧列：上传和处理状态 -->
+                    <div class="left-column">
+                        <!-- 上传区域 -->
+                        <div class="upload-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-cloud-upload-alt"></i> 图片上传</h2>
+                                <div class="section-badge">
+                                    <i class="fas fa-info-circle"></i> 支持多种格式
                                 </div>
-
-                                <!-- 坐标信息标签页 -->
-                                <div class="tab-pane" id="coordinateResults">
-                                    <div class="table-container">
-                                        <table class="results-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>序号</th>
-                                                    <th>坐标X</th>
-                                                    <th>坐标Y</th>
-                                                    <th>宽度</th>
-                                                    <th>高度</th>
-                                                    <th>内容</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="coordinateResultsBody">
-                                                <tr>
-                                                    <td colspan="6" class="empty-message">暂无坐标信息</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            </div>
+                            
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-area-content">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <p class="upload-text">拖放图片文件或点击选择</p>
+                                    <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF 格式</p>
                                 </div>
-
-                                <!-- 可视化标签页 -->
-                                <div class="tab-pane" id="visualization">
-                                    <div class="visualization-container">
-                                        <div class="visualization-placeholder" id="visualizationPlaceholder">
-                                            <i class="fas fa-image"></i>
-                                            <p>识别完成后，这里将显示图片和识别区域的可视化</p>
+                                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.gif" hidden>
+                                <button class="btn btn-primary upload-btn" id="selectFileBtn">
+                                    <i class="fas fa-folder-open"></i> 选择文件
+                                </button>
+                            </div>
+                            
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="file-info-content">
+                                    <div class="file-preview">
+                                        <img id="imagePreview" src="" alt="图片预览">
+                                    </div>
+                                    <div class="file-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">文件名:</span>
+                                            <span class="detail-value" id="fileName">-</span>
                                         </div>
-                                        <canvas id="visualizationCanvas" style="display: none;"></canvas>
+                                        <div class="detail-item">
+                                            <span class="detail-label">文件大小:</span>
+                                            <span class="detail-value" id="fileSize">-</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">图片尺寸:</span>
+                                            <span class="detail-value" id="imageDimensions">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="upload-actions">
+                                <button class="btn btn-success action-btn" id="uploadBtn" disabled>
+                                    <i class="fas fa-upload"></i> 上传
+                                </button>
+                                <button class="btn btn-process action-btn" id="processBtn" disabled>
+                                    <i class="fas fa-cogs"></i> 开始识别
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 处理状态区域 -->
+                        <div class="processing-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-spinner"></i> 处理状态</h2>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="progress-header">
+                                    <span>识别进度</span>
+                                    <span class="progress-percent" id="progressPercent">0%</span>
+                                </div>
+                                <div class="progress-bar" id="progressBar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <div class="progress-text" id="progressText">等待上传图片...</div>
+                            </div>
+                            
+                            <div class="status-steps">
+                                <div class="status-step active">
+                                    <div class="step-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <div class="step-text">
+                                        <div class="step-title">上传图片</div>
+                                        <div class="step-status" id="statusUpload">等待中</div>
+                                    </div>
+                                </div>
+                                <div class="status-step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-cogs"></i>
+                                    </div>
+                                    <div class="step-text">
+                                        <div class="step-title">OCR识别</div>
+                                        <div class="step-status" id="statusProcess">未开始</div>
+                                    </div>
+                                </div>
+                                <div class="status-step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="step-text">
+                                        <div class="step-title">完成</div>
+                                        <div class="step-status" id="statusResults">未开始</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="export-actions">
-                            <h3><i class="fas fa-download"></i> 导出结果</h3>
-                            <div class="export-buttons">
-                                <button class="btn btn-export" id="exportExcelBtn" disabled>
-                                    <i class="fas fa-file-excel"></i> 下载Excel文件
-                                </button>
-                                <button class="btn btn-export" id="exportJsonBtn" disabled>
-                                    <i class="fas fa-file-code"></i> 下载JSON文件
-                                </button>
-                                <button class="btn btn-export" id="exportImageBtn" disabled>
-                                    <i class="fas fa-file-image"></i> 下载标注图片
-                                </button>
+                    <!-- 右侧列：结果展示 -->
+                    <div class="right-column">
+                        <div class="results-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-chart-bar"></i> 识别结果</h2>
+                                <div class="section-badge">
+                                    <i class="fas fa-bolt"></i> 实时更新
+                                </div>
                             </div>
-                            <div class="api-info">
-                                <p><i class="fas fa-info-circle"></i> 所有数据也可以通过API访问：</p>
-                                <code id="apiUrl">http://localhost:5000/api/results/</code>
+                            
+                            <div class="results-summary" id="resultsSummary">
+                                <div class="summary-card">
+                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                                        <i class="fas fa-list-ol"></i>
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="totalItems">0</div>
+                                        <div class="summary-card-label">识别项数</div>
+                                    </div>
+                                </div>
+                                <div class="summary-card">
+                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                                        <i class="fas fa-percentage"></i>
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="avgConfidence">0%</div>
+                                        <div class="summary-card-label">平均置信度</div>
+                                    </div>
+                                </div>
+                                <div class="summary-card">
+                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                                        <i class="fas fa-ruler-combined"></i>
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="dimensionCount">0</div>
+                                        <div class="summary-card-label">尺寸标注</div>
+                                    </div>
+                                </div>
+                                <div class="summary-card">
+                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                                        <i class="fas fa-stopwatch"></i>
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="processingTime">0s</div>
+                                        <div class="summary-card-label">处理时间</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="results-tabs">
+                                <div class="tab-buttons">
+                                    <button class="tab-btn active" data-tab="textResults">
+                                        <i class="fas fa-font"></i> 文本内容
+                                    </button>
+                                    <button class="tab-btn" data-tab="coordinateResults">
+                                        <i class="fas fa-map-marker-alt"></i> 坐标信息
+                                    </button>
+                                    <button class="tab-btn" data-tab="visualization">
+                                        <i class="fas fa-eye"></i> 可视化
+                                    </button>
+                                </div>
+
+                                <div class="tab-content">
+                                    <!-- 文本内容标签页 -->
+                                    <div class="tab-pane active" id="textResults">
+                                        <div class="table-container">
+                                            <table class="results-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>序号</th>
+                                                        <th>文本内容</th>
+                                                        <th>置信度</th>
+                                                        <th>类型</th>
+                                                        <th>操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="textResultsBody">
+                                                    <tr>
+                                                        <td colspan="5" class="empty-message">暂无识别结果</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 坐标信息标签页 -->
+                                    <div class="tab-pane" id="coordinateResults">
+                                        <div class="table-container">
+                                            <table class="results-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>序号</th>
+                                                        <th>坐标X</th>
+                                                        <th>坐标Y</th>
+                                                        <th>宽度</th>
+                                                        <th>高度</th>
+                                                        <th>内容</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="coordinateResultsBody">
+                                                    <tr>
+                                                        <td colspan="6" class="empty-message">暂无坐标信息</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 可视化标签页 -->
+                                    <div class="tab-pane" id="visualization">
+                                        <div class="visualization-container">
+                                            <div class="visualization-placeholder" id="visualizationPlaceholder">
+                                                <i class="fas fa-image"></i>
+                                                <p>识别完成后，这里将显示图片和识别区域的可视化</p>
+                                            </div>
+                                            <canvas id="visualizationCanvas" style="display: none;"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="export-actions">
+                                <h3><i class="fas fa-download"></i> 导出结果</h3>
+                                <div class="export-buttons">
+                                    <button class="btn btn-export" id="exportExcelBtn" disabled>
+                                        <i class="fas fa-file-excel"></i> 下载Excel文件
+                                    </button>
+                                    <button class="btn btn-export" id="exportJsonBtn" disabled>
+                                        <i class="fas fa-file-code"></i> 下载JSON文件
+                                    </button>
+                                    <button class="btn btn-export" id="exportImageBtn" disabled>
+                                        <i class="fas fa-file-image"></i> 下载标注图片
+                                    </button>
+                                </div>
+                                <div class="api-info">
+                                    <p><i class="fas fa-info-circle"></i> 所有数据也可以通过API访问：</p>
+                                    <code id="apiUrl">http://localhost:5000/api/results/</code>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
 
-        <!-- 底部信息 -->
-        <footer class="footer">
+        <!-- 简化底部信息 -->
+        <footer class="simple-footer">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h4><i class="fas fa-info-circle"></i> 系统信息</h4>
-                    <p>OCR工业图片识别系统 v1.0.0</p>
-                    <p>使用百度OCR API + 自定义图像处理算法</p>
-                </div>
-                <div class="footer-section">
-                    <h4><i class="fas fa-cogs"></i> 技术支持</h4>
-                    <p>识别准确率: >95% (工业图纸)</p>
-                    <p>处理速度: < 5秒/图片</p>
-                    <p>支持格式: PNG, JPG, BMP, TIFF, GIF</p>
-                </div>
-                <div class="footer-section">
-                    <h4><i class="fas fa-lightbulb"></i> 使用提示</h4>
-                    <p>• 确保图片清晰，文字方向正确</p>
-                    <p>• 对于复杂图纸，建议分区域识别</p>
-                    <p>• 可导出Excel进行进一步分析</p>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>© 2023 OCR工业图片识别系统 | 专为工业图纸识别优化</p>
+                <p>© 2025 OCR工业图片识别系统 | 专为工业图纸识别优化 | 技术支持: sie@chinasie.com</p>
             </div>
         </footer>
     </div>

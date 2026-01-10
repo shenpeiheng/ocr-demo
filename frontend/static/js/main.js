@@ -19,7 +19,6 @@ const fileInfo = document.getElementById('fileInfo');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
 const imageDimensions = document.getElementById('imageDimensions');
-const uploadStatus = document.getElementById('uploadStatus');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
 const statusUpload = document.getElementById('statusUpload');
@@ -173,8 +172,7 @@ function previewFile(file) {
     // 显示文件信息
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
-    uploadStatus.textContent = '等待上传';
-    uploadStatus.className = 'status-waiting';
+    // 上传状态已经在状态步骤中显示，不需要单独的uploadStatus元素
     
     // 预览图片
     const reader = new FileReader();
@@ -241,8 +239,7 @@ async function handleUpload() {
         
         // 更新文件信息
         currentFile.serverFilename = data.filename;
-        uploadStatus.textContent = '上传成功';
-        uploadStatus.className = 'status-success';
+        // 上传状态已经在状态步骤中显示，不需要单独的uploadStatus元素
         
         // 更新进度
         updateProgress(50, '文件上传成功，准备识别处理');
@@ -257,8 +254,7 @@ async function handleUpload() {
     } catch (error) {
         console.error('上传错误:', error);
         showError(`上传失败: ${error.message}`);
-        uploadStatus.textContent = '上传失败';
-        uploadStatus.className = 'status-error';
+        // 上传状态已经在状态步骤中显示，不需要单独的uploadStatus元素
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 重新上传';
         updateProgress(0, '上传失败');
@@ -583,27 +579,31 @@ function updateStatus(stage, state) {
     
     if (!statusElement) return;
     
-    const icon = statusElement.querySelector('.status-icon');
+    // 获取父元素（status-step）和图标元素
+    const statusStep = statusElement.closest('.status-step');
+    const iconElement = statusStep ? statusStep.querySelector('.step-icon i') : null;
+    
+    if (!statusStep || !iconElement) return;
     
     // 移除所有状态类
-    statusElement.classList.remove('active', 'completed', 'error');
-    icon.classList.remove('fa-check-circle', 'fa-times-circle', 'fa-circle', 'fa-spinner', 'fa-spin');
+    statusStep.classList.remove('active', 'completed', 'error');
+    iconElement.classList.remove('fa-check-circle', 'fa-times-circle', 'fa-circle', 'fa-spinner', 'fa-spin');
     
     switch (state) {
         case 'active':
-            statusElement.classList.add('active');
-            icon.classList.add('fa-spinner', 'fa-spin');
+            statusStep.classList.add('active');
+            iconElement.classList.add('fa-spinner', 'fa-spin');
             break;
         case 'completed':
-            statusElement.classList.add('completed');
-            icon.classList.add('fa-check-circle');
+            statusStep.classList.add('completed');
+            iconElement.classList.add('fa-check-circle');
             break;
         case 'error':
-            statusElement.classList.add('error');
-            icon.classList.add('fa-times-circle');
+            statusStep.classList.add('error');
+            iconElement.classList.add('fa-times-circle');
             break;
         default:
-            icon.classList.add('fa-circle');
+            iconElement.classList.add('fa-circle');
     }
 }
 
