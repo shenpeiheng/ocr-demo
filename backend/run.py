@@ -99,7 +99,7 @@ def start_server(host='0.0.0.0', port=5000, debug=False):
     print("  GET  /uploads/<file>      - 访问上传的文件")
     
     print("\n前端界面:")
-    print(f"  http://{host}:{port}/../frontend/index.html")
+    print(f"  http://{host}:{port}/")
     
     print("\n按 Ctrl+C 停止服务器")
     print("=" * 60)
