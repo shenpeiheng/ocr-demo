@@ -3,7 +3,7 @@
  */
 
 // 全局变量
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = ''; // 使用相对路径，因为前端和后端在同一个服务中
 let currentFile = null;
 let currentResults = null;
 let processingStartTime = null;
@@ -36,6 +36,8 @@ const exportExcelBtn = document.getElementById('exportExcelBtn');
 const exportJsonBtn = document.getElementById('exportJsonBtn');
 const exportImageBtn = document.getElementById('exportImageBtn');
 const apiUrl = document.getElementById('apiUrl');
+const filterChineseToggle = document.getElementById('filterChineseToggle');
+const chineseFilterCount = document.getElementById('chineseFilterCount');
 
 // 初始化函数
 function init() {
@@ -46,9 +48,6 @@ function init() {
     
     // 初始化标签页
     initTabs();
-    
-    // 更新API URL显示
-    apiUrl.textContent = `${API_BASE_URL}/api/results/`;
     
     console.log('系统初始化完成');
 }
@@ -88,6 +87,16 @@ function bindEvents() {
         }
         fileInput.click();
     });
+    
+    // 过滤开关变化事件
+    if (filterChineseToggle) {
+        filterChineseToggle.addEventListener('change', () => {
+            if (currentResults) {
+                // 重新显示结果，应用新的过滤设置
+                displayResults({ results: currentResults });
+            }
+        });
+    }
 }
 
 // 初始化标签页
@@ -338,34 +347,61 @@ function displayResults(data) {
         return;
     }
     
-    const textItems = currentResults.text_items;
+    const allTextItems = currentResults.text_items;
     const processingTimeMs = Date.now() - processingStartTime;
     
-    // 更新摘要信息
-    totalItems.textContent = textItems.length;
+    // 检查过滤开关状态
+    const filterEnabled = filterChineseToggle ? filterChineseToggle.checked : true;
     
-    // 计算平均置信度
-    const avgConf = textItems.reduce((sum, item) => sum + (item.confidence || 0), 0) / textItems.length;
-    avgConfidence.textContent = `${(avgConf * 100).toFixed(1)}%`;
+    // 根据开关状态过滤数据
+    let displayTextItems;
+    let chineseItems = [];
     
-    // 计算尺寸标注数量
-    const dimensionItems = textItems.filter(item => item.type === 'dimension');
+    if (filterEnabled) {
+        // 过滤掉包含中文的识别项
+        displayTextItems = filterChineseItems(allTextItems);
+        chineseItems = getChineseItems(allTextItems);
+        
+        // 显示屏蔽信息（仅在首次处理时显示）
+        if (chineseItems.length > 0 && !data._alreadyNotified) {
+            showNotification(`已屏蔽 ${chineseItems.length} 个包含中文的识别项`, 'info');
+            data._alreadyNotified = true;
+        }
+    } else {
+        // 不过滤，显示所有项目
+        displayTextItems = allTextItems;
+    }
+    
+    // 更新过滤计数显示
+    if (chineseFilterCount) {
+        chineseFilterCount.textContent = chineseItems.length;
+    }
+    
+    // 更新摘要信息（使用显示的数据）
+    totalItems.textContent = displayTextItems.length;
+    
+    // 计算平均置信度（使用显示的数据）
+    const avgConf = displayTextItems.length > 0
+        ? displayTextItems.reduce((sum, item) => sum + (item.confidence || 0), 0) / displayTextItems.length
+        : 0;
+    avgConfidence.textContent = displayTextItems.length > 0 ? `${(avgConf * 100).toFixed(1)}%` : '0%';
+    
+    // 计算尺寸标注数量（使用显示的数据）
+    const dimensionItems = displayTextItems.filter(item => item.type === 'dimension');
     dimensionCount.textContent = dimensionItems.length;
     
     // 更新处理时间
     processingTime.textContent = `${(processingTimeMs / 1000).toFixed(2)}s`;
     
-    // 更新文本内容表格
-    updateTextResultsTable(textItems);
+    // 更新文本内容表格（使用显示的数据）
+    updateTextResultsTable(displayTextItems);
     
-    // 更新坐标表格
-    updateCoordinateTable(textItems);
+    // 更新坐标表格（使用显示的数据）
+    updateCoordinateTable(displayTextItems);
     
-    // 更新可视化
+    // 更新可视化（使用显示的数据）
     updateVisualization();
     
-    // 更新API URL
-    apiUrl.textContent = `${API_BASE_URL}/api/results/${currentFile.serverFilename}`;
 }
 
 // 更新文本结果表格
@@ -457,6 +493,26 @@ function updateVisualization() {
         return;
     }
     
+    // 检查过滤开关状态
+    const filterEnabled = filterChineseToggle ? filterChineseToggle.checked : true;
+    
+    // 根据开关状态过滤数据
+    let displayTextItems;
+    if (filterEnabled) {
+        // 过滤掉包含中文的识别项
+        displayTextItems = filterChineseItems(currentResults.text_items);
+    } else {
+        // 不过滤，显示所有项目
+        displayTextItems = currentResults.text_items;
+    }
+    
+    if (displayTextItems.length === 0) {
+        // 如果没有显示的项目，显示占位符
+        visualizationPlaceholder.style.display = 'flex';
+        visualizationCanvas.style.display = 'none';
+        return;
+    }
+    
     // 隐藏占位符，显示画布
     visualizationPlaceholder.style.display = 'none';
     visualizationCanvas.style.display = 'block';
@@ -491,7 +547,7 @@ function updateVisualization() {
         const scaleX = width / img.width;
         const scaleY = height / img.height;
         
-        currentResults.text_items.forEach(item => {
+        displayTextItems.forEach(item => {
             const location = item.location || {};
             const x = (location.left || 0) * scaleX;
             const y = (location.top || 0) * scaleY;
@@ -621,6 +677,23 @@ function getConfidenceClass(confidence) {
     if (confidence >= 0.8) return 'confidence-high';
     if (confidence >= 0.5) return 'confidence-medium';
     return 'confidence-low';
+}
+
+// 检测文本是否包含中文
+function containsChinese(text) {
+    // 中文Unicode范围：\u4e00-\u9fff
+    const chineseRegex = /[\u4e00-\u9fff]/;
+    return chineseRegex.test(text);
+}
+
+// 过滤包含中文的识别项
+function filterChineseItems(textItems) {
+    return textItems.filter(item => !containsChinese(item.text));
+}
+
+// 获取包含中文的识别项
+function getChineseItems(textItems) {
+    return textItems.filter(item => containsChinese(item.text));
 }
 
 function escapeHtml(text) {

@@ -6,7 +6,7 @@ import os
 import json
 import uuid
 from datetime import datetime
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_file, send_from_directory, render_template
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import openpyxl
@@ -20,7 +20,7 @@ from config import Config
 from ocr_processor import OCRProcessor
 
 # 初始化Flask应用
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
 # 根据配置决定是否启用CORS
 if Config.ENABLE_CORS:
@@ -45,6 +45,11 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
+    """前端页面"""
+    return send_from_directory('../frontend', 'index.html')
+
+@app.route('/api')
+def api_index():
     """API根路径"""
     return jsonify({
         'name': 'OCR工业图片识别系统',

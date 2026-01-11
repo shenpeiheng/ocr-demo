@@ -16,14 +16,14 @@
 
 ```
 ocr-demo/
-├── backend/              # 后端API服务
-│   ├── app.py           # Flask主应用
+├── backend/              # 后端API服务（包含前端静态文件服务）
+│   ├── app.py           # Flask主应用（整合前端页面服务）
 │   ├── ocr_processor.py # OCR处理器（百度OCR集成）
 │   ├── config.py        # 配置文件
 │   ├── run.py           # 启动脚本
 │   ├── requirements.txt # Python依赖
 │   └── .env.example     # 环境变量示例
-├── frontend/            # 前端界面
+├── frontend/            # 前端静态文件
 │   ├── index.html       # 主页面
 │   ├── static/
 │   │   ├── css/
@@ -31,6 +31,9 @@ ocr-demo/
 │   │   └── js/
 │   │       └── main.js   # JavaScript逻辑
 │   └── uploads/         # 文件上传目录
+├── Dockerfile           # 容器化构建文件（整合前后端）
+├── docker-compose.yml   # 容器编排配置
+├── .dockerignore        # Docker忽略文件
 └── README.md            # 项目文档
 ```
 
@@ -39,17 +42,19 @@ ocr-demo/
 ### 1. 环境要求
 
 - Python 3.7+
-- Node.js（可选，仅用于前端开发）
+- Docker 和 Docker Compose（可选，用于容器化部署）
 - 百度OCR API密钥（可选，可使用模拟模式）
 
-### 2. 安装后端依赖
+### 2. 传统部署方式（开发环境）
+
+#### 2.1 安装后端依赖
 
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-### 3. 配置环境变量
+#### 2.2 配置环境变量
 
 复制环境变量示例文件并配置：
 
@@ -68,7 +73,7 @@ BAIDU_SECRET_KEY=your_secret_key_here
 OCR_USE_MOCK=false  # 设置为false以使用真实百度OCR API
 ```
 
-### 4. 启动后端服务器
+#### 2.3 启动整合服务
 
 ```bash
 cd backend
@@ -82,23 +87,49 @@ cd backend
 python app.py
 ```
 
-服务器将在 http://localhost:5000 启动。
+#### 2.4 访问应用
 
-### 5. 访问前端界面
-
-在浏览器中打开：
+服务启动后，在浏览器中访问：
 ```
-file:///path/to/ocr-demo/frontend/index.html
+http://localhost:5000
 ```
 
-或者通过Python启动一个简单的HTTP服务器：
+**注意**：现在前端页面已整合到后端服务中，无需单独启动前端服务器。
+
+### 3. 容器化部署（生产环境推荐）
+
+#### 3.1 使用Docker Compose（推荐）
 
 ```bash
-cd frontend
-python -m http.server 8000
+# 启动服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
 ```
 
-然后在浏览器中访问 http://localhost:8000
+#### 3.2 使用Docker直接运行
+
+```bash
+# 构建镜像
+docker build -t ocr-industrial-system .
+
+# 运行容器
+docker run -p 5000:5000 -v ./frontend/uploads:/app/frontend/uploads ocr-industrial-system
+```
+
+#### 3.3 访问应用
+
+容器启动后，在浏览器中访问：
+```
+http://localhost:5000
+```
 
 ## API接口
 
@@ -183,9 +214,15 @@ GET /api/download/json/<filename>
 - `OUTPUT_JSON_ENABLED`: 是否生成JSON文件（默认true）
 
 ### 前端配置（frontend/static/js/main.js）
-- `API_BASE_URL`: 后端API地址（默认http://localhost:5000）
+- `API_BASE_URL`: 后端API地址（整合后使用相对路径''）
 - 最大文件大小限制：16MB
 - 支持的图片格式：PNG, JPG, JPEG, BMP, TIFF, GIF
+
+### 架构变更说明
+- **前后端整合**: 前端静态文件现在由Flask后端直接提供，无需单独的前端服务器
+- **简化部署**: 只需启动一个服务即可访问完整应用
+- **Docker优化**: 移除了Nginx服务，使用单个容器包含前后端
+- **路径调整**: 前端API调用使用相对路径，适应整合后的部署环境
 
 ## 开发指南
 

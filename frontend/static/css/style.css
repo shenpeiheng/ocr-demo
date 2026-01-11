@@ -1185,7 +1185,7 @@ body {
 }
 
 .tab-content {
-    min-height: 300px;
+    min-height: 360px;
 }
 
 .tab-pane {
@@ -1308,7 +1308,7 @@ body {
     background: linear-gradient(90deg, #e74c3c, #c0392b);
     color: white;
     flex: 1;
-    min-width: 200px;
+    min-width: 180px;
 }
 
 .btn-export:hover {
@@ -1656,4 +1656,138 @@ body {
 .confidence-low {
     color: #e74c3c;
     font-weight: 600;
+}
+
+/* 过滤控制样式 */
+.filter-controls {
+    background: linear-gradient(135deg, #f8fafc, #f0f7ff);
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e7ff;
+    box-shadow: 0 4px 12px rgba(127, 179, 213, 0.08);
+}
+
+.filter-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4a6572;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e7ff;
+}
+
+.filter-title i {
+    color: #7fb3d5;
+    font-size: 1.2rem;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #7fb3d5;
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+.filter-label {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.filter-badge {
+    background: #e74c3c;
+    color: white;
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
+}
+
+.filter-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid #7fb3d5;
+    margin-top: 5px;
+}
+
+.filter-info i {
+    color: #7fb3d5;
+    font-size: 0.9rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .filter-controls {
+        padding: 12px 15px;
+    }
+    
+    .filter-option {
+        flex-wrap: wrap;
+    }
+    
+    .filter-badge {
+        margin-left: auto;
+    }
 }
