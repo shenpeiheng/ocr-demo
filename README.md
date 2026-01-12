@@ -16,13 +16,12 @@
 
 ```
 ocr-demo/
-├── backend/              # 后端API服务（包含前端静态文件服务）
+├── backend/             # 后端API服务（包含前端静态文件服务）
 │   ├── app.py           # Flask主应用（整合前端页面服务）
 │   ├── ocr_processor.py # OCR处理器（百度OCR集成）
 │   ├── config.py        # 配置文件
 │   ├── run.py           # 启动脚本
-│   ├── requirements.txt # Python依赖
-│   └── .env.example     # 环境变量示例
+│   └── requirements.txt # Python依赖
 ├── frontend/            # 前端静态文件
 │   ├── index.html       # 主页面
 │   ├── static/
@@ -37,71 +36,13 @@ ocr-demo/
 └── README.md            # 项目文档
 ```
 
-## 快速开始
+## Docker部署
 
-### 1. 环境要求
+### 1. 使用Docker Compose（推荐）
 
-- Python 3.7+
-- Docker 和 Docker Compose（可选，用于容器化部署）
-- 百度OCR API密钥（可选，可使用模拟模式）
-
-### 2. 传统部署方式（开发环境）
-
-#### 2.1 安装后端依赖
-
+#### 1.1 启动服务
 ```bash
-cd backend
-pip install -r requirements.txt
-```
-
-#### 2.2 配置环境变量
-
-复制环境变量示例文件并配置：
-
-```bash
-cd backend
-copy .env.example .env
-```
-
-编辑`.env`文件，配置百度OCR API密钥（如需使用真实OCR）：
-
-```env
-# 百度OCR API配置（从百度AI开放平台获取）
-BAIDU_APP_ID=your_app_id_here
-BAIDU_API_KEY=your_api_key_here
-BAIDU_SECRET_KEY=your_secret_key_here
-OCR_USE_MOCK=false  # 设置为false以使用真实百度OCR API
-```
-
-#### 2.3 启动整合服务
-
-```bash
-cd backend
-python run.py
-```
-
-或者直接运行：
-
-```bash
-cd backend
-python app.py
-```
-
-#### 2.4 访问应用
-
-服务启动后，在浏览器中访问：
-```
-http://localhost:5000
-```
-
-**注意**：现在前端页面已整合到后端服务中，无需单独启动前端服务器。
-
-### 3. 容器化部署（生产环境推荐）
-
-#### 3.1 使用Docker Compose（推荐）
-
-```bash
-# 启动服务
+# 启动服务（后台运行）
 docker-compose up -d
 
 # 查看服务状态
@@ -114,22 +55,126 @@ docker-compose logs -f
 docker-compose down
 ```
 
-#### 3.2 使用Docker直接运行
-
+#### 1.2 使用构建脚本
 ```bash
-# 构建镜像
-docker build -t ocr-industrial-system .
+# Windows系统
+build.bat
 
-# 运行容器
-docker run -p 5000:5000 -v ./frontend/uploads:/app/frontend/uploads ocr-industrial-system
+# Linux/macOS系统
+chmod +x build.sh
+./build.sh
 ```
 
-#### 3.3 访问应用
+### 2. 使用Docker直接运行
 
+#### 2.1 构建镜像
+```bash
+docker build -t ocr-industrial-demo:latest .
+```
+
+#### 2.2 运行容器
+```bash
+# 基本运行
+docker run -p 5000:5000 --name ocr-demo ocr-industrial-demo
+
+# 带数据持久化
+docker run -p 5000:5000 \
+  -v ./frontend/uploads:/app/frontend/uploads \
+  --name ocr-demo \
+  ocr-industrial-demo
+
+# 带环境变量配置
+docker run -p 5000:5000 \
+  -v ./frontend/uploads:/app/frontend/uploads \
+  -v ./.env:/app/.env \
+  --name ocr-demo \
+  ocr-industrial-demo
+```
+
+#### 2.3 访问应用
 容器启动后，在浏览器中访问：
 ```
 http://localhost:5000
 ```
+
+### 3. Dockerfile说明
+
+#### 3.1 基础镜像
+- 使用Python 3.9-slim作为基础镜像
+- 包含必要的系统依赖（libgl1-mesa-glx等用于OpenCV）
+
+#### 3.2 构建优化
+- 多阶段构建减少镜像大小
+- 使用Python虚拟环境
+- 缓存依赖安装
+
+#### 3.3 健康检查
+- 自动健康检查确保服务可用性
+- 30秒间隔，3秒超时
+
+### 4. 环境配置
+
+#### 4.1 环境变量
+可以通过环境变量或.env文件配置：
+```env
+# Flask配置
+DEBUG=false
+PORT=5000
+SECRET_KEY=ocr-industrial-production-key
+
+# OCR配置
+OCR_USE_MOCK=false
+OCR_CONFIDENCE_THRESHOLD=0.5
+
+# 性能优化
+OMP_NUM_THREADS=4
+NUMEXPR_NUM_THREADS=4
+OPENBLAS_NUM_THREADS=4
+MKL_NUM_THREADS=4
+```
+
+#### 4.2 数据持久化
+- 上传目录：`./frontend/uploads` 挂载到容器内
+- 配置文件：`.env` 文件挂载到容器内
+
+### 5. 传统部署方式（开发环境）
+
+#### 5.1 环境要求
+- Python 3.7+
+- Docker 和 Docker Compose（可选，用于容器化部署）
+- 百度OCR API密钥（可选，可使用模拟模式）
+
+#### 5.2 安装后端依赖
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+#### 5.3 配置环境变量
+```bash
+cd backend
+copy .env.example .env
+```
+
+#### 5.4 启动服务
+```bash
+cd backend
+python run.py
+```
+
+或者直接运行：
+```bash
+cd backend
+python app.py
+```
+
+#### 5.5 访问应用
+服务启动后，在浏览器中访问：
+```
+http://localhost:5000
+```
+
+**注意**：现在前端页面已整合到后端服务中，无需单独启动前端服务器。
 
 ## API接口
 

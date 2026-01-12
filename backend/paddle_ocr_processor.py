@@ -17,51 +17,44 @@ logger = logging.getLogger(__name__)
 class PaddleOCRProcessor:
     """PaddleOCR处理器类"""
     
-    def __init__(self, use_gpu=False, lang='ch'):
+    def __init__(self, lang='ch'):
         """
         初始化PaddleOCR处理器
         
         Args:
-            use_gpu: 是否使用GPU加速
             lang: 识别语言 ('ch'中文, 'en'英文, 'chinese_cht'繁体中文)
         """
-        self.use_gpu = use_gpu
         self.lang = lang
         self.ocr = None
         self.initialized = False
         
-        # PaddleOCR配置 - 优化参数以提高工业图纸识别率
-        # 特别针对数字、字母、字符和工业标识
+        # 设置模型目录 - 优先使用环境变量，否则使用默认目录
+        import os
+        # 检查是否在Docker环境中
+        if os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv'):
+            # Docker环境使用/app/.paddleocr
+            default_model_dir = '/app/.paddleocr'
+        else:
+            # 本地环境使用用户目录下的.paddleocr
+            default_model_dir = os.path.expanduser('~/.paddleocr')
+        
+        model_dir = os.environ.get('PADDLEOCR_MODEL_DIR', default_model_dir)
+        
+        # PaddleOCR配置 - 只使用PaddleOCR 3.3.2支持的参数
+        # 参考: https://github.com/PaddlePaddle/PaddleOCR
+        # 使用PP-OCRv5模型以获得更好的识别效果
         self.config = {
-            'use_angle_cls': True,  # 使用方向分类器，对于倾斜文本很重要
-            'use_gpu': use_gpu,
             'lang': lang,
-            'show_log': False,
-            'use_space_char': True,  # 识别空格
-            'det_db_box_thresh': 0.2,  # 进一步降低检测框阈值，检测更多小文本区域
-            'det_db_unclip_ratio': 2.5,  # 增加检测框扩展比例，更好地包围文本
-            'det_db_score_mode': 'slow',  # 使用更精确的检测评分模式
-            'rec_char_dict_path': None,  # 使用默认字典
-            'rec_image_shape': '3, 48, 320',  # 识别图像形状
-            'rec_batch_num': 8,  # 增加批处理数量，提高处理速度
-            'max_text_length': 100,  # 增加最大文本长度，适应长标注
-            'drop_score': 0.3,  # 降低识别置信度阈值，保留更多识别结果
-            'use_dilation': True,  # 使用膨胀操作，连接断裂文本
-            'det_limit_type': 'max',  # 检测限制类型
-            'det_limit_side_len': 1920,  # 增加检测限制边长，处理高分辨率图像
-            'det_db_thresh': 0.3,  # 二值化阈值
-            'det_db_max_candidates': 1000,  # 增加最大候选框数量
-            'rec_char_type': 'ch',  # 字符类型
-            'rec_algorithm': 'CRNN',  # 识别算法
-            'use_tensorrt': False,  # 不使用TensorRT加速
-            'enable_mkldnn': False,  # 不使用MKLDNN加速
-            'cpu_threads': 10,  # CPU线程数
-            'det_model_dir': None,  # 检测模型目录
-            'rec_model_dir': None,  # 识别模型目录
-            'cls_model_dir': None,  # 分类模型目录
-            'use_pdserving': False,  # 不使用PaddleServing
-            'warmup': True,  # 预热模型
-            'precision': 'fp32',  # 精度
+            'ocr_version': 'PP-OCRv5',  # 使用PP-OCRv5模型版本
+            'text_det_box_thresh': 0.2,  # 进一步降低检测框阈值，检测更多小文本区域
+            'text_det_unclip_ratio': 2.5,  # 增加检测框扩展比例，更好地包围文本
+            'text_rec_score_thresh': 0.3,  # 降低识别置信度阈值，保留更多识别结果
+            'text_det_limit_type': 'max',  # 检测限制类型
+            'text_det_limit_side_len': 1920,  # 增加检测限制边长，处理高分辨率图像
+            'text_det_thresh': 0.3,  # 二值化阈值
+            'text_detection_model_dir': os.path.join(model_dir, 'det'),  # 检测模型目录
+            'text_recognition_model_dir': os.path.join(model_dir, 'rec'),  # 识别模型目录
+            'textline_orientation_model_dir': os.path.join(model_dir, 'cls'),  # 分类模型目录
         }
         
         # 尝试初始化PaddleOCR
@@ -71,39 +64,35 @@ class PaddleOCRProcessor:
         """初始化PaddleOCR"""
         try:
             from paddleocr import PaddleOCR
-            logger.info(f"初始化PaddleOCR (语言: {self.lang}, GPU: {self.use_gpu})...")
+            logger.info(f"初始化PaddleOCR (语言: {self.lang}, 版本: PP-OCRv5)...")
             
-            self.ocr = PaddleOCR(
-                use_angle_cls=self.config['use_angle_cls'],
-                use_gpu=self.config['use_gpu'],
-                lang=self.config['lang'],
-                show_log=self.config['show_log'],
-                use_space_char=self.config['use_space_char'],
-                det_db_box_thresh=self.config['det_db_box_thresh'],
-                det_db_unclip_ratio=self.config['det_db_unclip_ratio'],
-                det_db_score_mode=self.config['det_db_score_mode'],
-                rec_char_dict_path=self.config['rec_char_dict_path'],
-                rec_image_shape=self.config['rec_image_shape'],
-                rec_batch_num=self.config['rec_batch_num'],
-                max_text_length=self.config['max_text_length'],
-                drop_score=self.config['drop_score'],
-                use_dilation=self.config['use_dilation'],
-                det_limit_type=self.config['det_limit_type'],
-                det_limit_side_len=self.config['det_limit_side_len'],
-                det_db_thresh=self.config['det_db_thresh'],
-                det_db_max_candidates=self.config['det_db_max_candidates'],
-                rec_char_type=self.config['rec_char_type'],
-                rec_algorithm=self.config['rec_algorithm'],
-                use_tensorrt=self.config['use_tensorrt'],
-                enable_mkldnn=self.config['enable_mkldnn'],
-                cpu_threads=self.config['cpu_threads'],
-                det_model_dir=self.config['det_model_dir'],
-                rec_model_dir=self.config['rec_model_dir'],
-                cls_model_dir=self.config['cls_model_dir'],
-                use_pdserving=self.config['use_pdserving'],
-                warmup=self.config['warmup'],
-                precision=self.config['precision']
-            )
+            # 只使用PaddleOCR 3.3.2支持的参数
+            ocr_kwargs = {
+                'lang': self.config['lang'],
+                'ocr_version': self.config.get('ocr_version', 'PP-OCRv5'),  # 使用PP-OCRv5版本
+                'text_det_box_thresh': self.config['text_det_box_thresh'],
+                'text_det_unclip_ratio': self.config['text_det_unclip_ratio'],
+                'text_rec_score_thresh': self.config['text_rec_score_thresh'],
+                'text_det_limit_type': self.config['text_det_limit_type'],
+                'text_det_limit_side_len': self.config['text_det_limit_side_len'],
+                'text_det_thresh': self.config['text_det_thresh'],
+            }
+            
+            # 添加模型目录参数（如果目录存在）
+            # 只有当目录存在时才设置，否则让PaddleOCR使用默认缓存
+            text_detection_model_dir = self.config.get('text_detection_model_dir')
+            if text_detection_model_dir and os.path.exists(text_detection_model_dir):
+                ocr_kwargs['text_detection_model_dir'] = text_detection_model_dir
+            
+            text_recognition_model_dir = self.config.get('text_recognition_model_dir')
+            if text_recognition_model_dir and os.path.exists(text_recognition_model_dir):
+                ocr_kwargs['text_recognition_model_dir'] = text_recognition_model_dir
+            
+            textline_orientation_model_dir = self.config.get('textline_orientation_model_dir')
+            if textline_orientation_model_dir and os.path.exists(textline_orientation_model_dir):
+                ocr_kwargs['textline_orientation_model_dir'] = textline_orientation_model_dir
+            
+            self.ocr = PaddleOCR(**ocr_kwargs)
             
             self.initialized = True
             logger.info("PaddleOCR初始化成功")
@@ -138,19 +127,34 @@ class PaddleOCRProcessor:
             if not os.path.exists(image_path):
                 return self._get_error_result(f"图片文件不存在: {image_path}")
             
-            # 获取图片信息
+            # 获取原始图片信息
             img = Image.open(image_path)
             img_width, img_height = img.size
             
             # 预处理图片（增强识别效果）
             processed_image = self.preprocess_image(image_path)
             
-            # 使用PaddleOCR进行识别
-            logger.info("正在进行OCR识别...")
-            ocr_result = self.ocr.ocr(processed_image, cls=True)
+            # 获取预处理后的图像尺寸
+            if processed_image is not None:
+                processed_height, processed_width = processed_image.shape[:2]
+                logger.info(f"原始图像尺寸: {img_width}x{img_height}, 预处理后尺寸: {processed_width}x{processed_height}")
+                
+                # 计算缩放比例（如果尺寸不同）
+                scale_x = img_width / processed_width if processed_width > 0 else 1.0
+                scale_y = img_height / processed_height if processed_height > 0 else 1.0
+                
+                if abs(scale_x - 1.0) > 0.01 or abs(scale_y - 1.0) > 0.01:
+                    logger.info(f"图像缩放比例: X={scale_x:.3f}, Y={scale_y:.3f}")
+            else:
+                scale_x = scale_y = 1.0
+                logger.warning("预处理图像为空，使用原始图像")
             
-            # 解析结果
-            text_items = self._parse_ocr_result(ocr_result)
+            # 使用PaddleOCR进行识别 - 使用predict()方法
+            logger.info("正在进行OCR识别...")
+            ocr_result = self.ocr.predict(processed_image)
+            
+            # 解析结果，并应用坐标缩放（如果需要）
+            text_items = self._parse_ocr_result(ocr_result, scale_x, scale_y)
             
             # 分析工业图纸模式
             analysis_result = self.analyze_industrial_patterns(text_items)
@@ -286,12 +290,120 @@ class PaddleOCRProcessor:
             img = cv2.imread(image_path)
             return cv2.cvtColor(img, cv2.COLOR_BGR2RGB) if img is not None else None
     
-    def _parse_ocr_result(self, ocr_result) -> List[Dict]:
+    def _parse_ocr_result(self, ocr_result, scale_x=1.0, scale_y=1.0) -> List[Dict]:
         """
-        解析PaddleOCR返回的结果
+        解析PaddleOCR返回的结果，支持坐标缩放
         
         Args:
             ocr_result: PaddleOCR返回的结果
+            scale_x: X轴缩放比例
+            scale_y: Y轴缩放比例
+            
+        Returns:
+            解析后的文本项列表
+        """
+        text_items = []
+        
+        if not ocr_result:
+            return text_items
+        
+        try:
+            # PaddleOCR 3.3.2返回格式: 包含OCRResult对象的列表
+            # OCRResult是一个字典，包含rec_texts, rec_scores, rec_polys等字段
+            if isinstance(ocr_result, list) and len(ocr_result) > 0:
+                # 获取第一个OCRResult对象
+                ocr_data = ocr_result[0]
+                
+                # 检查是否是OCRResult对象（字典）
+                if isinstance(ocr_data, dict):
+                    # 获取文本列表和置信度列表
+                    rec_texts = ocr_data.get('rec_texts', [])
+                    rec_scores = ocr_data.get('rec_scores', [])
+                    rec_polys = ocr_data.get('rec_polys', [])
+                    
+                    logger.info(f"解析到 {len(rec_texts)} 个文本项，缩放比例: X={scale_x:.3f}, Y={scale_y:.3f}")
+                    
+                    # 遍历所有识别到的文本
+                    for i in range(len(rec_texts)):
+                        text = rec_texts[i]
+                        confidence = float(rec_scores[i]) if i < len(rec_scores) else 0.8
+                        
+                        # 获取多边形坐标
+                        poly = rec_polys[i] if i < len(rec_polys) else None
+                        
+                        # 计算边界框
+                        try:
+                            if poly is not None and isinstance(poly, np.ndarray):
+                                # 多边形坐标数组，形状为 (n, 2)
+                                # 应用缩放比例
+                                scaled_poly = poly.copy()
+                                scaled_poly[:, 0] = scaled_poly[:, 0] * scale_x
+                                scaled_poly[:, 1] = scaled_poly[:, 1] * scale_y
+                                
+                                x_coords = scaled_poly[:, 0]
+                                y_coords = scaled_poly[:, 1]
+                                
+                                left = int(np.min(x_coords))
+                                top = int(np.min(y_coords))
+                                right = int(np.max(x_coords))
+                                bottom = int(np.max(y_coords))
+                                width = right - left
+                                height = bottom - top
+                                
+                                # 将缩放后的多边形转换为列表格式
+                                box_points = scaled_poly.tolist()
+                                
+                                logger.debug(f"文本 '{text}' 坐标: left={left}, top={top}, width={width}, height={height}")
+                            else:
+                                # 如果没有多边形数据，使用默认值
+                                left = top = right = bottom = width = height = 0
+                                box_points = [[0, 0], [0, 0], [0, 0], [0, 0]]
+                        except Exception as e:
+                            logger.warning(f"解析多边形坐标失败: {e}, 使用默认值")
+                            left = top = right = bottom = width = height = 0
+                            box_points = [[0, 0], [0, 0], [0, 0], [0, 0]]
+                        
+                        # 确定文本类型
+                        text_type = self._determine_text_type(text)
+                        
+                        text_items.append({
+                            'id': i + 1,
+                            'text': text,
+                            'confidence': confidence,
+                            'location': {
+                                'left': left,
+                                'top': top,
+                                'width': width,
+                                'height': height,
+                                'right': right,
+                                'bottom': bottom,
+                                'points': box_points  # 保存缩放后的点坐标
+                            },
+                            'type': text_type
+                        })
+                else:
+                    logger.warning(f"OCR结果格式不是字典: {type(ocr_data)}")
+            else:
+                logger.warning(f"OCR结果为空或格式不正确: {type(ocr_result)}")
+                
+        except Exception as e:
+            logger.error(f"解析OCR结果失败: {e}")
+            # 尝试回退到旧格式解析
+            try:
+                text_items = self._parse_ocr_result_legacy(ocr_result, scale_x, scale_y)
+            except Exception as e2:
+                logger.error(f"回退解析也失败: {e2}")
+        
+        return text_items
+    
+    def _parse_ocr_result_legacy(self, ocr_result, scale_x=1.0, scale_y=1.0) -> List[Dict]:
+        """
+        解析旧版PaddleOCR返回的结果（兼容性回退），支持坐标缩放
+        
+        Args:
+            ocr_result: PaddleOCR返回的结果
+            scale_x: X轴缩放比例
+            scale_y: Y轴缩放比例
             
         Returns:
             解析后的文本项列表
@@ -305,7 +417,7 @@ class PaddleOCRProcessor:
             if not item:
                 continue
                 
-            # PaddleOCR返回格式: [[[x1,y1], [x2,y2], [x3,y3], [x4,y4]], (text, confidence)]
+            # 旧版PaddleOCR返回格式: [[[x1,y1], [x2,y2], [x3,y3], [x4,y4]], (text, confidence)]
             box_points = item[0]  # 四个点的坐标
             text_info = item[1]   # (文本, 置信度)
             
@@ -316,17 +428,38 @@ class PaddleOCRProcessor:
                 text = text_info[0] if isinstance(text_info[0], str) else ""
                 confidence = 0.8
             
-            # 计算边界框
-            points = np.array(box_points, dtype=np.int32)
-            x_coords = points[:, 0]
-            y_coords = points[:, 1]
-            
-            left = int(np.min(x_coords))
-            top = int(np.min(y_coords))
-            right = int(np.max(x_coords))
-            bottom = int(np.max(y_coords))
-            width = right - left
-            height = bottom - top
+            # 计算边界框 - 添加类型检查和错误处理
+            try:
+                # 确保所有坐标点都是数字
+                cleaned_points = []
+                for point in box_points:
+                    if isinstance(point, (list, tuple)) and len(point) >= 2:
+                        x = float(point[0]) if isinstance(point[0], (int, float, str)) and str(point[0]).replace('.', '').isdigit() else 0
+                        y = float(point[1]) if isinstance(point[1], (int, float, str)) and str(point[1]).replace('.', '').isdigit() else 0
+                        # 应用缩放比例
+                        x = x * scale_x
+                        y = y * scale_y
+                        cleaned_points.append([x, y])
+                    else:
+                        cleaned_points.append([0, 0])
+                
+                points = np.array(cleaned_points, dtype=np.float32)
+                x_coords = points[:, 0]
+                y_coords = points[:, 1]
+                
+                left = int(np.min(x_coords))
+                top = int(np.min(y_coords))
+                right = int(np.max(x_coords))
+                bottom = int(np.max(y_coords))
+                width = right - left
+                height = bottom - top
+                
+                # 更新缩放后的点坐标
+                scaled_box_points = cleaned_points
+            except Exception as e:
+                logger.warning(f"解析边界框坐标失败: {e}, 使用默认值")
+                left = top = right = bottom = width = height = 0
+                scaled_box_points = [[0, 0], [0, 0], [0, 0], [0, 0]]
             
             # 确定文本类型
             text_type = self._determine_text_type(text)
@@ -342,7 +475,7 @@ class PaddleOCRProcessor:
                     'height': height,
                     'right': right,
                     'bottom': bottom,
-                    'points': box_points  # 保存原始点坐标
+                    'points': scaled_box_points  # 保存缩放后的点坐标
                 },
                 'type': text_type
             })
@@ -603,9 +736,9 @@ class PaddleOCRProcessor:
 
 
 # 工厂函数，便于使用
-def create_paddle_ocr_processor(use_gpu=False, lang='ch'):
+def create_paddle_ocr_processor(lang='ch'):
     """创建PaddleOCR处理器实例"""
-    return PaddleOCRProcessor(use_gpu=use_gpu, lang=lang)
+    return PaddleOCRProcessor(lang=lang)
 
 
 if __name__ == '__main__':
@@ -619,14 +752,15 @@ if __name__ == '__main__':
         image_path = "../frontend/uploads/sample_industrial_drawing.png"
         if not os.path.exists(image_path):
             print(f"示例图片不存在: {image_path}")
-            print("请先运行 create_sample_image.py 创建示例图片")
+            print("请上传真实图片进行测试，或创建示例图片")
+            print("用法: python paddle_ocr_processor.py <图片路径>")
             sys.exit(1)
     
     print("测试PaddleOCR处理器...")
     print(f"处理图片: {image_path}")
     
     # 创建处理器
-    processor = PaddleOCRProcessor(use_gpu=False, lang='ch')
+    processor = PaddleOCRProcessor(lang='ch')
     
     if not processor.initialized:
         print("PaddleOCR初始化失败")
