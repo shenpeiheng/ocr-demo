@@ -199,12 +199,6 @@ def start_server(host='0.0.0.0', port=5000, debug=False):
     print(f"上传目录: {Config.UPLOAD_FOLDER}")
     print(f"OCR引擎: PaddleOCR PP-OCRv5")
     
-    # Docker环境特定信息
-    if is_docker_environment():
-        print(f"Docker容器ID: {os.environ.get('HOSTNAME', '未知')}")
-        print(f"容器内部端口: {port}")
-        print("注意: 外部访问端口可能不同（由docker run -p参数指定）")
-    
     print("\nAPI端点:")
     print("  GET  /                    - API信息")
     print("  POST /api/upload          - 上传图片")
@@ -214,15 +208,6 @@ def start_server(host='0.0.0.0', port=5000, debug=False):
     print("  GET  /api/download/json/<file>  - 下载JSON")
     print("  GET  /uploads/<file>      - 访问上传的文件")
     
-    # Docker环境中的额外提示
-    if is_docker_environment():
-        print("\nDocker容器信息:")
-        print("  - 查看日志: docker logs <容器名>")
-        print("  - 进入容器: docker exec -it <容器名> /bin/bash")
-        print("  - 停止容器: docker stop <容器名>")
-        print("  - 重启容器: docker restart <容器名>")
-    
-    print("\n按 Ctrl+C 停止服务器")
     print("=" * 60)
     
     # 检查上传目录权限（在Docker中特别重要）
@@ -311,20 +296,9 @@ def main():
         start_server(args.host, args.port, args.debug)
     except KeyboardInterrupt:
         print("\n\n服务器已停止")
-        if is_docker_environment():
-            print("提示: 使用 'docker stop <容器名>' 停止Docker容器")
     except Exception as e:
         print(f"\n错误: {e}")
         print(f"错误类型: {type(e).__name__}")
-        
-        # 提供Docker特定的故障排除建议
-        if is_docker_environment():
-            print("\nDocker故障排除建议:")
-            print("1. 检查容器日志: docker logs <容器名>")
-            print("2. 检查端口映射: docker ps")
-            print("3. 进入容器调试: docker exec -it <容器名> /bin/bash")
-            print("4. 检查卷挂载: docker inspect <容器名>")
-        
         sys.exit(1)
 
 if __name__ == '__main__':

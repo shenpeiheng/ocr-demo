@@ -22,21 +22,7 @@ class Config:
     ALLOWED_EXTENSIONS_STR = os.getenv('ALLOWED_EXTENSIONS', 'PNG,JPG,JPEG,BMP,TIFF,GIF')
     ALLOWED_EXTENSIONS = {ext.strip().lower() for ext in ALLOWED_EXTENSIONS_STR.split(',')}
     
-    # OCR处理配置 - 使用PaddleOCR PP-OCRv5
-    OCR_CONFIDENCE_THRESHOLD = float(os.getenv('OCR_CONFIDENCE_THRESHOLD', '0.5'))
-    
-    # 图像预处理配置
-    PREPROCESS_ENABLED = os.getenv('PREPROCESS_ENABLED', 'true').lower() == 'true'
-    IMAGE_RESIZE_WIDTH = int(os.getenv('IMAGE_RESIZE_WIDTH', '1600'))
-    IMAGE_RESIZE_HEIGHT = int(os.getenv('IMAGE_RESIZE_HEIGHT', '1200'))
-    
-    # 输出配置
-    OUTPUT_EXCEL_ENABLED = os.getenv('OUTPUT_EXCEL_ENABLED', 'true').lower() == 'true'
-    OUTPUT_JSON_ENABLED = os.getenv('OUTPUT_JSON_ENABLED', 'true').lower() == 'true'
-    OUTPUT_VISUALIZATION_ENABLED = os.getenv('OUTPUT_VISUALIZATION_ENABLED', 'true').lower() == 'true'
-    
-    # 高级配置
-    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    # CORS配置
     ENABLE_CORS = os.getenv('ENABLE_CORS', 'true').lower() == 'true'
     
     @classmethod
