@@ -67,6 +67,7 @@ class PaddleOCRProcessor:
             logger.info(f"初始化PaddleOCR (语言: {self.lang}, 版本: PP-OCRv5)...")
             
             # 只使用PaddleOCR 3.3.2支持的参数
+            # 更多参数参考 https://blog.csdn.net/qq_38614074/article/details/149041813
             ocr_kwargs = {
                 'lang': self.config['lang'],
                 'ocr_version': self.config.get('ocr_version', 'PP-OCRv5'),  # 使用PP-OCRv5版本
@@ -76,6 +77,9 @@ class PaddleOCRProcessor:
                 'text_det_limit_type': self.config['text_det_limit_type'],
                 'text_det_limit_side_len': self.config['text_det_limit_side_len'],
                 'text_det_thresh': self.config['text_det_thresh'],
+                'use_doc_orientation_classify': False,  # 禁用文档方向分类模块
+                'use_doc_unwarping': False,  # 禁用文本图像矫正模块
+                'use_textline_orientation': False,  # 禁用文本行方向分类模块
             }
             
             # 添加模型目录参数（如果目录存在）

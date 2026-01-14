@@ -13,6 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLAGS_use_mkldnn=0 \
     FLAGS_use_cinn=0 \
     OMP_NUM_THREADS=1
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -26,32 +27,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-# 关键步骤1：创建虚拟环境
+
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-# 关键步骤2：在虚拟环境中安装特定版本的numpy
-RUN /opt/venv/bin/pip install --upgrade pip==23.3.1
-# 关键：使用numpy 1.23.5（与PaddlePaddle 2.6.x兼容）
-RUN /opt/venv/bin/pip install numpy==1.23.5
-# 安装其他Python依赖
+RUN /opt/venv/bin/pip install --upgrade pip
 RUN /opt/venv/bin/pip install \
         Flask==2.3.3 \
         Flask-CORS==4.0.0 \
         Pillow==10.0.0 \
         openpyxl==3.1.2 \
-        # numpy==1.26.4 \
-        # opencv-python==4.6.0.66 \
+        numpy==1.26.4 \
+        opencv-python==4.6.0.66 \
         python-dotenv==1.0.0 \
-        setuptools==70.0.0 \
-        wheel==0.43.0
-# 安装opencv-python-headless（避免GUI依赖）
-RUN /opt/venv/bin/pip install opencv-python-headless==4.8.1.78
-# 下载并安装无AVX版本的PaddlePaddle（关键：使用正确的wheel）
-# RUN wget -q https://paddle-whl.bj.bcebos.com/stable/cpu/paddlepaddle/paddlepaddle-2.6.1-cp39-cp39-linux_x86_64.whl && \
-#    /opt/venv/bin/pip install paddlepaddle-2.6.1-cp39-cp39-linux_x86_64.whl && \
-#     rm paddlepaddle-2.6.1-cp39-cp39-linux_x86_64.whl
+        setuptools==70.0.0
 RUN /opt/venv/bin/pip install paddlepaddle==3.2.2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
-# 安装PaddleOCR
 RUN /opt/venv/bin/pip install paddleocr==3.3.2
 
 # 复制项目文件（包括预下载脚本）
@@ -77,10 +66,6 @@ ENV FLASK_APP=backend/app.py \
 
 # 暴露端口
 EXPOSE 5000
-
-# 健康检查
-#HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-#    CMD /opt/venv/bin/python -c "import requests; requests.get('http://localhost:5000/api', timeout=2)" || exit 1
 
 # 启动命令
 CMD ["/opt/venv/bin/python", "backend/run.py", "--host", "0.0.0.0", "--port", "5000"]

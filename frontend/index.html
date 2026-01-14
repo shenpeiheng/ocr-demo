@@ -175,9 +175,11 @@
                         <div class="upload-section card">
                             <div class="section-header">
                                 <h2><i class="fas fa-cloud-upload-alt"></i> 图片上传</h2>
+                                <!--
                                 <div class="section-badge">
                                     <i class="fas fa-info-circle"></i> 支持多种格式
                                 </div>
+                                -->
                             </div>
                             
                             <div class="upload-area" id="uploadArea">
@@ -228,6 +230,7 @@
                         <div class="processing-section card">
                             <div class="section-header">
                                 <h2><i class="fas fa-spinner"></i> 处理状态</h2>
+                                <div class="progress-text" id="progressText">等待上传图片...</div>
                             </div>
                             
                             <div class="progress-container">
@@ -238,7 +241,6 @@
                                 <div class="progress-bar" id="progressBar">
                                     <div class="progress-fill" id="progressFill"></div>
                                 </div>
-                                <div class="progress-text" id="progressText">等待上传图片...</div>
                             </div>
                             
                             <div class="status-steps">
@@ -312,40 +314,36 @@
                             </div>
 
                             <div class="results-summary" id="resultsSummary">
-                                <div class="summary-card">
-                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);">
-                                        <i class="fas fa-list-ol"></i>
+                                <div class="summary-card" style="background: linear-gradient(135deg, #3498db, #2980b9);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-list-ol"></i> 识别项数 
                                     </div>
                                     <div class="summary-card-content">
                                         <div class="summary-card-value" id="totalItems">0</div>
-                                        <div class="summary-card-label">识别项数</div>
                                     </div>
                                 </div>
-                                <div class="summary-card">
-                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
-                                        <i class="fas fa-percentage"></i>
+                                <div class="summary-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-percentage"></i> 平均置信度
                                     </div>
                                     <div class="summary-card-content">
                                         <div class="summary-card-value" id="avgConfidence">0%</div>
-                                        <div class="summary-card-label">平均置信度</div>
                                     </div>
                                 </div>
-                                <div class="summary-card">
-                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
-                                        <i class="fas fa-ruler-combined"></i>
+                                <div class="summary-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-ruler-combined"></i> 尺寸标注
                                     </div>
                                     <div class="summary-card-content">
                                         <div class="summary-card-value" id="dimensionCount">0</div>
-                                        <div class="summary-card-label">尺寸标注</div>
                                     </div>
                                 </div>
-                                <div class="summary-card">
-                                    <div class="summary-card-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
-                                        <i class="fas fa-stopwatch"></i>
+                                <div class="summary-card"  style="background: linear-gradient(135deg, #e74c3c, #c0392b);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-stopwatch"></i> 处理时间
                                     </div>
                                     <div class="summary-card-content">
                                         <div class="summary-card-value" id="processingTime">0s</div>
-                                        <div class="summary-card-label">处理时间</div>
                                     </div>
                                 </div>
                             </div>

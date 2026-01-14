@@ -192,7 +192,7 @@ body {
 /* 内容网格布局 */
 .content-grid {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
+    grid-template-columns: 0.8fr 1.7fr;
     gap: 5px;
 }
 
@@ -416,7 +416,7 @@ body {
 
 .content-wrapper {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
+    grid-template-columns: 0.8fr 1.7fr;
     gap: 10px;
     height: 100%;
 }
