@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF OCR识别系统</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">    
+</head>
+<body>
+    <div class="container">
+        <!-- 管理系统风格头部 -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-logo">
+                    <img src="static/images/logo.png" alt="OCR系统Logo" class="logo-image">
+                    <span class="admin-logo-text">PDF OCR识别系统</span>
+                </div>
+                
+                <nav class="admin-nav">
+                    <a href="index.html" class="nav-item">
+                        <i class="fas fa-image"></i>
+                        <span>图片识别</span>
+                    </a>
+                    <a href="pdf_ocr.html" class="nav-item active">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>PDF识别</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-history"></i>
+                        <span>历史记录</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>数据分析</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>系统设置</span>
+                    </a>
+                </nav>
+                
+                <div class="admin-user-info">
+                    <div class="user-notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">管理员</span>
+                            <span class="user-role">系统管理员</span>
+                        </div>
+                        <button class="user-menu-btn">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主体布局 -->
+        <div class="main-layout">
+            <!-- 左侧固定菜单栏 -->
+            <aside class="sidebar">
+                <nav class="sidebar-menu">
+                    <div class="menu-section">
+                        <a href="index.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="menu-text">图片识别</div>
+                        </a>
+                        <a href="pdf_ocr.html" class="menu-item active">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="menu-text">PDF识别</div>
+                            <div class="menu-badge">新</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="menu-text">历史记录</div>
+                            <div class="menu-badge">12</div>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="menu-text">数据分析</div>
+                        </a>
+                    </div>
+                    
+                    <div class="menu-section">
+                        <div class="menu-section-title">PDF工具</div>
+                        <a href="#" class="menu-item" id="pdfInfoBtn">
+                            <div class="menu-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="menu-text">PDF信息</div>
+                        </a>
+                        <a href="#" class="menu-item" id="extractTextBtn">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="menu-text">提取文本</div>
+                        </a>
+                        <a href="#" class="menu-item" id="convertImagesBtn">
+                            <div class="menu-icon">
+                                <i class="fas fa-images"></i>
+                            </div>
+                            <div class="menu-text">转换为图像</div>
+                        </a>
+                        <a href="#" class="menu-item" id="batchProcessBtn">
+                            <div class="menu-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="menu-text">批量处理</div>
+                        </a>
+                    </div>
+                    
+                    <div class="menu-section">
+                        <div class="menu-section-title">导出选项</div>
+                        <a href="#" class="menu-item" id="exportExcelBtnSide">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-excel"></i>
+                            </div>
+                            <div class="menu-text">导出Excel</div>
+                        </a>
+                        <a href="#" class="menu-item" id="exportJsonBtnSide">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-code"></i>
+                            </div>
+                            <div class="menu-text">导出JSON</div>
+                        </a>
+                        <a href="#" class="menu-item" id="exportImagesBtnSide">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-archive"></i>
+                            </div>
+                            <div class="menu-text">导出图像</div>
+                        </a>
+                    </div>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <div class="system-status">
+                        <div class="status-indicator online"></div>
+                        <span>系统在线</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 主要内容区域 -->
+            <main class="main-content-area">
+                <div class="content-grid">
+                    <!-- 左侧列：上传和处理设置 -->
+                    <div class="left-column">
+                        <!-- 上传区域 -->
+                        <div class="upload-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-file-upload"></i> PDF文件上传</h2>
+                            </div>
+                            
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-area-content">
+                                    <i class="fas fa-file-pdf upload-icon"></i>
+                                    <p class="upload-text">拖放PDF文件或点击选择</p>
+                                    <p class="upload-hint">支持 PDF 格式，最大 50MB</p>
+                                    <div class="supported-formats">
+                                        <span class="format-badge">PDF</span>
+                                        <span class="format-badge">扫描文档</span>
+                                        <span class="format-badge">电子发票</span>
+                                        <span class="format-badge">技术图纸</span>
+                                    </div>
+                                </div>
+                                <input type="file" id="fileInput" accept=".pdf,.PDF" hidden>
+                                <button class="btn btn-primary upload-btn" id="selectFileBtn">
+                                    <i class="fas fa-folder-open"></i> 选择PDF文件
+                                </button>
+                            </div>
+                            
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="file-info-content">
+                                    <div class="file-preview">
+                                        <i class="fas fa-file-pdf pdf-preview-icon"></i>
+                                    </div>
+                                    <div class="file-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">文件名:</span>
+                                            <span class="detail-value" id="fileName">-</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">文件大小:</span>
+                                            <span class="detail-value" id="fileSize">-</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">PDF页数:</span>
+                                            <span class="detail-value" id="pdfPages">-</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">文件类型:</span>
+                                            <span class="detail-value" id="fileType">PDF</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- PDF处理设置 -->
+                            <div class="pdf-settings" id="pdfSettings" style="display: none;">
+                                <div class="section-header">
+                                    <h3><i class="fas fa-cogs"></i> 处理设置</h3>
+                                </div>
+                                
+                                <div class="settings-grid">
+                                    <div class="setting-item">
+                                        <label for="dpiSetting">图像DPI:</label>
+                                        <select id="dpiSetting" class="setting-select">
+                                            <option value="150">150 DPI (标准)</option>
+                                            <option value="200" selected>200 DPI (推荐)</option>
+                                            <option value="300">300 DPI (高质量)</option>
+                                            <option value="400">400 DPI (超高精度)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="setting-item">
+                                        <label for="pagesSetting">处理页数:</label>
+                                        <div class="pages-control">
+                                            <input type="number" id="pagesSetting" min="1" max="50" value="10" class="pages-input">
+                                            <span class="pages-hint">(最大50页)</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="setting-item">
+                                        <label for="languageSetting">识别语言:</label>
+                                        <select id="languageSetting" class="setting-select">
+                                            <option value="ch" selected>中文</option>
+                                            <option value="en">英文</option>
+                                            <option value="chinese_cht">繁体中文</option>
+                                            <option value="multi">多语言</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="setting-item full-width">
+                                        <label class="switch-label">
+                                            <input type="checkbox" id="extractDirectText" checked>
+                                            <span class="switch-text">同时提取PDF原生文本</span>
+                                        </label>
+                                        <div class="setting-hint">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>开启后，将同时提取PDF中的可编辑文本（非图像文字）</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="upload-actions">
+                                <button class="btn btn-success action-btn" id="uploadBtn" disabled>
+                                    <i class="fas fa-upload"></i> 上传PDF
+                                </button>
+                                <button class="btn btn-process action-btn" id="processBtn" disabled>
+                                    <i class="fas fa-cogs"></i> 开始识别
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 处理状态区域 -->
+                        <div class="processing-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-spinner"></i> 处理状态</h2>
+                                <div class="progress-text" id="progressText">等待上传PDF文件...</div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="progress-header">
+                                    <span>识别进度</span>
+                                    <span class="progress-percent" id="progressPercent">0%</span>
+                                </div>
+                                <div class="progress-bar" id="progressBar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="status-steps">
+                                <div class="status-step active">
+                                    <div class="step-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <div class="step-text">
+                                        <div class="step-title">上传PDF</div>
+                                        <div class="step-status" id="statusUpload">等待中</div>
+                                    </div>
+                                </div>
+                                <div class="status-step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-file-image"></i>
+                                    </div>
+                                    <div class="step-text">
+                                        <div class="step-title">PDF转换</div>
+                                        <div class="step-status" id="statusConvert">未开始</div>
+                                    </div>
+                                </div>
+                                <div class="status-step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-cogs"></i>
+                                    </div>
+                                    <div class="step-text">
+                                        <div class="step-title">OCR识别</div>
+                                        <div class="step-status" id="statusProcess">未开始</div>
+                                    </div>
+                                </div>
+                                <div class="status-step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="step-text">
+                                        <div class="step-title">完成</div>
+                                        <div class="step-status" id="statusResults">未开始</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 页面处理进度 -->
+                            <div class="pages-progress" id="pagesProgress" style="display: none;">
+                                <div class="pages-progress-header">
+                                    <span>页面处理进度</span>
+                                    <span id="pagesProgressText">0/0 页</span>
+                                </div>
+                                <div class="pages-progress-bar">
+                                    <div class="pages-progress-fill" id="pagesProgressFill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧列：结果展示 -->
+                    <div class="right-column">
+                        <div class="results-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-chart-bar"></i> PDF识别结果</h2>
+                                <div class="export-buttons">
+                                    <button class="btn btn-export" id="exportExcelBtn" disabled>
+                                        <i class="fas fa-file-excel"></i> 下载Excel
+                                    </button>
+                                    <button class="btn btn-export" id="exportJsonBtn" disabled>
+                                        <i class="fas fa-file-code"></i> 下载JSON
+                                    </button>
+                                    <button class="btn btn-export" id="exportImagesBtn" disabled>
+                                        <i class="fas fa-images"></i> 下载图像
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- PDF信息摘要 -->
+                            <div class="results-summary" id="pdfSummary">
+                                <div class="summary-card" style="background: linear-gradient(135deg, #3498db, #2980b9);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-file-pdf"></i> PDF信息
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="pdfTotalPages">0</div>
+                                    </div>
+                                </div>
+                                <div class="summary-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-list-ol"></i> 识别项数
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="totalItems">0</div>
+                                    </div>
+                                </div>
+                                <div class="summary-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-percentage"></i> 平均置信度
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="avgConfidence">0%</div>
+                                    </div>
+                                </div>
+                                <div class="summary-card" style="background: linear-gradient(135deg, #e74c3c, #c0392b);color: white; text-align: center;">
+                                    <div class="summary-card-icon">
+                                        <i class="fas fa-stopwatch"></i> 处理时间
+                                    </div>
+                                    <div class="summary-card-content">
+                                        <div class="summary-card-value" id="processingTime">0s</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 页面摘要 -->
+                            <div class="pages-summary" id="pagesSummary" style="display: none;">
+                                <div class="section-header">
+                                    <h3><i class="fas fa-copy"></i> 页面处理摘要</h3>
+                                </div>
+                                <div class="table-container">
+                                    <table class="pages-table">
+                                        <thead>
+                                            <tr>
+                                                <th>页码</th>
+                                                <th>识别项数</th>
+                                                <th>处理时间</th>
+                                                <th>状态</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pagesSummaryBody">
+                                            <!-- 页面摘要行将通过JavaScript动态添加 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="results-tabs">
+                                <div class="tab-buttons">
+                                    <button class="tab-btn active" data-tab="textResults">
+                                        <i class="fas fa-font"></i> 文本内容
+                                    </button>
+                                    <button class="tab-btn" data-tab="pageResults">
+                                        <i class="fas fa-copy"></i> 按页面查看
+                                    </button>
+                                    <button class="tab-btn" data-tab="coordinateResults">
+                                        <i class="fas fa-map-marker-alt"></i> 坐标信息
+                                    </button>
+                                    <button class="tab-btn" data-tab="visualization">
+                                        <i class="fas fa-eye"></i> 页面预览
+                                    </button>
+                                </div>
+
+                                <div class="tab-content">
+                                    <!-- 文本内容标签页 -->
+                                    <div class="tab-pane active" id="textResults">
+                                        <div class="table-container">
+                                            <table class="results-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>页码</th>
+                                                        <th>序号</th>
+                                                        <th>文本内容</th>
+                                                        <th>置信度</th>
+                                                        <th>类型</th>
+                                                        <th>操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="textResultsBody">
+                                                    <tr>
+                                                        <td colspan="6" class="empty-message">暂无识别结果</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 按页面查看标签页 -->
+                                    <div class="tab-pane" id="pageResults">
+                                        <div class="page-selector">
+                                            <label for="pageSelect">选择页面:</label>
+                                            <select id="pageSelect" class="page-select">
+                                                <option value="all">所有页面</option>
+                                            </select>
+                                            <button class="btn btn-small" id="prevPageBtn">
+                                                <i class="fas fa-chevron-left"></i> 上一页
+                                            </button>
+                                            <button class="btn btn-small" id="nextPageBtn">
+                                                下一页 <i class="fas fa-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                        <div class="table-container">
+                                            <table class="results-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>序号</th>
+                                                        <th>文本内容</th>
+                                                        <th>置信度</th>
+                                                        <th>类型</th>
+                                                        <th>操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="pageResultsBody">
+                                                    <tr>
+                                                        <td colspan="5" class="empty-message">请选择页面查看结果</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 坐标信息标签页 -->
+                                    <div class="tab-pane" id="coordinateResults">
+                                        <div class="table-container">
+                                            <table class="results-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>页码</th>
+                                                        <th>序号</th>
+                                                        <th>坐标X</th>
+                                                        <th>坐标Y</th>
+                                                        <th>宽度</th>
+                                                        <th>高度</th>
+                                                        <th>内容</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="coordinateResultsBody">
+                                                    <tr>
+                                                        <td colspan="7" class="empty-message">暂无坐标信息</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 页面预览标签页 -->
+                                    <div class="tab-pane" id="visualization">
+                                        <div class="page-visualization">
+                                            <div class="page-navigation">
+                                                <button class="btn btn-small" id="prevImageBtn">
+                                                    <i class="fas fa-chevron-left"></i> 上一页
+                                                </button>
+                                                <span id="currentPageDisplay">页面: 1/0</span>
+                                                <button class="btn btn-small" id="nextImageBtn">
+                                                    下一页 <i class="fas fa-chevron-right"></i>
+                                                </button>
+                                            </div>
+                                            <div class="visualization-container">
+                                                <div class="visualization-placeholder" id="visualizationPlaceholder">
+                                                    <i class="fas fa-image"></i>
+                                                    <p>识别完成后，这里将显示PDF页面的可视化结果</p>
+                                                </div>
+                                                <canvas id="visualizationCanvas" style="display: none;"></canvas>
+                                            </div>
+                                            <div class="image-controls">
+                                                <button class="control-btn" id="zoomInBtn">
+                                                    <i class="fas fa-search-plus"></i>
+                                                </button>
+                                                <button class="control-btn" id="zoomOutBtn">
+                                                    <i class="fas fa-search-minus"></i>
+                                                </button>
+                                                <button class="control-btn" id="zoomResetBtn">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                                <button class="control-btn" id="downloadImageBtn">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 简化底部信息 -->
+        <footer class="simple-footer">
+            <div class="footer-content">
+                <p>© 2025 OCR工业图片识别系统 | 专为PDF和工业图纸识别优化 | 技术支持: sie@chinasie.com</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript文件 -->
+    <script src="static/js/pdf_ocr.js"></script>
+</body>
+</html>

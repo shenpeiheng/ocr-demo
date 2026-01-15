@@ -92,6 +92,6 @@ temp/
 tmp/
 
 # 配置文件（可选，如果需要挂载）
-.env
+#.env
 *.env.local
 *.env.*.local

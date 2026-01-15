@@ -19,8 +19,12 @@ class Config:
     
     # 文件上传配置
     UPLOAD_FOLDER = os.path.join('..', 'frontend', 'uploads')
-    ALLOWED_EXTENSIONS_STR = os.getenv('ALLOWED_EXTENSIONS', 'PNG,JPG,JPEG,BMP,TIFF,GIF')
+    ALLOWED_EXTENSIONS_STR = os.getenv('ALLOWED_EXTENSIONS', 'PNG,JPG,JPEG,BMP,TIFF,GIF,PDF')
     ALLOWED_EXTENSIONS = {ext.strip().lower() for ext in ALLOWED_EXTENSIONS_STR.split(',')}
+    
+    # PDF处理配置
+    PDF_MAX_PAGES = int(os.getenv('PDF_MAX_PAGES', '50'))  # 最大处理页数
+    PDF_DPI = int(os.getenv('PDF_DPI', '200'))  # PDF转换DPI
     
     # CORS配置
     ENABLE_CORS = os.getenv('ENABLE_CORS', 'true').lower() == 'true'

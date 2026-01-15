@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 OCR工业图片识别系统 - 启动脚本
-支持Linux Docker环境
 """
 
 import os
@@ -10,26 +9,6 @@ import argparse
 import subprocess
 import platform
 from config import Config
-
-def is_docker_environment():
-    """检测是否在Docker容器中运行"""
-    # 方法1: 检查 /.dockerenv 文件
-    if os.path.exists('/.dockerenv'):
-        return True
-    
-    # 方法2: 检查 cgroup 信息
-    try:
-        with open('/proc/self/cgroup', 'r') as f:
-            if 'docker' in f.read():
-                return True
-    except:
-        pass
-    
-    # 方法3: 检查环境变量
-    if os.environ.get('DOCKER_CONTAINER') == 'true':
-        return True
-    
-    return False
 
 def setup_environment():
     """设置环境"""
@@ -41,28 +20,6 @@ def setup_environment():
     print(f"操作系统: {platform.system()} {platform.release()}")
     print(f"Python版本: {sys.version.split()[0]}")
     print(f"工作目录: {os.getcwd()}")
-    
-    docker_env = is_docker_environment()
-    if docker_env:
-        print("运行环境: Docker容器")
-        # 在Docker环境中设置PaddleOCR模型目录
-        paddleocr_model_dir = '/app/.paddleocr'
-        os.environ['PADDLEOCR_MODEL_DIR'] = paddleocr_model_dir
-        print(f"PaddleOCR模型目录: {paddleocr_model_dir}")
-        
-        # 检查模型目录是否存在
-        if os.path.exists(paddleocr_model_dir):
-            import glob
-            model_files = glob.glob(os.path.join(paddleocr_model_dir, '**', '*'), recursive=True)
-            print(f"预下载模型文件数: {len(model_files)}")
-            if model_files:
-                print("✅ OCR模型已预下载")
-            else:
-                print("⚠️  模型目录为空，将在首次使用时下载")
-        else:
-            print("⚠️  模型目录不存在，将在首次使用时下载")
-    else:
-        print("运行环境: 本地系统")
     
     # 检查Python版本
     if sys.version_info < (3, 7):
@@ -77,13 +34,14 @@ def setup_environment():
         for issue in issues:
             print(f"  - {issue}")
     
-    # 检查依赖 - 在Docker环境中跳过某些检查
+    # 检查依赖
     print("\n检查依赖...")
     
     required_packages = [
         ('flask', 'Flask'),
         ('PIL', 'Pillow'),
         ('openpyxl', 'openpyxl'),
+        ('paddleocr', 'paddleocr'),
     ]
     
     missing_packages = []
@@ -99,32 +57,18 @@ def setup_environment():
             elif import_name == 'openpyxl':
                 import openpyxl
                 print(f"  ✓ openpyxl {openpyxl.__version__}")
+            elif import_name == 'paddleocr':
+                import paddleocr
+                print(f"  ✓ paddleocr {paddleocr.__version__}")
         except ImportError:
             print(f"  ✗ {package_name}未安装")
             missing_packages.append(package_name)
-    
-    # PaddleOCR依赖检查
-    try:
-        import paddleocr
-        print("  ✓ paddleocr")
-    except ImportError:
-        print("  ✗ paddleocr未安装")
-        missing_packages.append('paddleocr')
-    
-    # 在Docker环境中，依赖应该已经安装好
-    if missing_packages and docker_env:
-        print(f"\n警告: Docker环境中缺少以下包: {', '.join(missing_packages)}")
-        print("建议: 重新构建Docker镜像以确保所有依赖正确安装")
     
     print("\n环境设置完成!")
     return True
 
 def install_dependencies():
     """安装依赖"""
-    if is_docker_environment():
-        print("警告: 在Docker容器中运行，依赖应该已经在镜像构建时安装")
-        print("跳过自动依赖安装，如需更新依赖请重新构建镜像")
-        return True
     
     print("安装Python依赖...")
     
@@ -183,7 +127,7 @@ def install_dependencies():
         
         return False
 
-def start_server(host='0.0.0.0', port=5000, debug=False):
+def start_server(host='0.0.0.0', port=5000, debug=True):
     """启动服务器"""
     print("\n" + "=" * 60)
     print("启动OCR工业图片识别系统")
@@ -238,9 +182,7 @@ def start_server(host='0.0.0.0', port=5000, debug=False):
         app.config['ENV'] = 'production' if not debug else 'development'
         
         print(f"\n启动Flask应用 (环境: {app.config['ENV']})...")
-        # 在Docker环境或非调试模式下禁用reloader
-        use_reloader = debug and not is_docker_environment()
-        app.run(host=host, port=port, debug=debug, use_reloader=use_reloader)
+        app.run(host=host, port=port, debug=debug, use_reloader=False)
     except ImportError as e:
         print(f"错误: 无法导入应用模块: {e}")
         print("请确保 app.py 文件存在且正确")
@@ -253,34 +195,16 @@ def main():
     """主函数"""
     parser = argparse.ArgumentParser(
         description='OCR工业图片识别系统',
-        epilog='在Docker环境中运行时，建议使用环境变量配置而非命令行参数'
+        epilog='建议使用环境变量配置而非命令行参数'
     )
     parser.add_argument('--install', action='store_true', help='安装依赖（在Docker中不推荐）')
     parser.add_argument('--host', default='0.0.0.0', help='服务器主机地址（默认: 0.0.0.0）')
     parser.add_argument('--port', type=int, default=5000, help='服务器端口（默认: 5000）')
     parser.add_argument('--debug', action='store_true', help='启用调试模式')
+    parser.add_argument('--no-debug', action='store_true', help='禁用调试模式')
     parser.add_argument('--docker-info', action='store_true', help='显示Docker环境信息')
     
     args = parser.parse_args()
-    
-    # 显示Docker信息（如果请求）
-    if args.docker_info:
-        print("Docker环境检测:")
-        print(f"  在Docker中运行: {'是' if is_docker_environment() else '否'}")
-        print(f"  容器主机名: {os.environ.get('HOSTNAME', '未设置')}")
-        print(f"  环境变量PORT: {os.environ.get('PORT', '未设置')}")
-        print(f"  环境变量DEBUG: {os.environ.get('DEBUG', '未设置')}")
-        print(f"  工作目录: {os.getcwd()}")
-        return
-    
-    # Docker环境中的警告
-    if is_docker_environment() and args.install:
-        print("警告: 在Docker容器中手动安装依赖可能不是最佳实践")
-        print("建议: 重新构建Docker镜像以包含所有依赖")
-        response = input("是否继续安装? (y/N): ")
-        if response.lower() != 'y':
-            print("取消安装依赖")
-            args.install = False
     
     # 设置环境
     if not setup_environment():
@@ -291,9 +215,24 @@ def main():
         if not install_dependencies():
             sys.exit(1)
     
+    # 确定debug模式
+    # 如果指定了--debug，则启用debug模式
+    # 如果指定了--no-debug，则禁用debug模式
+    # 如果两者都没指定，则使用Config.DEBUG的值
+    if args.debug:
+        debug_mode = True
+        print("调试模式: 启用 (通过命令行参数 --debug)")
+    elif args.no_debug:
+        debug_mode = False
+        print("调试模式: 禁用 (通过命令行参数 --no-debug)")
+    else:
+        # 使用配置中的DEBUG值
+        debug_mode = Config.DEBUG
+        print(f"调试模式: {'启用' if debug_mode else '禁用'} (通过环境变量/配置文件)")
+    
     # 启动服务器
     try:
-        start_server(args.host, args.port, args.debug)
+        start_server(args.host, args.port, debug_mode)
     except KeyboardInterrupt:
         print("\n\n服务器已停止")
     except Exception as e:

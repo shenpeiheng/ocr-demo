@@ -28,15 +28,8 @@ class PaddleOCRProcessor:
         self.ocr = None
         self.initialized = False
         
-        # 设置模型目录 - 优先使用环境变量，否则使用默认目录
-        import os
-        # 检查是否在Docker环境中
-        if os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv'):
-            # Docker环境使用/app/.paddleocr
-            default_model_dir = '/app/.paddleocr'
-        else:
-            # 本地环境使用用户目录下的.paddleocr
-            default_model_dir = os.path.expanduser('~/.paddleocr')
+        # 本地环境使用用户目录下的.paddleocr
+        default_model_dir = os.path.expanduser('~/.paddleocr')
         
         model_dir = os.environ.get('PADDLEOCR_MODEL_DIR', default_model_dir)
         
@@ -77,9 +70,9 @@ class PaddleOCRProcessor:
                 'text_det_limit_type': self.config['text_det_limit_type'],
                 'text_det_limit_side_len': self.config['text_det_limit_side_len'],
                 'text_det_thresh': self.config['text_det_thresh'],
-                'use_doc_orientation_classify': False,  # 禁用文档方向分类模块
+                #'use_doc_orientation_classify': False,  # 禁用文档方向分类模块
                 'use_doc_unwarping': False,  # 禁用文本图像矫正模块
-                'use_textline_orientation': False,  # 禁用文本行方向分类模块
+                #'use_textline_orientation': False,  # 禁用文本行方向分类模块
             }
             
             # 添加模型目录参数（如果目录存在）
