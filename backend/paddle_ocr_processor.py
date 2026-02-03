@@ -39,9 +39,9 @@ class PaddleOCRProcessor:
         self.config = {
             'lang': lang,
             'ocr_version': 'PP-OCRv5',  # 使用PP-OCRv5模型版本
-            'text_det_box_thresh': 0.2,  # 进一步降低检测框阈值，检测更多小文本区域
+            'text_det_box_thresh': 0.13,  # 进一步降低检测框阈值，检测更多小文本区域
             'text_det_unclip_ratio': 2.5,  # 增加检测框扩展比例，更好地包围文本
-            'text_rec_score_thresh': 0.3,  # 降低识别置信度阈值，保留更多识别结果
+            'text_rec_score_thresh': 0.23,  # 降低识别置信度阈值，保留更多识别结果
             'text_det_limit_type': 'max',  # 检测限制类型
             'text_det_limit_side_len': 1920,  # 增加检测限制边长，处理高分辨率图像
             'text_det_thresh': 0.3,  # 二值化阈值
@@ -59,11 +59,26 @@ class PaddleOCRProcessor:
             from paddleocr import PaddleOCR
             logger.info(f"初始化PaddleOCR (语言: {self.lang}, 版本: PP-OCRv5)...")
             
+            # 检测GPU可用性
+            try:
+                import paddle
+                gpu_available = paddle.device.is_compiled_with_cuda() and paddle.device.cuda.device_count() > 0
+                if gpu_available:
+                    logger.info(f"检测到GPU可用，CUDA设备数量: {paddle.device.cuda.device_count()}")
+                    device = 'gpu:0'
+                else:
+                    logger.info("未检测到GPU，使用CPU模式")
+                    device = 'cpu'
+            except Exception as gpu_error:
+                logger.warning(f"GPU检测失败: {gpu_error}，使用CPU模式")
+                device = 'cpu'
+            
             # 只使用PaddleOCR 3.3.2支持的参数
             # 更多参数参考 https://blog.csdn.net/qq_38614074/article/details/149041813
             ocr_kwargs = {
                 'lang': self.config['lang'],
                 'ocr_version': self.config.get('ocr_version', 'PP-OCRv5'),  # 使用PP-OCRv5版本
+                #'device': 'gpu:0',  # 使用GPU或CPU
                 'text_det_box_thresh': self.config['text_det_box_thresh'],
                 'text_det_unclip_ratio': self.config['text_det_unclip_ratio'],
                 'text_rec_score_thresh': self.config['text_rec_score_thresh'],
@@ -72,8 +87,15 @@ class PaddleOCRProcessor:
                 'text_det_thresh': self.config['text_det_thresh'],
                 #'use_doc_orientation_classify': False,  # 禁用文档方向分类模块
                 'use_doc_unwarping': False,  # 禁用文本图像矫正模块
+                #'enable_hpi': True,
+                #'enable_mkldnn': True, # CPU 备用时启用 MKL-DNN 加速
+                #'cpu_threads': 8,
                 #'use_textline_orientation': False,  # 禁用文本行方向分类模块
             }
+            
+            logger.info(f"PaddleOCR初始化参数: device={device}, text_det_box_thresh={self.config['text_det_box_thresh']}, "
+                       f"text_det_unclip_ratio={self.config['text_det_unclip_ratio']}, "
+                       f"text_rec_score_thresh={self.config['text_rec_score_thresh']}")
             
             # 添加模型目录参数（如果目录存在）
             # 只有当目录存在时才设置，否则让PaddleOCR使用默认缓存
@@ -746,7 +768,7 @@ if __name__ == '__main__':
         image_path = sys.argv[1]
     else:
         # 使用示例图片
-        image_path = "../frontend/uploads/sample_industrial_drawing.png"
+        image_path = "../frontend/uploads/399ecd60879e4b08b87cdc506d27624f.png"
         if not os.path.exists(image_path):
             print(f"示例图片不存在: {image_path}")
             print("请上传真实图片进行测试，或创建示例图片")

@@ -388,7 +388,24 @@ function displayResults(data) {
     const avgConf = displayTextItems.length > 0
         ? displayTextItems.reduce((sum, item) => sum + (item.confidence || 0), 0) / displayTextItems.length
         : 0;
-    avgConfidence.textContent = displayTextItems.length > 0 ? `${(avgConf * 100).toFixed(1)}%` : '0%';
+    
+    // 调试：显示置信度变化信息
+    const originalAvg = allTextItems.length > 0
+        ? allTextItems.reduce((sum, item) => sum + (item.confidence || 0), 0) / allTextItems.length
+        : 0;
+    
+    const chineseAvg = chineseItems.length > 0
+        ? chineseItems.reduce((sum, item) => sum + (item.confidence || 0), 0) / chineseItems.length
+        : 0;
+    
+    console.log('=== 置信度调试信息 ===');
+    console.log(`过滤前: ${allTextItems.length} 个项目, 平均置信度: ${(originalAvg * 100).toFixed(2)}%`);
+    console.log(`过滤后: ${displayTextItems.length} 个项目, 平均置信度: ${(avgConf * 100).toFixed(2)}%`);
+    console.log(`过滤掉: ${chineseItems.length} 个中文项目, 平均置信度: ${(chineseAvg * 100).toFixed(2)}%`);
+    console.log(`置信度变化: ${((avgConf - originalAvg) * 100).toFixed(2)}%`);
+    console.log('=====================');
+    
+    avgConfidence.textContent = displayTextItems.length > 0 ? `${(avgConf * 100).toFixed(2)}%` : '0.00%';
     
     // 计算尺寸标注数量（使用显示的数据）
     const dimensionItems = displayTextItems.filter(item => item.type === 'dimension');
@@ -423,7 +440,7 @@ function updateTextResultsTable(textItems) {
     
     textItems.forEach((item, index) => {
         const confidenceClass = getConfidenceClass(item.confidence);
-        const confidencePercent = (item.confidence * 100).toFixed(1);
+        const confidencePercent = (item.confidence * 100).toFixed(2);
         
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -525,33 +542,53 @@ function updateVisualization() {
     const img = new Image();
     
     img.onload = function() {
-        // 设置画布尺寸
-        const maxWidth = 800;
-        const maxHeight = 500;
+        // 设置画布尺寸 - 提高最大尺寸以获得更好的清晰度
+        const maxWidth = 1200;  // 从800增加到1200
+        const maxHeight = 800;  // 从500增加到800
         let width = img.width;
         let height = img.height;
         
-        // 按比例缩放
-        if (width > maxWidth) {
-            height = (maxWidth / width) * height;
-            width = maxWidth;
-        }
-        if (height > maxHeight) {
-            width = (maxHeight / height) * width;
-            height = maxHeight;
+        // 按比例缩放，但保持原始宽高比
+        if (width > maxWidth || height > maxHeight) {
+            const scale = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.floor(width * scale);
+            height = Math.floor(height * scale);
         }
         
-        visualizationCanvas.width = width;
-        visualizationCanvas.height = height;
+        // 确保画布尺寸至少为原始尺寸的50%
+        const minScale = 0.5;
+        if (width < img.width * minScale) {
+            width = Math.floor(img.width * minScale);
+            height = Math.floor(img.height * minScale);
+        }
         
-        // 启用高质量图像平滑
+        // 设置画布物理像素尺寸（考虑设备像素比以获得更清晰的渲染）
+        const dpr = window.devicePixelRatio || 1;
+        visualizationCanvas.style.width = width + 'px';
+        visualizationCanvas.style.height = height + 'px';
+        visualizationCanvas.width = width * dpr;
+        visualizationCanvas.height = height * dpr;
+        
+        // 缩放上下文以匹配设备像素比
+        ctx.scale(dpr, dpr);
+        
+        // 启用最高质量图像平滑
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+        ctx.msImageSmoothingEnabled = true; // IE支持
+        ctx.mozImageSmoothingEnabled = true; // Firefox支持
+        ctx.webkitImageSmoothingEnabled = true; // Safari支持
         
-        // 绘制图片（使用高质量缩放）
+        // 清除画布并设置白色背景
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+        
+        // 绘制图片（使用高质量双线性插值）
+        ctx.save();
         ctx.drawImage(img, 0, 0, width, height);
+        ctx.restore();
         
-        // 绘制识别区域
+        // 绘制识别区域 - 考虑设备像素比
         const scaleX = width / img.width;
         const scaleY = height / img.height;
         
@@ -577,6 +614,11 @@ function updateVisualization() {
             const w = (location.width || 0) * scaleX;
             const h = (location.height || 0) * scaleY;
             
+            // 根据设备像素比调整线宽和字体大小
+            const dpr = window.devicePixelRatio || 1;
+            const baseLineWidth = 2;
+            const baseFontSize = 11;
+            
             // 根据类型设置颜色
             let color;
             switch (item.type) {
@@ -589,45 +631,60 @@ function updateVisualization() {
             ctx.fillStyle = color + '20'; // 20表示12%透明度
             ctx.fillRect(x, y, w, h);
             
-            // 绘制矩形边框
+            // 绘制矩形边框 - 根据设备像素比调整线宽
             ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
+            ctx.lineWidth = baseLineWidth / dpr; // 调整线宽以适应设备像素比
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
             ctx.strokeRect(x, y, w, h);
             
             // 计算标签位置，避免重叠
             let labelX = x;
             let labelY = y - 25; // 默认在框上方
             
-            // 检查是否与其他标签重叠
-            const labelWidth = Math.min(w, 120);
-            const labelHeight = 20;
+            // 计算文本内容
+            const displayText = item.text.length > 12 ? item.text.substring(0, 10) + '...' : item.text;
+            const labelText = `#${item.id}: ${displayText}`;
+            
+            // 测量文本宽度
+            const fontSize = Math.max(baseFontSize / dpr, 10); // 确保最小字体大小
+            ctx.font = `bold 12px Arial, sans-serif`;
+            const textMetrics = ctx.measureText(labelText);
+            const textWidth = textMetrics.width;
+            
+            // 动态计算标签宽度（文本宽度 + 内边距，但不超过框宽度）
+            const labelPadding = 16; // 左右内边距各8px
+            const dynamicLabelWidth = Math.min(Math.max(textWidth + labelPadding, 60), w);
+            const labelHeight = 22;
             
             // 如果上方空间不足，尝试放在框内
             if (labelY < 0) {
                 labelY = y + 5;
             }
             
-            // 绘制背景标签
+            // 绘制背景标签（圆角矩形）
             ctx.fillStyle = color;
-            ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+            //const borderRadius = 0;
+            //ctx.beginPath();
+            //ctx.roundRect(labelX, labelY, dynamicLabelWidth, labelHeight, borderRadius);
+            //ctx.fill();
             
-            // 绘制文本（显示ID和部分文本）
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 11px Arial';
-            const displayText = item.text.length > 10 ? item.text.substring(0, 8) + '...' : item.text;
-            ctx.fillText(`#${item.id}: ${displayText}`, labelX + 5, labelY + 14);
+            // 绘制文本（显示ID和部分文本）- 根据设备像素比调整字体大小
+            //ctx.fillStyle = 'white';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, labelX + 8, labelY + labelHeight / 2);
             
             // 在框中心绘制一个小圆点，表示检测中心
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(x + w/2, y + h/2, 3, 0, Math.PI * 2);
-            ctx.fill();
+            //ctx.fillStyle = 'white';
+            //ctx.beginPath();
+            //ctx.arc(x + w/2, y + h/2, 3 / dpr, 0, Math.PI * 2);
+            //ctx.fill();
             
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(x + w/2, y + h/2, 5, 0, Math.PI * 2);
-            ctx.stroke();
+            //ctx.strokeStyle = color;
+            //ctx.lineWidth = 1 / dpr;
+            //ctx.beginPath();
+            //ctx.arc(x + w/2, y + h/2, 5 / dpr, 0, Math.PI * 2);
+            //ctx.stroke();
         });
         
         // 添加缩放比例信息（移动到右上角，不遮挡图片）
@@ -676,7 +733,7 @@ function viewItemDetails(item) {
     const location = item.location || {};
     const details = `
         <strong>文本内容:</strong> ${escapeHtml(item.text)}<br>
-        <strong>置信度:</strong> ${(item.confidence * 100).toFixed(1)}%<br>
+        <strong>置信度:</strong> ${(item.confidence * 100).toFixed(2)}%<br>
         <strong>类型:</strong> ${item.type}<br>
         <strong>位置:</strong> X=${location.left}, Y=${location.top}<br>
         <strong>尺寸:</strong> ${location.width}×${location.height} 像素<br>
@@ -1117,15 +1174,20 @@ function initFullscreenViewer() {
             object-fit: contain;
             transition: transform 0.3s ease;
             cursor: move;
-            image-rendering: -webkit-optimize-contrast; /* Safari */
-            image-rendering: crisp-edges; /* Firefox */
-            image-rendering: pixelated; /* Chrome */
-            image-rendering: optimizeQuality; /* 标准属性 */
+            /* 使用最高质量图像渲染 */
+            image-rendering: auto; /* 现代浏览器默认使用高质量 */
+            image-rendering: crisp-edges; /* 保持边缘清晰 */
+            image-rendering: -webkit-optimize-contrast; /* Safari优化对比度 */
+            -ms-interpolation-mode: bicubic; /* IE高质量插值 */
+            -webkit-font-smoothing: antialiased; /* 字体抗锯齿 */
+            -moz-osx-font-smoothing: grayscale; /* macOS字体平滑 */
         }
         
-        /* 当图片放大时，使用高质量渲染 */
+        /* 当图片放大时，使用最高质量渲染 */
         #fullscreenImage.zoomed {
-            image-rendering: auto;
+            image-rendering: high-quality;
+            -webkit-image-rendering: high-quality;
+            -moz-image-rendering: high-quality;
         }
         
         .fullscreen-controls {
@@ -1285,9 +1347,14 @@ function initFullscreenViewer() {
                     // 启用最高质量渲染
                     tempCtx.imageSmoothingEnabled = true;
                     tempCtx.imageSmoothingQuality = 'high';
+                    tempCtx.msImageSmoothingEnabled = true;
+                    tempCtx.mozImageSmoothingEnabled = true;
+                    tempCtx.webkitImageSmoothingEnabled = true;
                     
-                    // 绘制原始图像
+                    // 绘制原始图像（使用最高质量）
+                    tempCtx.save();
                     tempCtx.drawImage(img, 0, 0, img.width, img.height);
+                    tempCtx.restore();
                     
                     // 获取显示的项目
                     const filterEnabled = filterChineseToggle ? filterChineseToggle.checked : true;
@@ -1323,22 +1390,37 @@ function initFullscreenViewer() {
                         tempCtx.lineWidth = Math.max(2, Math.min(w, h) * 0.02); // 根据框大小调整线宽
                         tempCtx.strokeRect(x, y, w, h);
                         
-                        // 绘制标签（根据框大小调整标签位置）
+                        // 绘制标签（使用动态宽度计算，避免文字显示不全）
                         const labelX = x;
                         let labelY = y - 25;
                         if (labelY < 0) labelY = y + 5;
-                        const labelWidth = Math.min(w, 150);
+                        
+                        // 计算文本内容
+                        const displayText = item.text.length > 12 ? item.text.substring(0, 10) + '...' : item.text;
+                        const labelText = `#${item.id}: ${displayText}`;
+                        
+                        // 测量文本宽度
+                        const fontSize = Math.max(10, Math.min(w, h) * 0.15);
+                        tempCtx.font = `bold 12px Arial`;
+                        const textMetrics = tempCtx.measureText(labelText);
+                        const textWidth = textMetrics.width;
+                        
+                        // 动态计算标签宽度（文本宽度 + 内边距，但不超过框宽度）
+                        const labelPadding = 16; // 左右内边距各8px
+                        const dynamicLabelWidth = Math.min(Math.max(textWidth + labelPadding, 60), w);
                         const labelHeight = 22;
                         
+                        // 绘制背景标签（圆角矩形）
                         tempCtx.fillStyle = color;
-                        tempCtx.fillRect(labelX, labelY, labelWidth, labelHeight);
+                        //const borderRadius = 4;
+                        //tempCtx.beginPath();
+                        //tempCtx.roundRect(labelX, labelY, dynamicLabelWidth, labelHeight, borderRadius);
+                        //tempCtx.fill();
                         
-                        // 绘制文本（根据框大小调整字体大小）
-                        const fontSize = Math.max(10, Math.min(w, h) * 0.15);
-                        tempCtx.fillStyle = 'white';
-                        tempCtx.font = `bold ${fontSize}px Arial`;
-                        const displayText = item.text.length > 12 ? item.text.substring(0, 10) + '...' : item.text;
-                        tempCtx.fillText(`#${item.id}: ${displayText}`, labelX + 5, labelY + labelHeight - 5);
+                        // 绘制文本（显示ID和部分文本）- 添加内边距
+                        //tempCtx.fillStyle = 'white';
+                        tempCtx.textBaseline = 'middle';
+                        tempCtx.fillText(labelText, labelX + 8, labelY + labelHeight / 2);
                     });
                     
                     // 使用高质量PNG格式
