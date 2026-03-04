@@ -1791,3 +1791,355 @@ input:checked + .slider:before {
         margin-left: auto;
     }
 }
+
+/* OpenAI VL 集成样式 */
+.engine-section {
+    margin-bottom: 20px;
+}
+
+.engine-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.engine-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.engine-option:hover {
+    border-color: #7fb3d5;
+    box-shadow: 0 2px 8px rgba(127, 179, 213, 0.2);
+}
+
+.engine-option.active {
+    border-color: #3498db;
+    background: #f0f8ff;
+}
+
+.engine-icon {
+    font-size: 24px;
+    color: #3498db;
+    margin-right: 15px;
+    width: 40px;
+    text-align: center;
+}
+
+.engine-info {
+    flex: 1;
+}
+
+.engine-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.engine-desc {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.engine-badge {
+    background: #2ecc71;
+    color: white;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.engine-badge.new {
+    background: #9b59b6;
+}
+
+.prompt-options {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.option-group {
+    margin-bottom: 15px;
+}
+
+.option-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.option-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    background: white;
+}
+
+.option-checkbox {
+    margin-right: 8px;
+}
+
+.custom-prompt-textarea {
+    width: 100%;
+    height: 100px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    resize: vertical;
+    margin-top: 10px;
+    background: white;
+}
+
+.custom-prompt-textarea:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+/* Markdown预览样式 */
+.markdown-preview {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 20px;
+}
+
+.markdown-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.markdown-preview th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.markdown-preview h1 {
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+.markdown-preview ul {
+    padding-left: 20px;
+    margin: 10px 0;
+}
+
+.markdown-preview li {
+    margin-bottom: 5px;
+}
+
+/* 结果标签页增强 */
+.results-tabs {
+    margin-top: 20px;
+}
+
+.tab-buttons {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 14px;
+    font-weight: 500;
+    color: #7f8c8d;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    color: #3498db;
+}
+
+.tab-btn.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+    background: #f8f9fa;
+}
+
+.tab-content {
+    min-height: 300px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* 可视化标签页增强 */
+.visualization-container {
+    position: relative;
+    min-height: 400px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.visualization-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #7f8c8d;
+}
+
+.visualization-placeholder i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #bdc3c7;
+}
+
+.visualization-placeholder p {
+    font-size: 16px;
+    text-align: center;
+    max-width: 300px;
+}
+
+#visualizationCanvas {
+    width: 100%;
+    height: 400px;
+    display: block;
+}
+
+/* 下载按钮组 */
+.download-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.download-btn {
+    padding: 10px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.download-btn:hover {
+    background: #2980b9;
+}
+
+.download-btn.markdown {
+    background: #2ecc71;
+}
+
+.download-btn.markdown:hover {
+    background: #27ae60;
+}
+
+.download-btn.json {
+    background: #9b59b6;
+}
+
+.download-btn.json:hover {
+    background: #8e44ad;
+}
+
+.download-btn.excel {
+    background: #e74c3c;
+}
+
+.download-btn.excel:hover {
+    background: #c0392b;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .engine-options {
+        flex-direction: column;
+    }
+    
+    .engine-option {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .engine-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .engine-info {
+        margin-bottom: 10px;
+    }
+    
+    .tab-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
+    
+    .download-buttons {
+        flex-direction: column;
+    }
+    
+    .download-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -18,7 +18,11 @@ class Config:
     PORT = int(os.getenv('PORT', '5000'))
     
     # 文件上传配置
-    UPLOAD_FOLDER = os.path.join('..', 'frontend', 'uploads')
+    upload_folder_from_env = os.getenv('UPLOAD_FOLDER')
+    if upload_folder_from_env:
+        UPLOAD_FOLDER = upload_folder_from_env
+    else:
+        UPLOAD_FOLDER = os.path.abspath(os.path.join('..', 'frontend', 'uploads'))
     ALLOWED_EXTENSIONS_STR = os.getenv('ALLOWED_EXTENSIONS', 'PNG,JPG,JPEG,BMP,TIFF,GIF,PDF')
     ALLOWED_EXTENSIONS = {ext.strip().lower() for ext in ALLOWED_EXTENSIONS_STR.split(',')}
     

@@ -351,8 +351,35 @@ function displayResults(data) {
         return;
     }
     
+    // 检查是否有预处理图片，如果有则更新图片预览
+    if (currentResults.preprocessed_image) {
+        console.log('检测到预处理图片:', currentResults.preprocessed_image);
+        // 使用预处理图片替换当前预览
+        const preprocessedUrl = `/uploads/${currentResults.preprocessed_image}`;
+        imagePreview.src = preprocessedUrl;
+        
+        // 更新图片尺寸显示
+        if (currentResults.image_preprocessed) {
+            // 如果图片被预处理过，显示预处理后的尺寸
+            const img = new Image();
+            img.onload = function() {
+                imageDimensions.textContent = `${img.width} × ${img.height} (已预处理)`;
+            };
+            img.src = preprocessedUrl;
+        }
+    }
+    
     const allTextItems = currentResults.text_items;
-    const processingTimeMs = Date.now() - processingStartTime;
+    
+    // 使用后端返回的处理时间（秒），如果不存在则使用前端计算的时间
+    let processingTimeMs;
+    if (currentResults.processing_time !== undefined) {
+        // 后端返回的是秒，转换为毫秒
+        processingTimeMs = currentResults.processing_time * 1000;
+    } else {
+        // 回退到前端计算
+        processingTimeMs = Date.now() - processingStartTime;
+    }
     
     // 检查过滤开关状态
     const filterEnabled = filterChineseToggle ? filterChineseToggle.checked : true;
@@ -491,16 +518,26 @@ function updateCoordinateTable(textItems) {
         return;
     }
     
+    // 获取图像尺寸用于坐标转换
+    let imgWidth = 0;
+    let imgHeight = 0;
+    if (currentResults && currentResults.image_info) {
+        imgWidth = currentResults.image_info.width || 0;
+        imgHeight = currentResults.image_info.height || 0;
+    }
+    
     textItems.forEach((item, index) => {
         const location = item.location || {};
+        // 坐标转换（反归一化）
+        const scaledLocation = rescaleCoordinates(location, imgWidth, imgHeight);
         
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${item.id}</td>
-            <td>${location.left || 0}</td>
-            <td>${location.top || 0}</td>
-            <td>${location.width || 0}</td>
-            <td>${location.height || 0}</td>
+            <td>${Math.round(scaledLocation.left) || 0}</td>
+            <td>${Math.round(scaledLocation.top) || 0}</td>
+            <td>${Math.round(scaledLocation.width) || 0}</td>
+            <td>${Math.round(scaledLocation.height) || 0}</td>
             <td>${escapeHtml(item.text)}</td>
         `;
         
@@ -542,25 +579,47 @@ function updateVisualization() {
     const img = new Image();
     
     img.onload = function() {
-        // 设置画布尺寸 - 提高最大尺寸以获得更好的清晰度
-        const maxWidth = 1200;  // 从800增加到1200
-        const maxHeight = 800;  // 从500增加到800
+        // 设置画布尺寸 - 根据预处理图片的实际尺寸和容器大小自适应
+        // 设置画布尺寸 - 自适应容器并保证最小显示尺寸
         let width = img.width;
         let height = img.height;
-        
-        // 按比例缩放，但保持原始宽高比
-        if (width > maxWidth || height > maxHeight) {
-            const scale = Math.min(maxWidth / width, maxHeight / height);
-            width = Math.floor(width * scale);
-            height = Math.floor(height * scale);
+
+        if (width <= 0 || height <= 0) {
+            console.warn('图像尺寸无效，跳过画布设置');
+            return;
         }
-        
-        // 确保画布尺寸至少为原始尺寸的50%
-        const minScale = 0.5;
-        if (width < img.width * minScale) {
-            width = Math.floor(img.width * minScale);
-            height = Math.floor(img.height * minScale);
-        }
+
+        const visualizationContainer = visualizationCanvas.parentElement;
+        const containerWidth = Math.max(1, visualizationContainer.clientWidth);
+        const containerHeight = Math.max(1, visualizationContainer.clientHeight);
+
+        const minDisplaySize = 300; // 最小显示边长
+
+        console.log(`图片原始尺寸: ${width}x${height}, 容器尺寸: ${containerWidth}x${containerHeight}`);
+
+        // 步骤1: 计算“适应容器”的缩放比例
+        const fitScale = Math.min(containerWidth / width, containerHeight / height);
+
+        // 步骤2: 计算“满足最小尺寸”的缩放比例
+        const minScale = Math.max(minDisplaySize / width, minDisplaySize / height);
+
+        // 步骤3: 最终缩放比例 = max(适应容器, 满足最小尺寸)，但不能无限大
+        // 如果容器本身很小（比如 <300），我们允许图像略大于容器以满足可读性
+        let finalScale = Math.max(fitScale, minScale);
+
+        // 可选：限制最大缩放（防止在超小容器中图像过大）
+        // const maxScale = Math.min(containerWidth / width * 2, containerHeight / height * 2, 2);
+        // finalScale = Math.min(finalScale, maxScale);
+
+        // 应用最终尺寸
+        width = Math.floor(width * finalScale);
+        height = Math.floor(height * finalScale);
+
+        // 额外保护：防止尺寸为 0
+        width = Math.max(1, width);
+        height = Math.max(1, height);
+
+        console.log(`最终显示尺寸: ${width}x${height} (缩放比例: ${finalScale.toFixed(3)})`);
         
         // 设置画布物理像素尺寸（考虑设备像素比以获得更清晰的渲染）
         const dpr = window.devicePixelRatio || 1;
@@ -595,10 +654,12 @@ function updateVisualization() {
         // 计算所有识别项的中心点，用于调整显示位置
         const centers = displayTextItems.map(item => {
             const location = item.location || {};
-            const x = (location.left || 0) * scaleX;
-            const y = (location.top || 0) * scaleY;
-            const w = (location.width || 0) * scaleX;
-            const h = (location.height || 0) * scaleY;
+            // 坐标转换（反归一化）
+            const scaledLocation = rescaleCoordinates(location, img.width, img.height);
+            const x = (scaledLocation.left || 0) * scaleX;
+            const y = (scaledLocation.top || 0) * scaleY;
+            const w = (scaledLocation.width || 0) * scaleX;
+            const h = (scaledLocation.height || 0) * scaleY;
             return {
                 x: x + w / 2,
                 y: y + h / 2,
@@ -609,10 +670,12 @@ function updateVisualization() {
         
         displayTextItems.forEach((item, index) => {
             const location = item.location || {};
-            const x = (location.left || 0) * scaleX;
-            const y = (location.top || 0) * scaleY;
-            const w = (location.width || 0) * scaleX;
-            const h = (location.height || 0) * scaleY;
+            // 坐标转换（反归一化）
+            const scaledLocation = rescaleCoordinates(location, img.width, img.height);
+            const x = (scaledLocation.left || 0) * scaleX;
+            const y = (scaledLocation.top || 0) * scaleY;
+            const w = (scaledLocation.width || 0) * scaleX;
+            const h = (scaledLocation.height || 0) * scaleY;
             
             // 根据设备像素比调整线宽和字体大小
             const dpr = window.devicePixelRatio || 1;
@@ -622,21 +685,21 @@ function updateVisualization() {
             // 根据类型设置颜色
             let color;
             switch (item.type) {
-                case 'dimension': color = '#e74c3c'; break; // 红色
+                case 'dimension': color = '#3498db'; break; // 蓝色
                 case 'tolerance': color = '#f39c12'; break; // 橙色
-                default: color = '#3498db'; // 蓝色
+                default: color = '#e74c3c'; // 红色
             }
             
             // 绘制矩形框（半透明填充）
             ctx.fillStyle = color + '20'; // 20表示12%透明度
-            ctx.fillRect(x, y, w, h);
+            //ctx.fillRect(x, y, w-x, h-y);
             
             // 绘制矩形边框 - 根据设备像素比调整线宽
             ctx.strokeStyle = color;
             ctx.lineWidth = baseLineWidth / dpr; // 调整线宽以适应设备像素比
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
-            ctx.strokeRect(x, y, w, h);
+            //ctx.strokeRect(x, y, w-x, h-y);
             
             // 计算标签位置，避免重叠
             let labelX = x;
@@ -672,7 +735,7 @@ function updateVisualization() {
             // 绘制文本（显示ID和部分文本）- 根据设备像素比调整字体大小
             //ctx.fillStyle = 'white';
             ctx.textBaseline = 'middle';
-            ctx.fillText(labelText, labelX + 8, labelY + labelHeight / 2);
+            ctx.fillText(labelText, labelX, labelY + labelHeight / 2);
             
             // 在框中心绘制一个小圆点，表示检测中心
             //ctx.fillStyle = 'white';
@@ -731,12 +794,22 @@ function exportAnnotatedImage() {
 // 查看项目详情
 function viewItemDetails(item) {
     const location = item.location || {};
+    // 获取图像尺寸用于坐标转换
+    let imgWidth = 0;
+    let imgHeight = 0;
+    if (currentResults && currentResults.image_info) {
+        imgWidth = currentResults.image_info.width || 0;
+        imgHeight = currentResults.image_info.height || 0;
+    }
+    // 坐标转换（反归一化）
+    const scaledLocation = rescaleCoordinates(location, imgWidth, imgHeight);
+    
     const details = `
         <strong>文本内容:</strong> ${escapeHtml(item.text)}<br>
         <strong>置信度:</strong> ${(item.confidence * 100).toFixed(2)}%<br>
         <strong>类型:</strong> ${item.type}<br>
-        <strong>位置:</strong> X=${location.left}, Y=${location.top}<br>
-        <strong>尺寸:</strong> ${location.width}×${location.height} 像素<br>
+        <strong>位置:</strong> X=${Math.round(scaledLocation.left)}, Y=${Math.round(scaledLocation.top)}<br>
+        <strong>尺寸:</strong> ${Math.round(scaledLocation.width)}×${Math.round(scaledLocation.height)} 像素<br>
         <strong>ID:</strong> ${item.id}
     `;
     
@@ -800,6 +873,66 @@ function getConfidenceClass(confidence) {
     if (confidence >= 0.8) return 'confidence-high';
     if (confidence >= 0.5) return 'confidence-medium';
     return 'confidence-low';
+}
+
+// 坐标转换函数（反归一化）
+// 支持 Qwen-VL 的 [0,1000] 归一化坐标，输出像素级 (left, top, width, height)
+function rescaleCoordinates(location, imgWidth, imgHeight) {
+    if (!location || imgWidth <= 0 || imgHeight <= 0) {
+        return location;
+    }
+
+    const scaled = { ...location };
+
+    // 判断是否为归一化坐标（Qwen-VL 风格：0-1000，允许轻微越界）
+    const isNormalized = 
+        typeof location.left === 'number' &&
+        typeof location.top === 'number' &&
+        typeof location.width === 'number' &&
+        typeof location.height === 'number' &&
+        location.left >= -50 && location.left <= 1050 &&
+        location.top >= -50 && location.top <= 1050 &&
+        location.width >= 0 && location.width <= 1050 &&
+        location.height >= 0 && location.height <= 1050;
+
+    if (isNormalized) {
+        // 在归一化空间还原右下角
+        const normRight = location.left + location.width;
+        const normBottom = location.top + location.height;
+
+        // 反归一化四条边
+        const leftPx = Math.round((location.left / 1000) * imgWidth);
+        const topPx = Math.round((location.top / 1000) * imgHeight);
+        const rightPx = Math.round((normRight / 1000) * imgWidth);
+        const bottomPx = Math.round((normBottom / 1000) * imgHeight);
+
+        // 裁剪到图像边界
+        const left = Math.max(0, Math.min(imgWidth, leftPx));
+        const top = Math.max(0, Math.min(imgHeight, topPx));
+        const right = Math.max(0, Math.min(imgWidth, rightPx));
+        const bottom = Math.max(0, Math.min(imgHeight, bottomPx));
+
+        // 重新计算宽高（确保 ≥1）
+        scaled.left = left;
+        scaled.top = top;
+        scaled.width = Math.max(1, right - left);
+        scaled.height = Math.max(1, bottom - top);
+
+        console.log(`反归一化: (${location.left}, ${location.top}, ${location.width}, ${location.height}) → (${scaled.left}, ${scaled.top}, ${scaled.width}, ${scaled.height})`);
+    } else {
+        // 如果不是归一化坐标，假设已是像素坐标，但仍做安全裁剪
+        const left = Math.max(0, Math.min(imgWidth, Math.round(scaled.left || 0)));
+        const top = Math.max(0, Math.min(imgHeight, Math.round(scaled.top || 0)));
+        const width = Math.max(1, Math.min(imgWidth - left, Math.round(scaled.width || 1)));
+        const height = Math.max(1, Math.min(imgHeight - top, Math.round(scaled.height || 1)));
+
+        scaled.left = left;
+        scaled.top = top;
+        scaled.width = width;
+        scaled.height = height;
+    }
+
+    return scaled;
 }
 
 // 检测文本是否包含中文
@@ -1365,30 +1498,32 @@ function initFullscreenViewer() {
                         displayTextItems = currentResults.text_items;
                     }
                     
-                    // 绘制识别区域到临时画布（使用原始OCR坐标，不需要缩放）
+                    // 绘制识别区域到临时画布（使用转换后的像素坐标）
                     displayTextItems.forEach(item => {
                         const location = item.location || {};
-                        const x = location.left || 0;
-                        const y = location.top || 0;
-                        const w = location.width || 0;
-                        const h = location.height || 0;
+                        // 应用坐标转换（反归一化）
+                        const scaledLocation = rescaleCoordinates(location, img.width, img.height);
+                        const x = scaledLocation.left || 0;
+                        const y = scaledLocation.top || 0;
+                        const w = scaledLocation.width || 0;
+                        const h = scaledLocation.height || 0;
                         
                         // 根据类型设置颜色
                         let color;
                         switch (item.type) {
-                            case 'dimension': color = '#e74c3c'; break;
+                            case 'dimension': color = '#3498db'; break;
                             case 'tolerance': color = '#f39c12'; break;
-                            default: color = '#3498db';
+                            default: color = '#e74c3c';
                         }
                         
                         // 绘制矩形框（半透明填充）
                         tempCtx.fillStyle = color + '20';
-                        tempCtx.fillRect(x, y, w, h);
+                        //tempCtx.fillRect(x, y, w, h);
                         
                         // 绘制矩形边框
                         tempCtx.strokeStyle = color;
                         tempCtx.lineWidth = Math.max(2, Math.min(w, h) * 0.02); // 根据框大小调整线宽
-                        tempCtx.strokeRect(x, y, w, h);
+                        //tempCtx.strokeRect(x, y, w, h);
                         
                         // 绘制标签（使用动态宽度计算，避免文字显示不全）
                         const labelX = x;
@@ -1420,7 +1555,7 @@ function initFullscreenViewer() {
                         // 绘制文本（显示ID和部分文本）- 添加内边距
                         //tempCtx.fillStyle = 'white';
                         tempCtx.textBaseline = 'middle';
-                        tempCtx.fillText(labelText, labelX + 8, labelY + labelHeight / 2);
+                        tempCtx.fillText(labelText, labelX, labelY + labelHeight / 2);
                     });
                     
                     // 使用高质量PNG格式

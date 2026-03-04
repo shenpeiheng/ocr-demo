@@ -18,6 +18,7 @@ services:
       - NUMEXPR_NUM_THREADS=4
       - OPENBLAS_NUM_THREADS=4
       - MKL_NUM_THREADS=4
+      - UPLOAD_FOLDER=/app/frontend/uploads
     volumes:
       # 挂载上传目录以持久化数据
       - ./frontend/uploads:/app/frontend/uploads
@@ -32,22 +33,6 @@ services:
       start_period: 10s
     networks:
       - ocr-network
-
-  # 可选：添加Nginx作为反向代理（如果需要）
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: ocr-nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #     - ./ssl:/etc/nginx/ssl
-  #   depends_on:
-  #     - ocr-app
-  #   networks:
-  #     - ocr-network
-
 networks:
   ocr-network:
     driver: bridge

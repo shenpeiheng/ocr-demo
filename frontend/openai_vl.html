@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI VL 机械图纸识别</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .openai-vl-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .engine-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .engine-btn {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .engine-btn.active {
+            border-color: #3498db;
+            background: #3498db;
+            color: white;
+        }
+        
+        .engine-btn:hover {
+            border-color: #2980b9;
+        }
+        
+        .prompt-selector {
+            margin-bottom: 20px;
+        }
+        
+        .prompt-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .prompt-option {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .prompt-option:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .prompt-option.active {
+            border-color: #3498db;
+            background: #f0f8ff;
+        }
+        
+        .prompt-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .prompt-preview {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            max-height: 60px;
+            overflow: hidden;
+        }
+        
+        .prompt-length {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
+        .custom-prompt-section {
+            margin-bottom: 20px;
+        }
+        
+        .custom-prompt-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            margin-top: 10px;
+        }
+        
+        .processing-options {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        .option-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .option-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .option-checkbox {
+            margin-right: 10px;
+        }
+        
+        .results-container {
+            margin-top: 30px;
+        }
+        
+        .markdown-preview {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .markdown-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        .markdown-preview th,
+        .markdown-preview td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .markdown-preview th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .results-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .status-indicator {
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .upload-section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: #3498db;
+        }
+        
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            background: #f0f8ff;
+            border-color: #2980b9;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .upload-hint {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .file-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .file-preview {
+            max-width: 300px;
+            margin: 0 auto 20px;
+        }
+        
+        .file-preview img {
+            max-width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .file-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .detail-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .detail-label {
+            display: block;
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .upload-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .openai-vl-container {
+                padding: 10px;
+            }
+            
+            .prompt-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="openai-vl-container">
+        <div class="section-title">
+            <i class="fas fa-robot"></i>
+            <span>OpenAI VL 机械图纸识别系统</span>
+        </div>
+        
+        <div class="upload-section">
+            <h2>1. 上传机械工程图纸</h2>
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <p class="upload-text">拖放图片文件或点击选择</p>
+                <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF 格式</p>
+                <button class="btn btn-primary" id="selectFileBtn">
+                    <i class="fas fa-folder-open"></i> 选择文件
+                </button>
+                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.gif" hidden>
+            </div>
+            
+            <div class="file-info" id="fileInfo" style="display: none;">
+                <div class="file-preview">
+                    <img id="imagePreview" src="" alt="图片预览">
+                </div>
+                <div class="file-details">
+                    <div class="detail-item">
+                        <span class="detail-label">文件名:</span>
+                        <span class="detail-value" id="fileName">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">文件大小:</span>
+                        <span class="detail-value" id="fileSize">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">图片尺寸:</span>
+                        <span class="detail-value" id="imageDimensions">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="upload-actions">
+                <button class="btn btn-primary" id="uploadBtn" disabled>
+                    <i class="fas fa-upload"></i> 上传文件
+                </button>
+            </div>
+        </div>
+        
+        <div class="processing-options" id="processingOptions" style="display: none;">
+            <h2>2. 配置识别参数</h2>
+            
+            <div class="engine-selector">
+                <button class="engine-btn active" data-engine="openai_vl">
+                    <i class="fas fa-robot"></i> OpenAI VL
+                </button>
+                <button class="engine-btn" data-engine="paddleocr">
+                    <i class="fas fa-eye"></i> PaddleOCR
+                </button>
+                <button class="engine-btn" data-engine="compare">
+                    <i class="fas fa-balance-scale"></i> 对比识别
+                </button>
+            </div>
+            
+            <div class="prompt-selector">
+                <div class="option-group">
+                    <label class="option-label">选择提示词模板:</label>
+                    <div class="prompt-options" id="promptOptions">
+                        <!-- 提示词选项将通过JavaScript动态加载 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="custom-prompt-section">
+                <div class="option-group">
+                    <label class="option-label">
+                        <input type="checkbox" id="useCustomPrompt" class="option-checkbox">
+                        使用自定义提示词
+                    </label>
+                    <textarea id="customPrompt" class="custom-prompt-textarea" placeholder="在此输入自定义提示词..."></textarea>
+                </div>
+            </div>
+            
+            <div class="option-group">
+                <label class="option-label">
+                    <input type="checkbox" id="includeRawResponse" class="option-checkbox">
+                    在结果中包含原始API响应
+                </label>
+            </div>
+            
+            <div class="upload-actions">
+                <button class="btn btn-success" id="processBtn" disabled>
+                    <i class="fas fa-cogs"></i> 开始识别
+                </button>
+                <button class="btn btn-secondary" id="resetBtn">
+                    <i class="fas fa-redo"></i> 重置
+                </button>
+            </div>
+        </div>
+        
+        <div class="results-container" id="resultsContainer" style="display: none;">
+            <h2>3. 识别结果</h2>
+            
+            <div class="status-indicator" id="statusIndicator"></div>
+            
+            <div class="results-summary" id="resultsSummary" style="display: none;">
+                <div class="file-details">
+                    <div class="detail-item">
+                        <span class="detail-label">OCR引擎:</span>
+                        <span class="detail-value" id="resultEngine">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">处理时间:</span>
+                        <span class="detail-value" id="resultTime">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">识别项数:</span>
+                        <span class="detail-value" id="resultItems">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">使用模型:</span>
+                        <span class="detail-value" id="resultModel">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="markdown-preview" id="markdownPreview">
+                <!-- Markdown预览将在这里显示 -->
+            </div>
+            
+            <div class="results-actions">
+                <button class="btn btn-primary" id="downloadMarkdownBtn">
+                    <i class="fas fa-download"></i> 下载Markdown文件
+                </button>
+                <button class="btn btn-primary" id="downloadJsonBtn">
+                    <i class="fas fa-download"></i> 下载JSON文件
+                </button>
+                <button class="btn btn-primary" id="downloadExcelBtn">
+                    <i class="fas fa-download"></i> 下载Excel文件
+                </button>
+                <button class="btn btn-secondary" id="viewRawBtn">
+                    <i class="fas fa-code"></i> 查看原始响应
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentFile = null;
+        let currentFilename = null;
+        let currentResults = null;
+        let selectedEngine = 'openai_vl';
+        let selectedPrompt = 'mechanical_drawing_standard';
+        
+        // DOM元素
+        const fileInput = document.getElementById('fileInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const processBtn = document.getElementById('processBtn');
+        const uploadArea = document.getElementById('uploadArea');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const imageDimensions = document.getElementById('imageDimensions');
+        const processingOptions = document.getElementById('processingOptions');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const resultsSummary = document.getElementById('resultsSummary');
+        const markdownPreview = document.getElementById('markdownPreview');
+        const promptOptions = document.getElementById('promptOptions');
+        const useCustomPrompt = document.getElementById('useCustomPrompt');
+        const customPrompt = document.getElementById('customPrompt');
+        const includeRawResponse = document.getElementById('includeRawResponse');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadMarkdownBtn = document.getElementById('downloadMarkdownBtn');
+        const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+        const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+        const viewRawBtn = document.getElementById('viewRawBtn');
+        const resultEngine = document.getElementById('resultEngine');
+        const resultTime = document.getElementById('resultTime');
+        const resultItems = document.getElementById('resultItems');
+        const resultModel = document.getElementById('resultModel');
+        
+        // 初始化函数
+        function init() {
+            console.log('OpenAI VL识别系统初始化...');
+            
+            // 绑定事件监听器
+            bindEvents();
+            
+            // 加载提示词列表
+            loadPrompts();
+            
+            console.log('系统初始化完成');
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            // 选择文件按钮
+            selectFileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fileInput.click();
+            });
+            
+            // 文件输入变化
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // 上传按钮
+            uploadBtn.addEventListener('click', handleUpload);
+            
+            // 处理按钮
+            processBtn.addEventListener('click', handleProcess);
+            
+            // 重置按钮
+            resetBtn.addEventListener('click', resetSystem);
+            
+            // 下载按钮
+            downloadMarkdownBtn.addEventListener('click', () => downloadResult('markdown'));
+            downloadJsonBtn.addEventListener('click', () => downloadResult('json'));
+            downloadExcelBtn.addEventListener('click', () => downloadResult('excel'));
+            viewRawBtn.addEventListener('click', viewRawResponse);
+            
+            // 拖放功能
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            
+            // 点击上传区域选择文件
+            uploadArea.addEventListener('click', (e) => {
+                if (e.target === selectFileBtn || selectFileBtn.contains(e.target)) {
+                    return;
+                }
+                fileInput.click();
+            });
+            
+            // 引擎选择
+            document.querySelectorAll('.engine-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedEngine = btn.dataset.engine;
+                    updateProcessButton();
+                });
+            });
+            
+            // 自定义提示词切换
+            useCustomPrompt.addEventListener('change', () => {
+                customPrompt.disabled = !useCustomPrompt.checked;
+                if (!useCustomPrompt.checked) {
+                    document.querySelectorAll('.prompt-option').forEach(opt => {
+                        if (opt.dataset.prompt === selectedPrompt) {
+                            opt.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+        
+        // 处理文件选择
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/bmp', 'image/tiff', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('请选择图片文件 (PNG, JPG, JPEG, BMP, TIFF, GIF)');
+                return;
+            }
+            
+            currentFile = file;
+            
+            // 显示文件信息
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            // 预览图片
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                
+                // 获取图片尺寸
+                const img = new Image();
+                img.onload = function() {
+                    imageDimensions.textContent = `${img.width} × ${img.height} 像素`;
+                    fileInfo.style.display = 'block';
+                    uploadBtn.disabled = false;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 处理上传
+        async function handleUpload() {
+            if (!currentFile) return;
+            
+            setStatus('正在上传文件...', 'processing');
+            uploadBtn.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentFilename = result.filename;
+                    setStatus('文件上传成功', 'success');
+                    
+                    // 显示处理选项
+                    processingOptions.style.display = 'block';
+                    processBtn.disabled = false;
+                    
+                    // 更新处理按钮文本
+                    updateProcessButton();
+                } else {
+                    setStatus(`上传失败: ${result.error}`, 'error');
+                    uploadBtn.disabled = false;
+                }
+            } catch (error) {
+                setStatus(`上传失败: ${error.message}`, 'error');
+                uploadBtn.disabled = false;
+            }
+        }
+        
+        // 处理识别
+        async function handleProcess() {
+            if (!currentFilename) return;
+            
+            setStatus('正在处理图片...', 'processing');
+            processBtn.disabled = true;
+            resultsContainer.style.display = 'block';
+            
+            // 准备请求数据
+            const requestData = {
+                filename: currentFilename,
+                engine: selectedEngine,
+                include_raw: includeRawResponse.checked
+            };
+            
+            // 添加提示词
+            if (useCustomPrompt.checked && customPrompt.value.trim()) {
+                requestData.custom_prompt = customPrompt.value.trim();
+            } else {
+                requestData.prompt = selectedPrompt;
+            }
+            
+            // 选择API端点
+            let endpoint = '/api/process';
+            if (selectedEngine === 'openai_vl') {
+                endpoint = '/api/process/openai_vl';
+            } else if (selectedEngine === 'paddleocr') {
+                endpoint = '/api/process/paddleocr';
+            } else if (selectedEngine === 'compare') {
+                // 对比识别 - 先使用OpenAI VL
+                endpoint = '/api/process/openai_vl';
+            }
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentResults = result;
+                    setStatus('识别成功', 'success');
+                    displayResults(result);
+                    
+                    // 如果是对比识别，再调用PaddleOCR
+                    if (selectedEngine === 'compare') {
+                        await runComparison();
+                    }
+                } else {
+                    setStatus(`识别失败: ${result.error}`, 'error');
+                    processBtn.disabled = false;
+                }
+            } catch (error) {
+                setStatus(`处理失败: ${error.message}`, 'error');
+                processBtn.disabled = false;
+            }
+        }
+        
+        // 运行对比识别
+        async function runComparison() {
+            setStatus('正在运行PaddleOCR对比识别...', 'processing');
+            
+            try {
+                const response = await fetch('/api/process/paddleocr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: currentFilename
+                    })
+                });
+                
+                const paddleResult = await response.json();
+                
+                if (paddleResult.success) {
+                    // 显示对比结果
+                    displayComparison(currentResults, paddleResult);
+                }
+            } catch (error) {
+                console.error('PaddleOCR对比失败:', error);
+            }
+        }
+        
+        // 显示结果
+        function displayResults(result) {
+            // 更新摘要信息
+            resultsSummary.style.display = 'block';
+            resultEngine.textContent = result.engine || result.results?.ocr_engine || '未知';
+            resultTime.textContent = `${result.results?.processing_time || 0}秒`;
+            resultItems.textContent = result.results?.total_items || 0;
+            resultModel.textContent = result.results?.model || '未知';
+            
+            // 生成Markdown预览
+            let markdownContent = '# 机械工程图纸识别结果\n\n';
+            
+            // 添加基本信息
+            markdownContent += '## 处理信息\n\n';
+            markdownContent += `- **OCR引擎**: ${result.engine || result.results?.ocr_engine || '未知'}\n`;
+            markdownContent += `- **处理时间**: ${result.results?.processing_time || 0}秒\n`;
+            markdownContent += `- **识别项数**: ${result.results?.total_items || 0}\n`;
+            
+            if (result.results?.model) {
+                markdownContent += `- **模型**: ${result.results.model}\n`;
+            }
+            
+            // 添加表格
+            const textItems = result.results?.text_items || [];
+            if (textItems.length > 0) {
+                markdownContent += '\n## 识别结果\n\n';
+                markdownContent += '| 序号 | 内容 | 类型 | 区域 | 坐标 |\n';
+                markdownContent += '|------|------|------|------|------|\n';
+                
+                textItems.forEach(item => {
+                    const index = item.id || 0;
+                    const content = escapeMarkdown(item.text || '');
+                    const type = escapeMarkdown(item.type || 'text');
+                    const region = escapeMarkdown(item.region || item.location_description || '未知区域');
+                    const x = item.location?.left || 0;
+                    const y = item.location?.top || 0;
+                    
+                    markdownContent += `| ${index} | ${content} | ${type} | ${region} | (${x}, ${y}) |\n`;
+                });
+            }
+            
+            // 添加分析结果
+            const analysis = result.results?.analysis || {};
+            if (Object.keys(analysis).length > 0) {
+                markdownContent += '\n## 分析结果\n\n';
+                
+                if (analysis.type_distribution) {
+                    markdownContent += '### 类型分布\n\n';
+                    Object.entries(analysis.type_distribution).forEach(([type, count]) => {
+                        if (count > 0) {
+                            markdownContent += `- **${type}**: ${count}项\n`;
+                        }
+                    });
+                }
+                
+                if (analysis.average_confidence) {
+                    markdownContent += `- **平均置信度**: ${analysis.average_confidence.toFixed(3)}\n`;
+                }
+            }
+            
+            // 显示Markdown
+            markdownPreview.innerHTML = marked.parse(markdownContent);
+            
+            // 启用下载按钮
+            downloadMarkdownBtn.disabled = false;
+            downloadJsonBtn.disabled = false;
+            downloadExcelBtn.disabled = false;
+            viewRawBtn.disabled = false;
+        }
+        
+        // 显示对比结果
+        function displayComparison(openaiResult, paddleResult) {
+            const openaiItems = openaiResult.results?.text_items || [];
+            const paddleItems = paddleResult.results?.text_items || [];
+            
+            let markdownContent = '# OCR引擎对比结果\n\n';
+            
+            markdownContent += '## 基本信息对比\n\n';
+            markdownContent += '| 项目 | OpenAI VL | PaddleOCR | 差异 |\n';
+            markdownContent += '|------|-----------|-----------|------|\n';
+            markdownContent += `| 识别项数 | ${openaiItems.length} | ${paddleItems.length} | ${openaiItems.length - paddleItems.length} |\n`;
+            markdownContent += `| 处理时间 | ${openaiResult.results?.processing_time || 0}秒 | ${paddleResult.results?.processing_time || 0}秒 | ${(openaiResult.results?.processing_time || 0) - (paddleResult.results?.processing_time || 0)}秒 |\n`;
+            
+            // 共同识别项
+            const openaiTexts = openaiItems.map(item => item.text?.trim()).filter(Boolean);
+            const paddleTexts = paddleItems.map(item => item.text?.trim()).filter(Boolean);
+            const commonTexts = openaiTexts.filter(text => paddleTexts.includes(text));
+            
+            markdownContent += `\n## 共同识别项 (${commonTexts.length}项)\n\n`;
+            if (commonTexts.length > 0) {
+                commonTexts.slice(0, 10).forEach((text, i) => {
+                    markdownContent += `${i + 1}. ${escapeMarkdown(text)}\n`;
+                });
+                if (commonTexts.length > 10) {
+                    markdownContent += `... 还有 ${commonTexts.length - 10} 项未显示\n`;
+                }
+            } else {
+                markdownContent += '无共同识别项\n';
+            }
+            
+            // 各自独有的识别项
+            const uniqueToOpenAI = openaiTexts.filter(text => !paddleTexts.includes(text));
+            const uniqueToPaddle = paddleTexts.filter(text => !openaiTexts.includes(text));
+            
+            markdownContent += `\n## OpenAI VL 独有识别项 (${uniqueToOpenAI.length}项)\n\n`;
+            if (uniqueToOpenAI.length > 0) {
+                uniqueToOpenAI.slice(0, 10).forEach((text, i) => {
+                    markdownContent += `${i + 1}. ${escapeMarkdown(text)}\n`;
+                });
+            } else {
+                markdownContent += '无独有识别项\n';
+            }
+            
+            markdownContent += `\n## PaddleOCR 独有识别项 (${uniqueToPaddle.length}项)\n\n`;
+            if (uniqueToPaddle.length > 0) {
+                uniqueToPaddle.slice(0, 10).forEach((text, i) => {
+                    markdownContent += `${i + 1}. ${escapeMarkdown(text)}\n`;
+                });
+            } else {
+                markdownContent += '无独有识别项\n';
+            }
+            
+            // 添加到现有预览
+            const existingContent = markdownPreview.innerHTML;
+            markdownPreview.innerHTML = existingContent + marked.parse(markdownContent);
+            
+            setStatus('对比识别完成', 'success');
+        }
+        
+        // 下载结果
+        function downloadResult(type) {
+            if (!currentFilename || !currentResults) return;
+            
+            let url = '';
+            let filename = `ocr_result_${currentFilename}`;
+            
+            switch (type) {
+                case 'markdown':
+                    url = `/api/download/markdown/${currentFilename}`;
+                    filename += '.md';
+                    break;
+                case 'json':
+                    url = `/api/download/json/${currentFilename}`;
+                    filename += '.json';
+                    break;
+                case 'excel':
+                    url = `/api/download/excel/${currentFilename}`;
+                    filename += '.xlsx';
+                    break;
+            }
+            
+            // 创建临时链接进行下载
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 查看原始响应
+        function viewRawResponse() {
+            if (!currentResults) return;
+            
+            const rawResponse = currentResults.results?.raw_response || currentResults.raw_response;
+            if (rawResponse) {
+                alert('原始API响应:\n\n' + rawResponse.substring(0, 2000) + (rawResponse.length > 2000 ? '...' : ''));
+            } else {
+                alert('无原始响应数据');
+            }
+        }
+        
+        // 加载提示词列表
+        async function loadPrompts() {
+            try {
+                const response = await fetch('/api/prompts');
+                const result = await response.json();
+                
+                if (result.success) {
+                    promptOptions.innerHTML = '';
+                    
+                    result.prompts.forEach(prompt => {
+                        const option = document.createElement('div');
+                        option.className = 'prompt-option';
+                        if (prompt.name === selectedPrompt) {
+                            option.classList.add('active');
+                        }
+                        option.dataset.prompt = prompt.name;
+                        
+                        option.innerHTML = `
+                            <div class="prompt-name">${prompt.name}</div>
+                            <div class="prompt-preview">${escapeHtml(prompt.preview)}</div>
+                            <div class="prompt-length">${prompt.length} 字符</div>
+                        `;
+                        
+                        option.addEventListener('click', () => {
+                            document.querySelectorAll('.prompt-option').forEach(opt => opt.classList.remove('active'));
+                            option.classList.add('active');
+                            selectedPrompt = prompt.name;
+                            useCustomPrompt.checked = false;
+                            customPrompt.disabled = true;
+                        });
+                        
+                        promptOptions.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('加载提示词失败:', error);
+            }
+        }
+        
+        // 更新处理按钮文本
+        function updateProcessButton() {
+            let text = '开始识别';
+            if (selectedEngine === 'openai_vl') {
+                text = '使用 OpenAI VL 识别';
+            } else if (selectedEngine === 'paddleocr') {
+                text = '使用 PaddleOCR 识别';
+            } else if (selectedEngine === 'compare') {
+                text = '对比识别 (OpenAI VL + PaddleOCR)';
+            }
+            processBtn.innerHTML = `<i class="fas fa-cogs"></i> ${text}`;
+        }
+        
+        // 设置状态
+        function setStatus(message, type) {
+            statusIndicator.textContent = message;
+            statusIndicator.className = 'status-indicator';
+            
+            switch (type) {
+                case 'processing':
+                    statusIndicator.classList.add('status-processing');
+                    break;
+                case 'success':
+                    statusIndicator.classList.add('status-success');
+                    break;
+                case 'error':
+                    statusIndicator.classList.add('status-error');
+                    break;
+            }
+        }
+        
+        // 重置系统
+        function resetSystem() {
+            currentFile = null;
+            currentFilename = null;
+            currentResults = null;
+            
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            processingOptions.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            resultsSummary.style.display = 'none';
+            
+            uploadBtn.disabled = true;
+            processBtn.disabled = true;
+            
+            downloadMarkdownBtn.disabled = true;
+            downloadJsonBtn.disabled = true;
+            downloadExcelBtn.disabled = true;
+            viewRawBtn.disabled = true;
+            
+            markdownPreview.innerHTML = '';
+            statusIndicator.textContent = '';
+            statusIndicator.className = 'status-indicator';
+            
+            // 重置表单
+            useCustomPrompt.checked = false;
+            customPrompt.disabled = true;
+            customPrompt.value = '';
+            includeRawResponse.checked = false;
+            
+            // 重置引擎选择
+            selectedEngine = 'openai_vl';
+            document.querySelectorAll('.engine-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.engine === 'openai_vl') {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 重置提示词选择
+            selectedPrompt = 'mechanical_drawing_standard';
+            document.querySelectorAll('.prompt-option').forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.dataset.prompt === selectedPrompt) {
+                    opt.classList.add('active');
+                }
+            });
+            
+            updateProcessButton();
+        }
+        
+        // 处理拖放
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#2980b9';
+            uploadArea.style.background = '#f0f8ff';
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3498db';
+            uploadArea.style.background = '';
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3498db';
+            uploadArea.style.background = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect({ target: fileInput });
+            }
+        }
+        
+        // 工具函数
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function escapeMarkdown(text) {
+            if (!text) return '';
+            return text.toString()
+                .replace(/\|/g, '\\|')
+                .replace(/\*/g, '\\*')
+                .replace(/_/g, '\\_')
+                .replace(/`/g, '\\`')
+                .replace(/\[/g, '\\[')
+                .replace(/\]/g, '\\]')
+                .replace(/\(/g, '\\(')
+                .replace(/\)/g, '\\)');
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // 引入marked.js库用于Markdown渲染
+        if (typeof marked === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
+</body>
+</html>

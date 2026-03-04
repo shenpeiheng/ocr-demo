@@ -233,6 +233,72 @@
                             </div>
                         </div>
 
+                        <!-- OCR引擎选择区域 -->
+                        <div class="engine-section card" id="engineSection" style="display: none;">
+                            <div class="section-header">
+                                <h2><i class="fas fa-microchip"></i> OCR引擎选择</h2>
+                            </div>
+                            
+                            <div class="engine-options">
+                                <div class="engine-option active" data-engine="auto">
+                                    <div class="engine-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="engine-info">
+                                        <div class="engine-name">自动选择</div>
+                                        <div class="engine-desc">根据环境配置自动选择最佳引擎</div>
+                                    </div>
+                                    <div class="engine-badge">推荐</div>
+                                </div>
+                                <div class="engine-option" data-engine="openai_vl">
+                                    <div class="engine-icon">
+                                        <i class="fas fa-brain"></i>
+                                    </div>
+                                    <div class="engine-info">
+                                        <div class="engine-name">OpenAI VL</div>
+                                        <div class="engine-desc">使用视觉语言模型，适合机械图纸</div>
+                                    </div>
+                                    <div class="engine-badge new">AI</div>
+                                </div>
+                                <div class="engine-option" data-engine="paddleocr">
+                                    <div class="engine-icon">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <div class="engine-info">
+                                        <div class="engine-name">PaddleOCR</div>
+                                        <div class="engine-desc">传统OCR引擎，速度快精度高</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 提示词选项（仅OpenAI VL显示） -->
+                            <div class="prompt-options" id="promptOptions" style="display: none;">
+                                <div class="option-group">
+                                    <label class="option-label">提示词模板:</label>
+                                    <select class="option-select" id="promptSelect">
+                                        <option value="mechanical_drawing_standard">机械图纸标准识别</option>
+                                        <option value="mechanical_drawing_detailed">机械图纸详细识别</option>
+                                        <option value="dimension_extraction">尺寸标注提取</option>
+                                        <option value="title_block_extraction">标题栏信息提取</option>
+                                        <option value="technical_requirements">技术要求提取</option>
+                                    </select>
+                                </div>
+                                <div class="option-group">
+                                    <label class="option-label">
+                                        <input type="checkbox" id="useCustomPrompt" class="option-checkbox">
+                                        使用自定义提示词
+                                    </label>
+                                    <textarea id="customPrompt" class="custom-prompt-textarea" placeholder="在此输入自定义提示词..." disabled></textarea>
+                                </div>
+                                <div class="option-group">
+                                    <label class="option-label">
+                                        <input type="checkbox" id="includeRawResponse" class="option-checkbox">
+                                        包含原始API响应
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 处理状态区域 -->
                         <div class="processing-section card">
                             <div class="section-header">
@@ -313,55 +379,50 @@
                                         <span class="filter-label">屏蔽中文内容</span>
                                         <span class="filter-badge" id="chineseFilterCount">0</span>
                                     </div>
-                                    <div class="filter-info">
-                                        <i class="fas fa-info-circle"></i>
-                                        <span>开启后，识别结果中的中文文本将被自动过滤</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="results-summary" id="resultsSummary">
-                                <div class="summary-card" style="background: linear-gradient(135deg, #3498db, #2980b9);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-list-ol"></i> 识别项数 
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="totalItems">0</div>
-                                    </div>
-                                </div>
-                                <div class="summary-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-percentage"></i> 平均置信度
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="avgConfidence">0%</div>
-                                    </div>
-                                </div>
-                                <div class="summary-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-ruler-combined"></i> 尺寸标注
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="dimensionCount">0</div>
-                                    </div>
-                                </div>
-                                <div class="summary-card"  style="background: linear-gradient(135deg, #e74c3c, #c0392b);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-stopwatch"></i> 处理时间
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="processingTime">0s</div>
+                                    <div class="results-summary" id="resultsSummary">
+                                        <div class="summary-card" style="background: linear-gradient(135deg, #3498db, #2980b9);color: white; text-align: center;">
+                                            <div class="summary-card-icon">
+                                                <i class="fas fa-list-ol"></i> 识别项数 
+                                            </div>
+                                            <div class="summary-card-content">
+                                                <div class="summary-card-value" id="totalItems">0</div>
+                                            </div>
+                                        </div>
+                                        <div class="summary-card" style="display: none;background: linear-gradient(135deg, #2ecc71, #27ae60);color: white; text-align: center;">
+                                            <div class="summary-card-icon">
+                                                <i class="fas fa-percentage"></i> 平均置信度
+                                            </div>
+                                            <div class="summary-card-content">
+                                                <div class="summary-card-value" id="avgConfidence">0%</div>
+                                            </div>
+                                        </div>
+                                        <div class="summary-card" style="display: none;background: linear-gradient(135deg, #9b59b6, #8e44ad);color: white; text-align: center;">
+                                            <div class="summary-card-icon">
+                                                <i class="fas fa-ruler-combined"></i> 尺寸标注
+                                            </div>
+                                            <div class="summary-card-content">
+                                                <div class="summary-card-value" id="dimensionCount">0</div>
+                                            </div>
+                                        </div>
+                                        <div class="summary-card"  style="background: linear-gradient(135deg, #e74c3c, #c0392b);color: white; text-align: center;">
+                                            <div class="summary-card-icon">
+                                                <i class="fas fa-stopwatch"></i> 处理时间
+                                            </div>
+                                            <div class="summary-card-content">
+                                                <div class="summary-card-value" id="processingTime">0s</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="results-tabs">
                                 <div class="tab-buttons">
-                                    <button class="tab-btn active" data-tab="textResults">
+                                    <button class="tab-btn" data-tab="textResults" style="display: none;">
                                         <i class="fas fa-font"></i> 文本内容
                                     </button>
-                                    <button class="tab-btn" data-tab="coordinateResults">
-                                        <i class="fas fa-map-marker-alt"></i> 坐标信息
+                                    <button class="tab-btn active" data-tab="coordinateResults">
+                                        <i class="fas fa-map-marker-alt"></i> 文本信息
                                     </button>
                                     <button class="tab-btn" data-tab="visualization">
                                         <i class="fas fa-eye"></i> 可视化
@@ -370,7 +431,7 @@
 
                                 <div class="tab-content">
                                     <!-- 文本内容标签页 -->
-                                    <div class="tab-pane active" id="textResults">
+                                    <div class="tab-pane" id="textResults">
                                         <div class="table-container">
                                             <table class="results-table">
                                                 <thead>
@@ -392,7 +453,7 @@
                                     </div>
 
                                     <!-- 坐标信息标签页 -->
-                                    <div class="tab-pane" id="coordinateResults">
+                                    <div class="tab-pane active" id="coordinateResults">
                                         <div class="table-container">
                                             <table class="results-table">
                                                 <thead>
