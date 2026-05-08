@@ -146,6 +146,8 @@ MKL_NUM_THREADS=4
 
 #### 5.2 安装后端依赖
 ```bash
+source venv/bin/activate
+
 cd backend
 pip install -r requirements.txt
 ```

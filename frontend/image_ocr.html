@@ -1283,7 +1283,7 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
             }
 
             try {
-                const response = await fetch('/api/process/custom', {
+                const response = await fetch(getApiBaseUrl() + '/api/process/custom', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

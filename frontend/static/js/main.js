@@ -3,7 +3,26 @@
  */
 
 // 全局变量
-const API_BASE_URL = ''; // 使用相对路径，因为前端和后端在同一个服务中
+/**
+ * 动态获取 API 基础路径
+ *
+ * 兼容场景：
+ * 1. 直接访问：http://host:8000/  → API_BASE_URL = ''
+ * 2. VSCode端口转发：http://host:8080/proxy/8000/  → API_BASE_URL = '/proxy/8000'
+ *
+ * 检测逻辑：如果当前页面 URL 包含 /proxy/ 路径，则自动提取代理前缀
+ */
+function getApiBaseUrl() {
+    // 从当前页面路径中检测是否包含 /proxy/ 前缀
+    var pathname = window.location.pathname;
+    var match = pathname.match(/^(\/proxy\/\d+)/);
+    if (match) {
+        return match[1]; // 例如 '/proxy/8000'
+    }
+    return ''; // 无代理，使用相对路径
+}
+
+const API_BASE_URL = getApiBaseUrl(); // 动态检测基础路径
 let currentFile = null;
 let currentResults = null;
 let processingStartTime = null;

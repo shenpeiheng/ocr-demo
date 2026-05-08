@@ -626,7 +626,20 @@
                 }
             });
         }
-        
+
+        /**
+         * 动态获取 API 基础路径
+         * 兼容 VSCode 端口转发代理路径
+         */
+        function getApiBaseUrl() {
+            var pathname = window.location.pathname;
+            var match = pathname.match(/^(\/proxy\/\d+)/);
+            if (match) {
+                return match[1];
+            }
+            return '';
+        }
+
         // 处理文件选择
         function handleFileSelect(e) {
             const file = e.target.files[0];
@@ -673,7 +686,7 @@
             formData.append('file', currentFile);
             
             try {
-                const response = await fetch('/api/upload', {
+                const response = await fetch(getApiBaseUrl() + '/api/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -723,14 +736,14 @@
             }
             
             // 选择API端点
-            let endpoint = '/api/process';
+            let endpoint = getApiBaseUrl() + '/api/process';
             if (selectedEngine === 'openai_vl') {
-                endpoint = '/api/process/openai_vl';
+                endpoint = getApiBaseUrl() + '/api/process/openai_vl';
             } else if (selectedEngine === 'paddleocr') {
-                endpoint = '/api/process/paddleocr';
+                endpoint = getApiBaseUrl() + '/api/process/paddleocr';
             } else if (selectedEngine === 'compare') {
                 // 对比识别 - 先使用OpenAI VL
-                endpoint = '/api/process/openai_vl';
+                endpoint = getApiBaseUrl() + '/api/process/openai_vl';
             }
             
             try {
@@ -768,7 +781,7 @@
             setStatus('正在运行PaddleOCR对比识别...', 'processing');
             
             try {
-                const response = await fetch('/api/process/paddleocr', {
+                const response = await fetch(getApiBaseUrl() + '/api/process/paddleocr', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -964,7 +977,7 @@
         // 加载提示词列表
         async function loadPrompts() {
             try {
-                const response = await fetch('/api/prompts');
+                const response = await fetch(getApiBaseUrl() + '/api/prompts');
                 const result = await response.json();
                 
                 if (result.success) {
