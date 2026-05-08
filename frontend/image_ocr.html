@@ -104,16 +104,39 @@
                             <div class="menu-text">PDF识别</div>
                             <!--<div class="menu-badge new">新</div>-->
                         </a>
+                        <a href="safety_helmet_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-hard-hat"></i>
+                            </div>
+                            <div class="menu-text">实时安全帽检测</div>
+                        </a>
+                        <a href="license_plate_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-car"></i>
+                            </div>
+                            <div class="menu-text">车牌识别</div>
+                        </a>
+                        <a href="face_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-smile"></i>
+                            </div>
+                            <div class="menu-text">人脸检测</div>
+                        </a>
+                        <a href="keypoint_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-male"></i>
+                            </div>
+                            <div class="menu-text">全身关键点检测</div>
+                        </a>
                         <a href="paddle_ocr.html" class="menu-item">
                             <div class="menu-icon">
                                 <i class="fas fa-eye"></i>
                             </div>
-                            <div class="menu-text">PaddleOCR</div>
-                            <div class="menu-badge">新</div>
+                            <div class="menu-text">在线官方案例</div>
                         </a>
                     </div>
                     
-
+ 
                 </nav>
                 
                 <!--<div class="sidebar-footer">
@@ -181,6 +204,13 @@
                                 <button class="btn btn-process action-btn" id="imageOcrProcessBtn" disabled>
                                     <i class="fas fa-cogs"></i> 开始识别
                                 </button>
+                            </div>
+                            <!-- 示例图片选择 -->
+                            <div class="sample-images-section" id="sampleImagesSection">
+                                <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
+                                <div class="sample-grid" id="sampleGrid">
+                                    <!-- 由 JS 动态生成 -->
+                                </div>
                             </div>
                         </div>
 
@@ -307,7 +337,7 @@
                             </div>
                             
                             <div class="prompt-preset-buttons">
-                                <button class="preset-btn" data-image="static/images/demo/4.png" data-prompt="请根据提供的机械工程图纸，执行以下任务：
+                                <button class="preset-btn" data-image="static/images/demo/4.png|static/images/demo/26.jpg|static/images/demo/27.png|static/images/demo/29.png" data-prompt="请根据提供的机械工程图纸，执行以下任务：
 
 1.  **全面识别**：仔细分析图纸，识别出图中出现的所有文字、数字、符号和标注信息，确保不遗漏任何细节。
 2.  **按 OCR 顺序排序**：将所有识别到的信息项，严格按照从左到右、从上到下的 OCR 识别顺序进行排序。
@@ -316,16 +346,18 @@
     - **序号**：从 1 开始的连续整数。
     - **内容**：该信息项的具体文本、数字或符号（例如 `// 0.2 A` 或 `65`）。
     - **类型**：描述该信息属于哪个类型的区域（如：尺寸标注、表面粗糙度、视图标识、标题栏、技术要求等）。
-    - **区域**：**精确描述**该信息所在的具体**位置名称**，例如：“主视图左侧、C-C剖视图上部、标题栏左下角、三维模型图右侧”等。此字段应反映其在图纸上的**相对位置**，而非强制使用预设列表。
-    - **坐标**：提供该信息在图纸上的左上角像素坐标及边界框尺寸，格式为 (left, top, width, height)，单位为像素。其中 left 和 top 为边界框左上角坐标，width 和 height 为边界框宽高。所有数值必须为整数，且基于原始输入图像分辨率，保证绝对不能超过图片的分辨率。
+    - **区域**：**精确描述**该信息所在的具体**位置名称**，例如："主视图左侧、C-C剖视图上部、标题栏左下角、三维模型图右侧"等。此字段应反映其在图纸上的**相对位置**，而非强制使用预设列表。
+    - **坐标**：提供该信息在图纸上的位置坐标，格式为 (左上角x,左上角y,右下角x,右下角y)，坐标范围为 [0, 1000]，所有数值为整数。
 
 **输出要求**：
 - 将所有信息整合成一个完整的 Markdown 表格。
 - 表格应包含上述所有字段。
-- 请确保信息完整、准确，并严格遵循指定的格式和顺序。">
+- 请确保信息完整、准确，并严格遵循指定的格式和顺序。
+
+">
                                     <i class="fas fa-image"></i> 工业图纸
                                 </button>
-                                <button class="preset-btn" data-image="static/images/demo/6.png" data-prompt="角色定义
+                                <button class="preset-btn" data-image="static/images/demo/6.png|static/images/demo/28.jpeg" data-prompt="角色定义
 
 你是一个专业的OCR（光学字符识别）与证件信息结构化分析助手。你的任务是准确、高效地从用户上传的证件图像中提取关键信息。
 
@@ -335,7 +367,7 @@
 
 提取字段说明
 
-你需要提取以下具体字段。如果某个字段在图片中无法找到或模糊不清，请在对应的值中填写 null（不要填写“未知”或空字符串）。
+你需要提取以下具体字段。如果某个字段在图片中无法找到或模糊不清，请在对应的值中填写 null（不要填写"未知"或空字符串）。
 
 document_type: 证件类型（例如：居民身份证、护照、驾驶证、行驶证、营业执照等）。
 name: 姓名/名称（个人姓名或企业/机构名称）。
@@ -374,7 +406,7 @@ place_of_birth: 出生地点（如果可见）。
 }">
                                     <i class="fas fa-id-card"></i> 证件识别
                                 </button>
-                                <button class="preset-btn" data-image="static/images/demo/5.png" data-prompt="角色定义
+                                <button class="preset-btn" data-image="static/images/demo/5.png|static/images/demo/35.png|static/images/demo/36.png" data-prompt="角色定义
 
 你是一个专业的OCR（光学字符识别）与票据结构化分析助手。你的任务是准确、高效地从用户上传的车票图像中提取关键信息。
 
@@ -430,7 +462,7 @@ seat_number: 座位号（如果可见）。
 或者需要我把输出格式改为Markdown表格以便人工核对？">
                                     <i class="fas fa-file-invoice"></i> 票据
                                 </button>
-                                <button class="preset-btn active" data-image="static/images/demo/1.jpeg" data-prompt="你是一个专业的图像分析助手。请仔细分析以下燃气表的图像，并按照以下要求提供详细信息：
+                                <button class="preset-btn" data-image="static/images/demo/1.jpeg" data-prompt="你是一个专业的图像分析助手。请仔细分析以下燃气表的图像，并按照以下要求提供详细信息：
 
 **1. 当前读数**
    - 请精确读取并报告当前显示的数值。
@@ -498,39 +530,58 @@ seat_number: 座位号（如果可见）。
 [在此处插入您的燃气表图像]">
                                     <i class="fas fa-fire"></i> 燃气计量
                                 </button>
-                                <button class="preset-btn" data-image="static/images/demo/2.jpeg" data-prompt="**任务：** 请对提供的图片进行详细分析，精确识别并提取所有可见的关键信息。
+                                <button class="preset-btn" data-image="static/images/demo/2.jpeg|static/images/demo/37.png" data-prompt="**任务：** 请对提供的图片进行详细分析，精确识别并提取所有可见的关键信息。
 
 **具体要求如下：**
 
-1.  **读取主表盘读数：**
-    *   识别主刻度盘上大指针所指向的精确位置。
-    *   主刻度盘的单位是毫米（mm），数字标记代表0.1 mm（例如，“0”到“10”之间是0.1 mm）。
-    *   每个大格（如“0”到“10”）被细分为10个小格，每个小格代表 **0.01 mm**。
-    *   请根据指针的位置，计算出精确的读数，并将结果以 **两位小数** 的形式输出（例如：`X.XX`）。注意，该读数应为 **11点几**（即在11.00到11.99之间）。
+1.  **识别仪表类型：**
+    *   首先确定该仪器的类型（例如：百分表、千分表、压力表、真空压力表、双针压力表等）。
+    *   如果是指针式仪表（如压力表），请识别表盘上有几个指针，每个指针的颜色分别是什么。
 
-2.  **识别仪表类型与参数：**
-    *   确定该仪器的名称（例如：千分表、百分表）。
-    *   提取其测量范围（量程）。在图中，这通常标注为 `0-50mm`。
-    *   提取其最小分度值（精度）。在图中，这通常标注为 `0.01 mm`。
+2.  **读取所有指针读数（重要 - 请按以下方法精确读取）：**
+    *   **如果是指针式仪表（如压力表）**，表盘上可能有多个指针（如红针、黑针、蓝针等），**每个指针都必须单独读取并输出**。
+    *   **压力表精确读数方法：**
+        - 步骤1：先看表盘上的数字刻度（如 0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6），确定指针指向哪两个数字之间。
+        - 步骤2：两个数字之间有多少个小格，每个小格代表多少值（例如 0到0.2之间有10小格，每小格=0.02）。
+        - 步骤3：指针指向第几个小格，计算精确读数 = 前一个数字 + (小格数 × 每小格值)。
+        - 步骤4：注意有些压力表有内外两圈刻度（如黑色外圈 MPa、红色内圈 bar/psi），不同指针可能使用不同刻度圈。
+    *   对于每个指针，请输出：
+        - 指针颜色
+        - 指针指向的刻度值（精确到最小分度）
+        - 对应的单位（如 MPa、bar、psi、kPa 等）
+    
+    *   **如果是百分表/千分表**，识别主刻度盘上大指针所指向的精确位置。主刻度盘的单位是毫米（mm），数字标记代表0.1 mm（例如，"0"到"10"之间是0.1 mm）。每个大格（如"0"到"10"）被细分为10个小格，每个小格代表 **0.01 mm**。请根据指针的位置，计算出精确的读数，并将结果以 **两位小数** 的形式输出（例如：`X.XX`）。注意，该读数应为 **11点几**（即在11.00到11.99之间）。
 
-3.  **识别品牌信息：**
-    *   找出仪表盘中央的品牌标志或文字。
+3.  **识别仪表参数：**
+    *   提取其测量范围（量程），如 `0-1.6 MPa`、`0-50mm` 等。
+    *   提取其最小分度值（精度）。
+    *   提取表盘上的单位标识。
 
-4.  **综合输出：**
+4.  **识别品牌与编号信息：**
+    *   找出仪表盘上的品牌标志、文字或编号。
+
+5.  **综合输出：**
     *   将以上所有信息整合成一个清晰、完整的回答。
-    *   请先给出主表盘的精确读数（两位小数），然后列出其他识别出的信息。
+    *   如果有多指针，请按指针颜色分别列出读数。
 
 ---
 
-**示例输出格式：**
-*   **主读数：** 0.35 mm
+**示例输出格式（压力表-多指针）：**
+*   **仪表类型：** 压力表
+*   **量程：** 0-1.6 MPa
+*   **指针1（黑色）：** 0.8 MPa
+*   **指针2（红色）：** 1.2 MPa
+*   **品牌：** [品牌名称]
+
+**示例输出格式（百分表）：**
 *   **仪表类型：** 百分表
+*   **主读数：** 0.35 mm
 *   **量程：** 0-50 mm
 *   **精度：** 0.01 mm
 *   **品牌：** [品牌名称]">
                                     <i class="fas fa-ruler-horizontal"></i> 百分表
                                 </button>
-                                <button class="preset-btn" data-image="static/images/demo/3.jpeg" data-prompt="角色定义
+                                <button class="preset-btn active" data-image="static/images/demo/33.png|static/images/demo/34.png|static/images/demo/3.jpeg" data-prompt="角色定义
 
 你是一个专业的工业仪表OCR识别与数据分析助手。你的任务是准确识别电子数显表（如数显千分表、卡尺、压力表、万用表等）屏幕上的读数、单位及状态图标。
 
@@ -552,11 +603,22 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
 
 输出格式要求
 
-必须且仅输出一个标准的JSON对象。
-不要输出任何Markdown标记（如  ... ），不要输出任何解释性文字或寒暄语。
-确保JSON格式合法，可以直接被代码解析。
+请先输出一个Markdown表格，列出每个识别到的信息项及其在图片中的位置坐标，格式如下：
+| 序号 | 内容 | 类型 | 区域 | 坐标 |
+|------|------|------|------|------|
+| 1 | 识别出的文本 | 类型名称 | 区域描述 | (x1, y1, x2, y2) |
+
+坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，范围为 [0, 1000]。
+
+然后再输出一个标准的JSON对象包含上述所有字段。
 
 示例输出
+
+| 序号 | 内容 | 类型 | 区域 | 坐标 |
+|------|------|------|------|------|
+| 1 | 0.0005 | 读数 | 屏幕中央 | (300, 200, 450, 240) |
+| 2 | mm | 单位 | 屏幕右侧 | (460, 205, 510, 235) |
+| 3 | ABS | 模式 | 屏幕左上 | (280, 180, 340, 200) |
 
 {
   device_type: 电子数显千分表,
@@ -637,7 +699,13 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
 5. **空值处理**：如果某字段在图中未显示或为空，请填入 null。
 6. **格式要求**：金额保留两位小数，日期格式为 YYYY-MM-DD。
 
-请输出纯粹的 JSON 格式，不要包含任何解释性文字：
+请先输出一个Markdown表格，列出每个识别到的信息项及其在图片中的位置坐标，格式如下：
+| 序号 | 内容 | 类型 | 区域 | 坐标 |
+|------|------|------|------|------|
+| 1 | 识别出的文本 | 类型名称 | 区域描述 | (x1, y1, x2, y2) |
+坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，范围为 [0, 1000]。
+
+然后再输出纯粹的 JSON 格式：
 
 ```json
 {
@@ -692,9 +760,339 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
 }">
                                     <i class="fas fa-wave-square"></i> 电子发票
                                 </button>
+                                <button class="preset-btn" data-image="static/images/demo/43.png|static/images/demo/32.png|static/images/demo/22.png" data-prompt="### 角色定义
+你是一个专业的钢丝绳无损检测与缺陷分析专家。你的任务是仔细分析上传的钢丝绳图像或检测信号图，识别并评估所有可见的缺陷类型、位置及严重程度。
+
+### 任务目标
+请对图像进行全场景分析，检测钢丝绳表面或内部的各类缺陷，包括但不限于：断丝、磨损、变形、锈蚀、疲劳裂纹等，并给出综合判定结果。
+
+### 关键识别规则
+1. **断丝检测**：识别钢丝绳表面断裂的单丝或多丝，记录断丝数量及分布位置。
+2. **磨损检测**：识别钢丝绳直径变细、外层钢丝磨损等迹象，评估磨损程度（轻微/中等/严重）。
+3. **变形检测**：识别钢丝绳的扭曲、压扁、打结、灯笼状变形等异常形态。
+4. **锈蚀检测**：识别钢丝绳表面的锈斑、锈坑、变色等腐蚀迹象，评估锈蚀程度。
+5. **电磁检测信号**：如果图像包含电磁检测（如漏磁MFL）信号图，请分析信号异常区域，定位缺陷位置。
+6. **综合判定**：根据以上检测结果，给出钢丝绳的整体安全状态评估（合格/预警/不合格）。
+
+### 输出格式要求
+请先输出一个Markdown表格，列出每个识别到的缺陷或关键区域及其位置坐标，格式如下：
+| 序号 | 缺陷类型 | 详细描述 | 位置区域 | 坐标 |
+|------|----------|----------|----------|------|
+| 1 | 缺陷类型名称 | 详细描述 | 位置描述 | (x1, y1, x2, y2) |
+
+坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，范围为 [0, 1000]。
+
+然后再输出综合判定结果。
+
+### 示例输出
+| 序号 | 缺陷类型 | 详细描述 | 位置区域 | 坐标 |
+|------|----------|----------|----------|------|
+| 1 | 断丝 | 表面2根钢丝断裂，断口平整 | 距左端约15cm处 | (200, 300, 250, 400) |
+| 2 | 磨损 | 外层钢丝磨损约30%，直径减小 | 中部区域 | (400, 280, 600, 420) |
+| 3 | 锈蚀 | 表面大面积黄褐色锈斑，伴有轻微点蚀 | 右半段 | (650, 290, 850, 410) |
+
+**综合判定结果：**
+- **整体安全状态：** 预警
+- **主要问题：** 断丝2根 + 中度磨损 + 局部锈蚀
+- **建议：** 加强监测，建议在1个月内安排更换">
+                                    <i class="fas fa-cable-car"></i> 钢丝绳缺陷检测
+                                </button>
+                                <button class="preset-btn" data-image="static/images/demo/23.png|static/images/demo/31.png" data-prompt="### 角色定义
+你是一个专业的燃气管道接口安装质量检查专家。你的任务是仔细分析上传的接口缠生料带照片，检查生料带缠绕质量和接口安装是否符合规范要求。
+
+### 任务目标
+请对图像进行详细分析，检测以下关键指标：
+1. **生料带缠绕质量**：检查生料带缠绕是否均匀、平整，有无松散、重叠不均或缺失。
+2. **外露丝扣检查**：检测连接完成后外露螺纹的牙数是否在1-3扣的标准范围内。
+3. **接口密封性评估**：根据生料带缠绕状态和丝扣外露情况，评估接口密封质量。
+4. **安装规范性**：判断整体安装是否符合燃气管道施工规范。
+
+### 关键识别规则
+1. **生料带缠绕**：观察生料带在螺纹上的缠绕层数是否均匀，边缘是否整齐，有无明显缺陷。
+2. **外露丝扣计数**：准确数出连接后外露的螺纹牙数，标准要求为1-3扣。
+3. **照片完整性**：确认照片是否清晰展示了接口缠生料带的完整状态。
+
+### 输出格式要求
+请先输出一个Markdown表格，列出每个识别到的检查项及其位置坐标，格式如下：
+| 序号 | 检查项 | 检测结果 | 位置区域 | 坐标 |
+|------|--------|----------|----------|------|
+| 1 | 检查项名称 | 检测结果描述 | 位置描述 | (x1, y1, x2, y2) |
+
+坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，范围为 [0, 1000]。
+
+然后再输出综合检查结论。
+
+### 示例输出
+| 序号 | 检查项 | 检测结果 | 位置区域 | 坐标 |
+|------|--------|----------|----------|------|
+| 1 | 生料带缠绕 | 缠绕均匀，无松散，约8-10层 | 接口中部 | (200, 300, 500, 450) |
+| 2 | 外露丝扣 | 外露2扣，符合1-3扣标准 | 接口末端 | (500, 300, 600, 450) |
+| 3 | 接口整体 | 安装规范，密封良好 | 整体接口 | (150, 250, 650, 500) |
+
+**综合检查结论：**
+- **检查结果：** 合格
+- **生料带缠绕：** 均匀平整，符合要求
+- **外露丝扣：** 2扣（标准1-3扣），合格
+- **建议：** 无">
+                                    <i class="fas fa-tape"></i> 接口缠生料带
+                                </button>
+                                <button class="preset-btn" data-image="static/images/demo/24.png|static/images/demo/44.png" data-prompt="### 角色定义
+你是一个专业的工业高危作业安全监督与劳保穿戴检查专家。你的任务是仔细分析上传的作业人员图像，全面检查其个人防护装备（PPE）的佩戴完整性和规范性。
+
+### 任务目标
+请对图像进行全场景分析，检测作业人员的劳保穿戴情况，包括但不限于：安全帽、安全带、防滑鞋、防护服、防护手套、护目镜等，并给出综合判定。
+
+### 关键识别规则
+1. **安全帽检测**：判断作业人员是否正确佩戴安全帽，帽带是否系紧，安全帽颜色。
+2. **安全带检测**：判断是否佩戴全身式安全带，挂钩是否可靠连接。
+3. **防滑鞋检测**：判断是否穿着防滑/安全鞋。
+4. **防护服检测**：判断是否穿着符合要求的工作防护服（如反光服、防静电服等）。
+5. **其他防护装备**：检测是否佩戴防护手套、护目镜、面罩等其他必要装备。
+6. **佩戴规范性**：评估每项装备的佩戴是否规范，有无松动、缺失或错误佩戴。
+
+### 输出格式要求
+请先输出一个Markdown表格，列出每个检测到的防护装备及其位置坐标，格式如下：
+| 序号 | 防护装备 | 检测结果 | 佩戴位置 | 坐标 |
+|------|----------|----------|----------|------|
+| 1 | 装备名称 | 检测结果描述 | 身体位置描述 | (x1, y1, x2, y2) |
+
+坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，范围为 [0, 1000]。
+
+然后再输出综合检查结论。
+
+### 示例输出
+| 序号 | 防护装备 | 检测结果 | 佩戴位置 | 坐标 |
+|------|----------|----------|----------|------|
+| 1 | 安全帽 | 已佩戴，黄色，帽带系紧，规范 | 头部 | (300, 100, 400, 200) |
+| 2 | 安全带 | 已佩戴，挂钩连接可靠 | 躯干 | (320, 250, 420, 500) |
+| 3 | 防滑鞋 | 已穿着 | 脚部 | (300, 550, 450, 600) |
+| 4 | 防护服 | 已穿着，反光服 | 全身 | (280, 150, 480, 580) |
+
+**综合检查结论：**
+- **检查结果：** 合格
+- **佩戴齐全：** 安全帽、安全带、防滑鞋、防护服
+- **佩戴规范性：** 全部规范
+- **建议：** 继续保持">
+                                    <i class="fas fa-hard-hat"></i> 穿戴安全检测
+                                </button>
+                                <button class="preset-btn" data-image="static/images/demo/45.png|static/images/demo/46.png" data-prompt="### 角色定义
+你是一个专业的动火作业安全监督与防火装备检查专家。你的任务是仔细分析上传的动火作业人员图像，全面检查其防火个人防护装备（PPE）的佩戴完整性和规范性。
+
+### 检查内容
+请对图像中的作业人员进行详细分析，检查以下防火装备的佩戴情况：
+
+1. **防火服：**
+   - 是否穿着专用防火服（阻燃服）。
+   - 防火服是否完好（无破损、无油污严重污染）。
+   - 是否正确穿戴（拉链拉好、扣子扣好、袖口裤口扎紧）。
+
+2. **防护面罩/护目镜：**
+   - 是否佩戴焊接防护面罩或防火护目镜。
+   - 面罩是否放下处于防护位置。
+   - 镜片是否清洁、无严重划痕影响视线。
+
+3. **防火手套：**
+   - 是否佩戴专用防火/焊接手套。
+   - 手套是否完好（无破损、无烧焦）。
+   - 手套袖口是否覆盖住防火服袖口。
+
+4. **防护脚套/防火鞋：**
+   - 是否穿着防火鞋或防护脚套。
+   - 鞋面是否完好无破损。
+
+5. **安全帽：**
+   - 是否佩戴安全帽。
+   - 安全帽是否完好，帽带是否系好。
+
+6. **其他防护：**
+   - 是否佩戴耳塞/耳罩（如需要）。
+   - 身上是否有易燃物（如敞开的衣袋、化纤衣物外露等）。
+
+### 输出格式要求
+请按以下格式输出检查结果：
+
+**动火作业防火穿戴检查报告**
+- **防火服：** [已穿戴/未穿戴/不规范] - [具体描述]
+- **防护面罩/护目镜：** [已佩戴/未佩戴/不规范] - [具体描述]
+- **防火手套：** [已佩戴/未佩戴/不规范] - [具体描述]
+- **防火鞋/脚套：** [已穿戴/未穿戴] - [具体描述]
+- **安全帽：** [已佩戴/未佩戴/不规范] - [具体描述]
+- **其他防护：** [描述]
+- **总体评价：** [合格/不合格]
+- **存在问题：** [列出所有不符合项]
+- **整改建议：** [针对不合格项给出具体整改意见]">
+                                    <i class="fas fa-fire-extinguisher"></i> 防火穿戴合规
+                                </button>
+                                <button class="preset-btn" data-image="static/images/demo/47.png|static/images/demo/50.png|static/images/demo/48.png|static/images/demo/49.png" data-prompt="### 角色定义
+你是一个专业的临时用电安全与电缆绝缘检测专家。你的任务是仔细分析上传的电缆线图像，严格区分电缆表面的**真实缺陷**与**表面污渍/灰尘**，准确检测破损、裂纹、老化等绝缘层缺陷，并评估其安全状态。
+
+### 重要：灰尘与缺陷的严格区分规则
+电缆表面常见的**脚印、灰尘、泥土**等属于**表面污渍**，不是绝缘层缺陷，**不得判定为破损或裂纹**。请按以下标准严格区分：
+
+**表面污渍/灰尘的特征（不算缺陷）：**
+- 颜色为灰白色、土黄色、浅棕色，附着在电缆表面
+- 形状不规则，呈片状、点状分布，无固定形态
+- 不改变电缆绝缘层的表面平整度（摸上去是平的）
+- 可以用布擦除的痕迹（如脚印形状）
+- 电缆本身的绝缘层颜色在污渍下方仍然完好
+
+**真实缺陷的特征（算缺陷）：**
+- **破损**：绝缘层有**缺口、凹陷、穿孔**，能看到内部不同颜色的材料或导体
+- **裂纹**：绝缘层表面有**线状裂开**，裂口处颜色加深，能看到裂缝深度
+- **磨损**：绝缘层**变薄**，表面纹理消失，露出下层材料
+- **老化**：绝缘层颜色**整体发黑、发黄**，非局部污渍，而是材料本身变色
+- **裸露导体**：绝缘层完全脱落，**直接看到内部铜丝/铝丝**
+
+### 检测内容
+请对图像中的电缆线进行详细分析，检测以下方面：
+
+1. **外观完整性检测（严格区分污渍与缺陷）：**
+   - 电缆线外绝缘层是否有**破损**（缺口、划伤、穿孔等）——注意区分破损与表面灰尘。
+   - 是否有**裂纹**（表面细纹、龟裂）——裂纹是线状裂开，不是片状污渍。
+   - 是否有**磨损**（外皮变薄、磨平）。
+   - 是否有**压痕或变形**（被重物压扁、扭曲）。
+
+2. **老化程度评估：**
+   - 绝缘层颜色是否**整体发黑、发黄或变色**（材料本身老化，非表面灰尘）。
+   - 表面是否**硬化、发脆**。
+   - 是否有**油污侵蚀**导致绝缘层膨胀或软化。
+   - 是否有**裸露导体**（绝缘层完全脱落，露出内部铜丝/铝丝）。
+
+3. **接头与连接处检查：**
+   - 电缆接头是否**包扎完好**（绝缘胶带缠绕规范）。
+   - 接头处是否有**裸露导体**。
+   - 接头是否**防水处理**到位。
+   - 是否有**分叉或散开**的线头。
+
+4. **使用环境评估：**
+   - 电缆是否**泡水**或处于潮湿环境中。
+   - 电缆是否被**重物压覆**。
+   - 电缆是否经过**锐利边缘**（有被割伤风险）。
+   - 电缆是否有**过度弯曲**（弯曲半径过小）。
+
+### 缺陷定位要求
+对于检测到的每个**真实缺陷**（非表面污渍），请标注其位置坐标，格式如下：
+| 序号 | 缺陷类型 | 严重程度 | 位置描述 | 坐标 |
+|------|----------|----------|----------|------|
+| 1 | 破损 | 严重 | 电缆中部 | (x1, y1, x2, y2) |
+
+坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，范围为 [0, 1000]。
+
+### 输出格式要求
+请按以下格式输出检测结果：
+
+**电缆线绝缘检测报告**
+- **整体绝缘状态：** [良好/一般/差/危险]
+- **表面污渍情况：** [有脚印灰尘/有泥土/无显著污渍]（仅描述，不计为缺陷）
+- **破损点数量：** [N个]（仅统计真实破损，不含污渍）
+- **裂纹数量：** [N条]（仅统计真实裂纹，不含表面纹路）
+- **老化程度：** [无/轻微/中等/严重]
+- **裸露导体：** [有/无]
+- **接头状态：** [规范/不规范/无接头]
+- **环境风险：** [无/泡水/压覆/锐边/过度弯曲]
+- **综合判定：** [合格/不合格]
+- **处理建议：** [如需维修或更换，给出具体建议]">
+                                    <i class="fas fa-bolt"></i> 电缆线检测
+                                </button>
+                                <button class="preset-btn" data-image="static/images/demo/25.png|static/images/demo/30.png" data-prompt="### 角色定义
+你是一个专业的图像目标检测与物品识别专家，擅长在复杂场景（包括物品堆叠、遮挡、密集排列）中精确识别和计数。你的任务是仔细分析上传的图片，识别图中出现的所有物品，统计每种物品的数量，并标注每个物品的位置坐标。
+
+### 任务目标
+请对图像进行全场景分析，检测并识别图中所有可见的物品对象，包括但不限于：工具、设备、材料、个人物品等。对每种物品进行计数，并给出每个物品的精确位置。
+
+### 关键识别规则（重要）
+1. **全面检测**：不遗漏图中任何可见的物品，无论大小。
+2. **遮挡处理（核心规则）**：对于堆叠或部分遮挡的物品，**每个物品必须单独标注坐标，绝不能将多个重叠物品合并为一个坐标**。根据可见部分推断完整物品，分别计数并分别标注坐标。例如：一叠盘子中露出3个边缘，则计为3个，每个盘子各自有一个独立的坐标框。
+3. **分类统计**：将相同类型的物品归为一类，统计每类物品的总数。
+4. **位置标注（核心规则）**：对每个检测到的物品，用独立的边界框标注其位置。**即使多个物品堆叠在一起，每个物品也必须有自己的独立坐标，不能合并成一个坐标**。对于被遮挡的物品，标注其可见部分的边界框。
+5. **重复物品**：对于多个相同物品（如多个螺丝、多本书），**每个物品分别标注一个独立的坐标**，不能合并。
+6. **计数验证**：输出前请自行验证计数是否合理。检查是否有遗漏或重复计数。对于明显成堆的物品，根据堆叠层数和露出部分估算数量。
+7. **区分相似物品**：注意区分外观相似但功能不同的物品（如不同规格的扳手、螺丝刀），分别归类计数。
+8. **坐标独立性**：表格中每一行对应一个物品，每个物品有且仅有一个坐标。N个物品必须有N行，不能少。
+
+### 输出格式要求
+请先输出一个Markdown表格，列出每个识别到的物品及其位置坐标，格式如下：
+| 序号 | 物品名称 | 数量统计 | 位置区域 | 坐标 |
+|------|----------|----------|----------|------|
+| 1 | 物品名称 | 该类第几个 | 位置描述 | (x1, y1, x2, y2) |
+
+**重要：表格中每一行代表一个独立的物品，每个物品都必须有自己独立的坐标。如果有N个物品，表格必须有N行，每行一个坐标。**
+
+坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，范围为 [0, 1000]。
+
+然后再输出物品分类统计汇总。
+
+### 示例输出（正确示范）
+| 序号 | 物品名称 | 数量统计 | 位置区域 | 坐标 |
+|------|----------|----------|----------|------|
+| 1 | 活动扳手 | 第1个 | 画面左侧 | (100, 200, 250, 400) |
+| 2 | 活动扳手 | 第2个 | 画面右侧 | (500, 180, 650, 380) |
+| 3 | 十字螺丝刀 | 第1个 | 画面中央 | (300, 300, 400, 500) |
+| 4 | 安全帽 | 第1个 | 画面左上 | (50, 50, 150, 180) |
+
+**物品分类统计汇总：**
+- 活动扳手：2个
+- 十字螺丝刀：1个
+- 安全帽：1个
+- **总计：4个物品**">
+                                    <i class="fas fa-boxes"></i> 物品识别
+                                </button>
+                                <button class="preset-btn" data-image="static/images/demo/38.png|static/images/demo/39.png|static/images/demo/40.png|static/images/demo/41.png|static/images/demo/42.png" data-prompt="### 角色定义
+你是一个专业的钢管焊接前除锈质量检查专家。你的任务是仔细分析上传的钢管焊口区域图像，判断焊口及其周围是否已经进行了有效的除锈处理，并评估除锈质量等级。
+
+### 检查内容
+请对图像中的钢管焊口区域进行详细分析，检查以下方面：
+
+1. **除锈程度评估：**
+   - 焊口表面是否有可见的铁锈、氧化皮、污渍或涂层残留。
+   - 金属表面是否露出均匀的金属光泽（银白色或灰白色）。
+   - 评估除锈面积占比：已除锈区域占焊口总面积的比例（百分比）。
+   - 判断除锈方法（如：打磨除锈、喷砂除锈、化学除锈等），根据表面纹理特征推断。
+
+2. **除锈质量分级（参照国家标准）：**
+   - **Sa3级（一级/优秀）**：表面呈均匀的金属光泽，无任何可见的铁锈、氧化皮、污渍、涂层残留。完全洁净。
+   - **Sa2.5级（二级/良好）**：表面几乎全部露出金属光泽，允许有轻微的点状或条纹状锈迹残留，但总面积不超过5%。
+   - **Sa2级（三级/合格）**：表面大部分露出金属光泽，允许有少量锈斑、氧化皮残留，但总面积不超过30%。
+   - **Sa1级（四级/不合格）**：表面仅有轻度除锈处理，仍有大量锈迹、氧化皮或涂层残留，金属光泽不明显。
+   - **未处理**：表面完全没有经过除锈处理，覆盖大量铁锈、氧化皮。
+
+3. **焊口区域细节检查：**
+   - 焊口坡口面是否打磨光滑。
+   - 焊口边缘是否有毛刺或尖锐棱角需要处理。
+   - 焊口两侧各50mm范围内的管体表面是否也进行了除锈处理。
+   - 是否有油污、水分或其他污染物。
+
+4. **综合判定：**
+   - 给出除锈质量是否合格的结论（合格/不合格）。
+   - 如果不合格，指出具体问题及需要重新处理的部位。
+   - 如果合格，确认是否可以进入下一步焊接工序。
+
+### 输出格式要求
+请按以下格式输出检查结果：
+
+**除锈质量检查报告**
+- **除锈等级：** [Sa3 / Sa2.5 / Sa2 / Sa1 / 未处理]
+- **除锈面积占比：** [百分比]
+- **除锈方法推断：** [打磨/喷砂/化学/不确定]
+- **金属光泽度：** [良好/一般/差/无]
+- **残留物情况：** [描述残留的铁锈、氧化皮、涂层等]
+- **焊口坡口状态：** [光滑/有毛刺/需处理]
+- **边缘清理范围：** [焊口两侧清理宽度，单位mm]
+- **油污/水分：** [有/无]
+- **综合判定：** [合格/不合格]
+- **处理建议：** [如需重新处理，给出具体建议]">
+                                    <i class="fas fa-tools"></i> 钢管焊口除锈
+                                </button>
                             </div>
                             
                             <div class="prompt-input-area">
+                                <div class="prompt-input-header">
+                                    <i class="fas fa-pen"></i>
+                                    <span>提示词</span>
+                                    <button class="btn btn-sm btn-copy" onclick="copyPromptText()" title="复制提示词" style="margin-left: auto;">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
                                 <textarea id="rightPromptInput" class="prompt-textarea"
                                     placeholder="选择上方预设提示词，或在此直接输入自定义提示词...">
 你是一个专业的图像分析助手。请仔细分析以下燃气表的图像，并按照以下要求提供详细信息：
@@ -741,7 +1139,41 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
                                     <i class="fas fa-file-alt"></i>
                                     <span>输出结果</span>
                                 </div>
-                                <textarea id="outputContent" class="output-textarea" placeholder="识别完成后，输出结果将显示在这里..." readonly></textarea>
+                                <!-- 结果区域：左图右JSON -->
+                                <div class="result-split-layout" id="resultSplitLayout" style="display: none;">
+                                    <!-- 左侧：结果图片 -->
+                                    <div class="result-image-panel">
+                                        <div class="result-image-header">
+                                            <i class="fas fa-image"></i>
+                                            <span>标注结果图</span>
+                                            <span class="result-image-hint">点击图片可放大</span>
+                                        </div>
+                                        <div class="result-image-container">
+                                            <img id="resultImage" src="" alt="识别结果图片" class="result-image" onclick="openFullscreenViewer(this.src)">
+                                            <div class="result-image-overlay">
+                                                <i class="fas fa-search-plus"></i>
+                                                <span>点击放大</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- 右侧：JSON/文本结果（可切换） -->
+                                    <div class="result-json-panel">
+                                        <div class="result-json-header">
+                                            <i class="fas fa-code"></i>
+                                            <span>识别结果</span>
+                                            <div class="result-tab-buttons">
+                                                <button class="result-tab-btn active" data-tab="json" onclick="switchResultTab('json')">JSON</button>
+                                                <button class="result-tab-btn" data-tab="raw" onclick="switchResultTab('raw')">原文</button>
+                                            </div>
+                                            <button class="btn btn-sm btn-copy" onclick="copyJsonResult()" title="复制内容">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <textarea id="outputContent" class="output-textarea json-output" placeholder="识别完成后，JSON结果将显示在这里..." readonly></textarea>
+                                    </div>
+                                </div>
+                                <!-- 兼容旧版纯文本输出（无坐标数据时显示） -->
+                                <textarea id="outputContentFallback" class="output-textarea" placeholder="识别完成后，输出结果将显示在这里..." readonly style="display: none;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -763,9 +1195,9 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
         // 加载默认示例图片
         async function loadDefaultImage() {
             try {
-                const response = await fetch('static/images/demo/1.jpeg');
+                const response = await fetch('static/images/demo/33.png');
                 const blob = await response.blob();
-                const file = new File([blob], '1.jpeg', { type: 'image/jpeg' });
+                const file = new File([blob], '33.png', { type: 'image/jpeg' });
                 // 使用 main.js 中的 previewFile 函数
                 if (typeof previewFile === 'function') {
                     previewFile(file);
@@ -794,7 +1226,11 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
         // 调用后端自定义提示词接口，处理并显示结果
         async function processWithPrompt(prompt) {
             const outputContent = document.getElementById('outputContent');
+            const outputFallback = document.getElementById('outputContentFallback');
+            const resultSplitLayout = document.getElementById('resultSplitLayout');
+            const resultImage = document.getElementById('resultImage');
             const processBtn = document.getElementById('imageOcrProcessBtn');
+            
             if (!prompt) {
                 alert('请输入提示词');
                 return;
@@ -804,7 +1240,6 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
             if (!currentFile || !currentFile.serverFilename) {
                 if (currentFile) {
                     await handleUpload();
-                    // handleUpload 中设置的是旧按钮 processBtn（null），手动启用新按钮
                     if (processBtn) processBtn.disabled = false;
                 } else {
                     alert('请先上传图片');
@@ -817,10 +1252,22 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
                 return;
             }
 
-            // 显示处理中状态
-            outputContent.value = '正在处理...';
-            outputContent.removeAttribute('readonly');
-
+            // 显示处理中状态 - 动画效果
+            resultSplitLayout.style.display = 'flex';
+            outputFallback.style.display = 'none';
+            
+            // 左侧图片区域显示加载动画
+            resultImage.src = '';
+            resultImage.alt = '处理中...';
+            var imageContainer = document.querySelector('.result-image-container');
+            if (imageContainer) {
+                imageContainer.innerHTML = '<div class="result-loading"><div class="result-loading-spinner"><i class="fas fa-spinner fa-pulse fa-3x"></i></div><div class="result-loading-text">正在识别中...</div></div>';
+            }
+            
+            // 右侧JSON区域显示加载动画
+            outputContent.value = '';
+            outputContent.placeholder = '正在处理，请稍候...';
+            
             // 按钮旋转动画
             if (processBtn) {
                 processBtn.disabled = true;
@@ -853,11 +1300,38 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
                     throw new Error(data.error || `请求失败: ${response.status}`);
                 }
 
-                // 显示结果到输出框
-                if (data.raw_text) {
-                    outputContent.value = data.raw_text;
+                // 保存 raw_text 和 json_result 供切换使用
+                window._lastRawText = data.raw_text || '';
+                window._lastJsonResult = data.json_result || '';
+                
+                // 判断是否有结果图片和JSON数据
+                if (data.result_image && data.json_result) {
+                    // 恢复图片容器
+                    if (imageContainer) {
+                        imageContainer.innerHTML = '<img id="resultImage" src="" alt="识别结果图片" class="result-image" onclick="openFullscreenViewer(this.src)"><div class="result-image-overlay"><i class="fas fa-search-plus"></i><span>点击放大</span></div>';
+                    }
+                    var newResultImage = document.getElementById('resultImage');
+                    if (newResultImage) {
+                        newResultImage.src = data.result_image;
+                    }
+                    
+                    // 默认显示JSON结果
+                    outputContent.value = data.json_result;
+                    outputContent.placeholder = '识别完成后，JSON结果将显示在这里...';
+                    // 重置tab状态为JSON
+                    document.querySelectorAll('.result-tab-btn').forEach(function(btn) {
+                        btn.classList.toggle('active', btn.dataset.tab === 'json');
+                    });
+                    
                 } else {
-                    outputContent.value = '未获取到识别结果';
+                    // 兼容旧版：只显示纯文本
+                    resultSplitLayout.style.display = 'none';
+                    outputFallback.style.display = 'block';
+                    if (data.raw_text) {
+                        outputFallback.value = data.raw_text;
+                    } else {
+                        outputFallback.value = '未获取到识别结果';
+                    }
                 }
 
                 // 更新进度
@@ -871,7 +1345,9 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
 
             } catch (error) {
                 console.error('自定义提示词处理失败:', error);
-                outputContent.value = '处理失败: ' + error.message;
+                resultSplitLayout.style.display = 'none';
+                outputFallback.style.display = 'block';
+                outputFallback.value = '处理失败: ' + error.message;
                 
                 if (typeof updateProgress === 'function') {
                     updateProgress(0, '处理失败');
@@ -886,6 +1362,123 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
                     processBtn.innerHTML = '<i class="fas fa-cogs"></i> 开始识别';
                 }
             }
+        }
+
+        // 切换结果Tab（JSON / 原文）
+        function switchResultTab(tab) {
+            const outputContent = document.getElementById('outputContent');
+            // 更新按钮状态
+            document.querySelectorAll('.result-tab-btn').forEach(function(btn) {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            // 切换内容
+            if (tab === 'json') {
+                outputContent.value = window._lastJsonResult || '';
+            } else {
+                outputContent.value = window._lastRawText || '';
+            }
+        }
+
+        // 复制提示词到剪贴板
+        function copyPromptText() {
+            const promptInput = document.getElementById('rightPromptInput');
+            const text = promptInput ? promptInput.value : '';
+            if (!text) {
+                showCopyToast('提示词为空，无法复制');
+                return;
+            }
+            copyToClipboard(text, '提示词已复制到剪贴板');
+        }
+
+        // 复制当前结果到剪贴板（根据当前激活的tab复制对应内容）
+        function copyJsonResult() {
+            const outputContent = document.getElementById('outputContent');
+            const text = outputContent.value;
+            if (!text) {
+                return;
+            }
+            
+            // 判断当前激活的是哪个tab
+            var activeTab = document.querySelector('.result-tab-btn.active');
+            var tabName = activeTab ? activeTab.dataset.tab : 'json';
+            var label = tabName === 'json' ? 'JSON' : '原文';
+            
+            copyToClipboard(text, label + ' 已复制到剪贴板');
+        }
+
+        // 通用复制函数
+        function copyToClipboard(text, successMessage) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showCopyToast(successMessage || '已复制到剪贴板');
+                }).catch(function() {
+                    fallbackCopyText(text, successMessage);
+                });
+            } else {
+                fallbackCopyText(text, successMessage);
+            }
+        }
+
+        function fallbackCopyText(text, successMessage) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showCopyToast(successMessage || '已复制到剪贴板');
+            } catch (e) {
+                showCopyToast('复制失败，请手动选择复制');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // 显示复制成功提示
+        function showCopyToast(message) {
+            let toast = document.getElementById('copyToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'copyToast';
+                toast.className = 'copy-toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // ESC键关闭Lightbox
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        // 更新示例图片网格
+        function updateSampleGrid(imagePaths) {
+            var grid = document.getElementById('sampleGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            imagePaths.forEach(function(path, idx) {
+                var fileName = path.split('/').pop();
+                var item = document.createElement('div');
+                item.className = 'sample-item' + (idx === 0 ? ' selected' : '');
+                item.setAttribute('data-src', path);
+                item.innerHTML = '<img src="' + path + '" alt="' + fileName + '" loading="lazy">' +
+                    '<span>' + fileName + '</span>';
+                item.addEventListener('click', function() {
+                    grid.querySelectorAll('.sample-item').forEach(function(si) {
+                        si.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    loadImageByPath(path);
+                });
+                grid.appendChild(item);
+            });
         }
 
         // 预设提示词按钮功能 + 自定义处理逻辑
@@ -919,10 +1512,22 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
                         if (outputEl) {
                             outputEl.value = '';
                         }
+                        // 隐藏结果分割布局，显示回退文本框
+                        var splitLayout = document.getElementById('resultSplitLayout');
+                        var fallbackEl = document.getElementById('outputContentFallback');
+                        if (splitLayout) splitLayout.style.display = 'none';
+                        if (fallbackEl) {
+                            fallbackEl.value = '';
+                            fallbackEl.style.display = 'none';
+                        }
                         // 切换对应的图片
-                        var imagePath = this.getAttribute('data-image');
-                        if (imagePath) {
-                            loadImageByPath(imagePath);
+                        // 支持 data-image 属性，单张或多张用 | 分隔
+                        var imageAttr = this.getAttribute('data-image');
+                        if (imageAttr) {
+                            var imagePaths = imageAttr.split('|').map(function(s) { return s.trim(); });
+                            updateSampleGrid(imagePaths);
+                            // 自动加载第一张
+                            loadImageByPath(imagePaths[0]);
                         }
                     }
                 });
@@ -930,6 +1535,15 @@ raw_text: 屏幕上识别到的所有原始文本（用于辅助核对）。
 
             // 页面加载后自动加载默认图片（燃气表）
             loadDefaultImage();
+            // 初始化示例图片网格（默认显示燃气表的图片）
+            var defaultActiveBtn = document.querySelector('.preset-btn.active');
+            if (defaultActiveBtn) {
+                var imgAttr = defaultActiveBtn.getAttribute('data-image');
+                if (imgAttr) {
+                    var paths = imgAttr.split('|').map(function(s) { return s.trim(); });
+                    updateSampleGrid(paths);
+                }
+            }
             // 默认图片加载后，main.js 的 previewFile 会尝试禁用 processBtn（null），
             // 需要手动启用 imageOcrProcessBtn
             setTimeout(function() {

@@ -95,3 +95,23 @@ tmp/
 #.env
 *.env.local
 *.env.*.local
+
+# 文档和README（非运行必需）
+README.md
+*.md
+
+# Docker相关（避免循环引用）
+docker-compose.yml
+docker-compose-linux.yml
+
+# 打包文件
+*.tar
+*.tar.gz
+*.zip
+
+# 测试脚本和临时文件（已清理，但以防残留）
+backend/test_*.py
+backend/download_*.py
+backend/fix_*.py
+backend/gen_*.py
+backend/test_*.jpg

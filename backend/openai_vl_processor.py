@@ -31,7 +31,7 @@ class OpenAIVLProcessor:
         # 从环境变量获取配置
         self.api_key = api_key or os.getenv('MODELSCOPE_API_KEY',"ms-83c39231-b66e-4ed8-8a2b-52c9ded22a51")
         self.base_url = base_url or os.getenv('MODELSCOPE_BASE_URL',"https://api-inference.modelscope.cn/v1")
-        self.model = model or os.getenv('MODELSCOPE_MODEL', 'Qwen/Qwen3-VL-30B-A3B-Instruct')
+        self.model = model or os.getenv('MODELSCOPE_MODEL', 'Qwen/Qwen3-VL-235B-A22B-Instruct')
         
         # 验证配置
         if not self.api_key:
@@ -280,12 +280,21 @@ class OpenAIVLProcessor:
             table_lines = []
             
             for line in lines:
-                if '|' in line and ('---' in line or '序号' in line or '内容' in line):
-                    in_table = True
+                # 检测表格开始：包含 | 且包含 ---（分隔线）或 序号/内容/坐标 等表头关键字
+                has_pipe = '|' in line
+                is_table_header = '---' in line or '序号' in line or '内容' in line or '坐标' in line or '类型' in line or '区域' in line
+                
+                if has_pipe and (is_table_header or in_table):
+                    if not in_table:
+                        # 检查这一行是否真的是表格（至少2个 |）
+                        if line.count('|') >= 2:
+                            in_table = True
+                            table_lines.append(line)
+                    else:
+                        table_lines.append(line)
+                elif in_table and has_pipe:
                     table_lines.append(line)
-                elif in_table and '|' in line:
-                    table_lines.append(line)
-                elif in_table and '|' not in line and line.strip():
+                elif in_table and not has_pipe and line.strip():
                     # 表格结束
                     break
             
@@ -344,6 +353,17 @@ class OpenAIVLProcessor:
                 logger.warning("Markdown表格解析失败，尝试其他格式解析")
                 text_items = self._parse_fallback_format(response_content, img_width, img_height)
             
+            # 尝试从JSON代码块中提取更多信息（即使表格已经解析到了一些）
+            json_items = self._parse_json_format(response_content, img_width, img_height)
+            if json_items:
+                # 合并JSON提取的项（去重）
+                existing_texts = {item.get('text', '') for item in text_items}
+                for item in json_items:
+                    if item.get('text', '') not in existing_texts:
+                        text_items.append(item)
+                        existing_texts.add(item.get('text', ''))
+                logger.info(f"从JSON补充了 {len(json_items)} 个项，合并后共 {len(text_items)} 个")
+            
             # 分析结果
             analysis_result = self._analyze_results(text_items)
             
@@ -366,45 +386,136 @@ class OpenAIVLProcessor:
     
     def _parse_coordinates(self, coord_text: str, img_width: int, img_height: int, region: str) -> tuple:
         """
-        解析坐标文本，支持三种格式：
-        1. Qwen-VL 原生格式: <box>(x1,y1),(x2,y2)</box>
-        2. 方括号角点格式: [x1, y1, x2, y2]
-        3. 传统宽高格式: (left, top, width, height)
-        返回归一化到 [0,1000] 的 (left, top, width, height)
+        解析坐标文本，支持多种格式，返回 (left, top, width, height) 绝对像素坐标。
+        
+        Qwen-VL 系列模型的 <box> 格式坐标范围为 [0, 1000]（归一化坐标），
+        需要映射到实际图片尺寸。
         """
         try:
             import re
             
-            # 格式1: Qwen-VL 的 <box>(x1,y1),(x2,y2)</box>
-            box_match = re.search(r'<box>\s*\(\s*(\d+\.?\d*)\s*,\s*(\d+\.?\d*)\s*\)\s*,\s*\(\s*(\d+\.?\d*)\s*,\s*(\d+\.?\d*)\s*\)\s*</box>', coord_text, re.IGNORECASE)
+            # 格式1: Qwen-VL 原生 <box> 格式
+            # 模型输出格式极其不稳定，可能的各种变体：
+            #   <box>(x1,y1),(x2,y2)</box>
+            #   <box>x1,y1,x2,y2</box>
+            #   <box>x1,y1),(x2,y2</box>  (括号不匹配)
+            #   <box>(x1,y1,x2,y2)</box>
+            # 通用方案：提取 <box> 和 </box> 之间的所有数字，取前4个
+            box_match = None
+            box_content = re.search(r'<box>(.*?)</box>', coord_text, re.IGNORECASE | re.DOTALL)
+            if box_content:
+                inner = box_content.group(1)
+                # 提取所有数字（整数或小数）
+                nums = re.findall(r'(\d+\.?\d*)', inner)
+                if len(nums) >= 4:
+                    box_match = [float(nums[0]), float(nums[1]), float(nums[2]), float(nums[3])]
             if box_match:
-                x1 = float(box_match.group(1))
-                y1 = float(box_match.group(2))
-                x2 = float(box_match.group(3))
-                y2 = float(box_match.group(4))
-                left = min(x1, x2)
-                top = min(y1, y2)
-                width = abs(x2 - x1)
-                height = abs(y2 - y1)
+                if isinstance(box_match, list):
+                    x1, y1, x2, y2 = box_match
+                else:
+                    x1 = float(box_match.group(1))
+                    y1 = float(box_match.group(2))
+                    x2 = float(box_match.group(3))
+                    y2 = float(box_match.group(4))
+                
+                # 判断坐标范围：如果最大值 <= 1000，说明是归一化坐标 [0, 1000]，需要映射
+                max_val = max(x1, y1, x2, y2)
+                if max_val <= 1000:
+                    # 归一化坐标 [0, 1000] -> 绝对像素坐标
+                    scale_x = img_width / 1000.0
+                    scale_y = img_height / 1000.0
+                    abs_x1 = x1 * scale_x
+                    abs_y1 = y1 * scale_y
+                    abs_x2 = x2 * scale_x
+                    abs_y2 = y2 * scale_y
+                else:
+                    # 已经是绝对像素坐标
+                    abs_x1, abs_y1, abs_x2, abs_y2 = x1, y1, x2, y2
+                
+                left = int(min(abs_x1, abs_x2))
+                top = int(min(abs_y1, abs_y2))
+                width = int(abs(abs_x2 - abs_x1))
+                height = int(abs(abs_y2 - abs_y1))
+                logger.info(f"<box>坐标: ({x1},{y1},{x2},{y2}) -> 绝对像素: ({left},{top},{width},{height}), 图片尺寸: {img_width}x{img_height}")
                 return left, top, width, height
             
-            # 格式2: 方括号 [x1, y1, x2, y2] —— 这是你日志中出现的格式！
+            # 格式2: 方括号 [x1, y1, x2, y2]
             bracket_match = re.search(r'\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]', coord_text)
             if bracket_match:
                 x1 = int(bracket_match.group(1))
                 y1 = int(bracket_match.group(2))
                 x2 = int(bracket_match.group(3))
                 y2 = int(bracket_match.group(4))
-                left = min(x1, x2)
-                top = min(y1, y2)
-                width = abs(x2 - x1)
-                height = abs(y2 - y1)
+                
+                # 同样判断是否归一化坐标
+                max_val = max(x1, y1, x2, y2)
+                if max_val <= 1000:
+                    scale_x = img_width / 1000.0
+                    scale_y = img_height / 1000.0
+                    abs_x1 = x1 * scale_x
+                    abs_y1 = y1 * scale_y
+                    abs_x2 = x2 * scale_x
+                    abs_y2 = y2 * scale_y
+                else:
+                    abs_x1, abs_y1, abs_x2, abs_y2 = float(x1), float(y1), float(x2), float(y2)
+                
+                left = int(min(abs_x1, abs_x2))
+                top = int(min(abs_y1, abs_y2))
+                width = int(abs(abs_x2 - abs_x1))
+                height = int(abs(abs_y2 - abs_y1))
                 return left, top, width, height
             
-            # 格式3: 传统 (left, top, width, height)
-            tuple_match = re.search(r'\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\)', coord_text)
+            # 格式3: 圆括号 (v1, v2, v3, v4)
+            # 可能是角点格式 (x1,y1,x2,y2) 或宽高格式 (left,top,width,height)
+            tuple_match = re.search(r'\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)', coord_text)
             if tuple_match:
-                return int(tuple_match.group(1)), int(tuple_match.group(2)), int(tuple_match.group(3)), int(tuple_match.group(4))
+                v1 = int(tuple_match.group(1))
+                v2 = int(tuple_match.group(2))
+                v3 = int(tuple_match.group(3))
+                v4 = int(tuple_match.group(4))
+                
+                # 先判断是否归一化坐标 [0, 1000]
+                max_val = max(v1, v2, v3, v4)
+                is_normalized = (max_val <= 1000)
+                
+                # 智能判断角点格式 (x1,y1,x2,y2) vs 宽高格式 (left,top,width,height)
+                width_guess = abs(v3 - v1)
+                height_guess = abs(v4 - v2)
+                
+                is_corner = False
+                if v3 > v1 and v4 > v2:
+                    if width_guess < v3 * 0.8 and height_guess < v4 * 0.8:
+                        is_corner = True
+                    elif img_width > 100 and width_guess < img_width * 0.3 and height_guess < img_height * 0.3:
+                        is_corner = True
+                
+                if is_corner:
+                    # 角点格式：v1,y1是左上角，v3,y2是右下角
+                    raw_x1, raw_y1, raw_x2, raw_y2 = v1, v2, v3, v4
+                else:
+                    # 宽高格式：v1,y1是左上角，v3是宽度，v4是高度
+                    raw_x1, raw_y1 = v1, v2
+                    raw_x2 = v1 + v3
+                    raw_y2 = v2 + v4
+                
+                # 归一化坐标映射
+                if is_normalized:
+                    scale_x = img_width / 1000.0
+                    scale_y = img_height / 1000.0
+                    abs_x1 = raw_x1 * scale_x
+                    abs_y1 = raw_y1 * scale_y
+                    abs_x2 = raw_x2 * scale_x
+                    abs_y2 = raw_y2 * scale_y
+                else:
+                    abs_x1, abs_y1, abs_x2, abs_y2 = raw_x1, raw_y1, raw_x2, raw_y2
+                
+                left = int(min(abs_x1, abs_x2))
+                top = int(min(abs_y1, abs_y2))
+                width = int(abs(abs_x2 - abs_x1))
+                height = int(abs(abs_y2 - abs_y1))
+                
+                logger.info(f"圆括号坐标: ({v1},{v2},{v3},{v4}) -> 角点={is_corner}, 归一化={is_normalized} -> 绝对像素: ({left},{top},{width},{height}), 图片: {img_width}x{img_height}")
+                return left, top, width, height
             
             # 都不匹配
             logger.warning(f"无法解析坐标: {coord_text}，使用默认位置")
@@ -445,6 +556,7 @@ class OpenAIVLProcessor:
         Returns:
             文本项列表
         """
+        import re
         text_items = []
         
         try:
@@ -493,6 +605,118 @@ class OpenAIVLProcessor:
         
         except Exception as e:
             logger.warning(f"回退格式解析失败: {e}")
+        
+        return text_items
+    
+    def _parse_json_format(self, response_content: str, img_width: int, img_height: int) -> List[Dict]:
+        """
+        从JSON格式的响应中提取文本项（当Markdown表格解析失败时的最后尝试）
+        
+        Args:
+            response_content: API返回的文本内容
+            img_width: 图片宽度
+            img_height: 图片高度
+            
+        Returns:
+            文本项列表
+        """
+        import re
+        import json as json_lib
+        text_items = []
+        
+        try:
+            # 尝试提取 ```json ... ``` 代码块
+            json_block_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', response_content, re.DOTALL)
+            if json_block_match:
+                json_str = json_block_match.group(1).strip()
+            else:
+                # 尝试直接解析整个响应
+                json_str = response_content.strip()
+            
+            # 尝试解析JSON
+            # 先尝试标准JSON解析
+            try:
+                data = json_lib.loads(json_str)
+            except:
+                # 尝试修复非标准JSON（如键名没有引号）
+                # 将 { key: value } 转为 { "key": "value" }
+                fixed = re.sub(r'(\w+)(?=\s*:)', r'"\1"', json_str)
+                # 将单引号转为双引号
+                fixed = fixed.replace("'", '"')
+                try:
+                    data = json_lib.loads(fixed)
+                except:
+                    data = None
+            
+            if data and isinstance(data, dict):
+                # 递归提取所有字符串值作为text_items
+                index = 1
+                def extract_values(obj, path=""):
+                    nonlocal index
+                    items = []
+                    if isinstance(obj, dict):
+                        # 检查是否有bounding_box或bbox字段（安全帽、目标检测等）
+                        bbox = None
+                        for key in ['bounding_box', 'bbox', 'box', 'location', 'coordinates']:
+                            if key in obj and isinstance(obj[key], list) and len(obj[key]) >= 4:
+                                bbox = obj[key]
+                                break
+                        
+                        for key, value in obj.items():
+                            current_path = f"{path}.{key}" if path else str(key)
+                            if isinstance(value, str) and len(value) > 0 and len(value) < 100:
+                                # 如果有bounding_box，使用真实坐标
+                                if bbox:
+                                    try:
+                                        nums = [float(x) for x in bbox[:4]]
+                                        max_val = max(nums)
+                                        if max_val <= 1000:
+                                            scale_x = img_width / 1000.0
+                                            scale_y = img_height / 1000.0
+                                            abs_x1, abs_y1 = nums[0] * scale_x, nums[1] * scale_y
+                                            abs_x2, abs_y2 = nums[2] * scale_x, nums[3] * scale_y
+                                        else:
+                                            abs_x1, abs_y1, abs_x2, abs_y2 = nums
+                                        loc_left = int(min(abs_x1, abs_x2))
+                                        loc_top = int(min(abs_y1, abs_y2))
+                                        loc_w = int(abs(abs_x2 - abs_x1))
+                                        loc_h = int(abs(abs_y2 - abs_y1))
+                                    except:
+                                        loc_left = 100 + (index * 30) % (img_width - 100)
+                                        loc_top = 100 + (index * 20) % (img_height - 100)
+                                        loc_w, loc_h = 80, 20
+                                else:
+                                    loc_left = 100 + (index * 30) % (img_width - 100)
+                                    loc_top = 100 + (index * 20) % (img_height - 100)
+                                    loc_w, loc_h = 80, 20
+                                
+                                items.append({
+                                    'id': index,
+                                    'text': value,
+                                    'confidence': 0.9,
+                                    'location': {
+                                        'left': loc_left,
+                                        'top': loc_top,
+                                        'width': loc_w,
+                                        'height': loc_h
+                                    },
+                                    'type': current_path,
+                                    'region': current_path,
+                                    'coordinates_text': f"({loc_left}, {loc_top}, {loc_w}, {loc_h})"
+                                })
+                                index += 1
+                            elif isinstance(value, (dict, list)):
+                                items.extend(extract_values(value, current_path))
+                    elif isinstance(obj, list):
+                        for i, item in enumerate(obj):
+                            items.extend(extract_values(item, f"{path}[{i}]"))
+                    return items
+                
+                text_items = extract_values(data)
+                if text_items:
+                    logger.info(f"从JSON中提取了 {len(text_items)} 个文本项")
+        except Exception as e:
+            logger.warning(f"JSON格式解析失败: {e}")
         
         return text_items
     

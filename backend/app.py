@@ -7,15 +7,20 @@ OCR工业图片识别系统 - 后端API服务
 import os
 import json
 import uuid
+import io
+import base64
 import tempfile
 import shutil
+import re
+import requests
+import threading
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file, send_from_directory, render_template
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import openpyxl
 from openpyxl import Workbook
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import cv2
 
@@ -298,7 +303,7 @@ def process_with_paddleocr():
 
 @app.route('/api/process/custom', methods=['POST'])
 def process_with_custom_prompt():
-    """使用自定义提示词处理图片，返回原始文本结果"""
+    """使用自定义提示词处理图片，返回原始文本结果及带标注的结果图片"""
     data = request.json
     if not data or 'filename' not in data:
         return jsonify({'error': '缺少文件名参数'}), 400
@@ -318,6 +323,21 @@ def process_with_custom_prompt():
     try:
         prompt = data['prompt']
         
+        # 追加坐标格式要求：要求模型在输出末尾附加Markdown表格
+        # 使用 (x1, y1, x2, y2) 格式，避免HTML标签冲突
+        coord_note = """
+
+
+        【重要输出要求】
+        请在回答的最后，严格按照以下Markdown表格格式列出所有识别到的信息项及其位置坐标：
+
+        | 序号 | 内容 | 类型 | 区域 | 坐标 |
+        |------|------|------|------|------|
+        | 1 | 识别出的文本 | 类型名称 | 区域描述 | (x1, y1, x2, y2) |
+
+        坐标请使用 (左上角x, 左上角y, 右下角x, 右下角y) 格式，坐标范围为 [0, 1000]，所有数值为整数。"""
+        prompt = prompt + coord_note
+        
         # 图片预处理：检查尺寸并调整，确保不超过2048x2048（ModelScope API限制）
         preprocessed_path = preprocess_image_for_ocr(filepath, target_size=990, max_size=2048)
         
@@ -334,13 +354,38 @@ def process_with_custom_prompt():
                 text_parts.append(f"{item.get('text', '')}")
             raw_text = '\n'.join(text_parts)
         
+        # 生成带标注框的结果图片
+        # 注意：坐标是基于预处理后的图片尺寸解析的，所以要用预处理后的图片来画框
+        result_image_base64 = None
+        text_items = results.get('text_items', [])
+        draw_source = preprocessed_path if os.path.exists(preprocessed_path) else filepath
+        if os.path.exists(draw_source):
+            try:
+                result_image_base64 = draw_ocr_boxes(draw_source, text_items)
+            except Exception as draw_err:
+                print(f"[WARN] 绘制标注框失败: {draw_err}")
+        
+        # 如果绘制失败或text_items为空，至少返回原始图片
+        if result_image_base64 is None and os.path.exists(filepath):
+            try:
+                with open(filepath, 'rb') as f:
+                    img_data = f.read()
+                result_image_base64 = f'data:image/jpeg;base64,{base64.b64encode(img_data).decode("utf-8")}'
+            except Exception as e:
+                print(f"[WARN] 读取原始图片失败: {e}")
+        
+        # 构建JSON结果（格式化输出）
+        json_result = format_results_as_json(results)
+        
         return jsonify({
             'success': True,
             'message': '自定义提示词处理成功',
             'filename': filename,
             'engine': 'openai_vl',
             'raw_text': raw_text,
-            'results': results
+            'results': results,
+            'result_image': result_image_base64,
+            'json_result': json_result
         })
         
     except Exception as e:
@@ -650,6 +695,185 @@ def uploaded_file(filename):
     """访问上传的文件"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+# 全局缓存 RetinaFace 模型（线程安全）
+_face_detection_lock = threading.Lock()
+_face_detection_pipeline = None
+
+def _get_face_detection_pipeline():
+    """获取或初始化 ModelScope RetinaFace 人脸检测 pipeline（延迟加载，线程安全）"""
+    global _face_detection_pipeline
+    if _face_detection_pipeline is None:
+        with _face_detection_lock:
+            if _face_detection_pipeline is None:
+                try:
+                    from modelscope.pipelines import pipeline
+                    from modelscope.utils.constant import Tasks
+                    _face_detection_pipeline = pipeline(
+                        Tasks.face_detection,
+                        model='iic/cv_resnet50_face-detection_retinaface'
+                    )
+                except Exception as e:
+                    print(f"[FaceDetection] 加载 RetinaFace 模型失败: {e}")
+                    _face_detection_pipeline = None
+    return _face_detection_pipeline
+
+@app.route('/api/face_detection', methods=['POST'])
+def face_detection():
+    """
+    人脸检测 API
+    使用 ModelScope RetinaFace 模型 (iic/cv_resnet50_face-detection_retinaface)
+    高精度人脸检测，支持密集人脸场景
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': '没有文件部分'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': '没有选择文件'}), 400
+    
+    try:
+        # 保存上传的图片到临时文件（RetinaFace pipeline 需要文件路径）
+        image_bytes = file.read()
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'error': '无法解码图片'}), 400
+        
+        img_height, img_width = img.shape[:2]
+        
+        # 保存临时文件供 RetinaFace 使用
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, f'face_detection_{uuid.uuid4().hex}.jpg')
+        cv2.imwrite(temp_path, img)
+        
+        try:
+            # 使用 RetinaFace 模型进行人脸检测
+            pipeline = _get_face_detection_pipeline()
+            
+            if pipeline is not None:
+                result = pipeline(temp_path)
+                
+                scores = result.get('scores', [])
+                boxes = result.get('boxes', [])
+                
+                faces = []
+                for i, box in enumerate(boxes):
+                    if len(box) >= 4:
+                        x1, y1, x2, y2 = box[:4]
+                        confidence = float(scores[i]) if i < len(scores) else 0.0
+                        
+                        # 确保坐标在图片范围内
+                        x1 = max(0, int(x1))
+                        y1 = max(0, int(y1))
+                        x2 = min(img_width, int(x2))
+                        y2 = min(img_height, int(y2))
+                        
+                        faces.append({
+                            'bbox': {
+                                'x1': float(x1),
+                                'y1': float(y1),
+                                'x2': float(x2),
+                                'y2': float(y2),
+                                'width': float(x2 - x1),
+                                'height': float(y2 - y1)
+                            },
+                            'confidence': round(confidence, 4)
+                        })
+                
+                detector_name = 'ModelScope RetinaFace'
+            else:
+                # Fallback: 使用 OpenCV DNN (ResNet SSD)
+                model_dir = os.path.join(os.path.dirname(__file__), 'models')
+                prototxt = os.path.join(model_dir, 'deploy.prototxt')
+                caffemodel = os.path.join(model_dir, 'res10_300x300_ssd_iter_140000.caffemodel')
+                
+                if os.path.exists(prototxt) and os.path.exists(caffemodel):
+                    net = cv2.dnn.readNetFromCaffe(prototxt, caffemodel)
+                    blob = cv2.dnn.blobFromImage(
+                        cv2.resize(img, (300, 300)),
+                        1.0, (300, 300), (104.0, 177.0, 123.0)
+                    )
+                    net.setInput(blob)
+                    detections = net.forward()
+                    
+                    faces = []
+                    for i in range(detections.shape[2]):
+                        confidence = float(detections[0, 0, i, 2])
+                        if confidence > 0.5:
+                            box = detections[0, 0, i, 3:7] * np.array(
+                                [img_width, img_height, img_width, img_height]
+                            )
+                            x1, y1, x2, y2 = box.astype(int)
+                            x1 = max(0, x1); y1 = max(0, y1)
+                            x2 = min(img_width, x2); y2 = min(img_height, y2)
+                            faces.append({
+                                'bbox': {'x1': float(x1), 'y1': float(y1),
+                                        'x2': float(x2), 'y2': float(y2),
+                                        'width': float(x2 - x1), 'height': float(y2 - y1)},
+                                'confidence': round(confidence, 4)
+                            })
+                    detector_name = 'OpenCV DNN (ResNet SSD)'
+                else:
+                    # Fallback: Haar Cascade
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+                    face_cascade = cv2.CascadeClassifier(cascade_path)
+                    faces_data = face_cascade.detectMultiScale(gray, 1.1, 5, minSize=(30, 30))
+                    faces = []
+                    for (x, y, w, h) in faces_data:
+                        faces.append({
+                            'bbox': {'x1': float(x), 'y1': float(y),
+                                    'x2': float(x + w), 'y2': float(y + h),
+                                    'width': float(w), 'height': float(h)},
+                            'confidence': 0.95
+                        })
+                    detector_name = 'OpenCV Haar Cascade'
+        finally:
+            # 清理临时文件
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+        
+        # 在图片上绘制检测框
+        img_draw = img.copy()
+        for face in faces:
+            bbox = face['bbox']
+            x1 = int(bbox['x1'])
+            y1 = int(bbox['y1'])
+            x2 = int(bbox['x2'])
+            y2 = int(bbox['y2'])
+            
+            # 绘制矩形框（绿色）
+            cv2.rectangle(img_draw, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            
+            # 绘制置信度标签
+            label = f"Face {face['confidence']:.2f}"
+            (label_w, label_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+            cv2.rectangle(img_draw, (x1, y1 - label_h - 10), (x1 + label_w + 10, y1), (0, 255, 0), -1)
+            cv2.putText(img_draw, label, (x1 + 5, y1 - 5),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        
+        # 将标注后的图片编码为 base64
+        _, buffer_draw = cv2.imencode('.jpg', img_draw, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        img_result_base64 = base64.b64encode(buffer_draw).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'face_count': len(faces),
+            'faces': faces,
+            'image_width': img_width,
+            'image_height': img_height,
+            'result_image': f'data:image/jpeg;base64,{img_result_base64}',
+            'detector': detector_name,
+            'model_ref': 'https://modelscope.cn/models/iic/cv_resnet50_face-detection_retinaface'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'人脸检测失败: {str(e)}'}), 500
+
 @app.route('/api/pdf/info/<filename>')
 def get_pdf_info(filename):
     """获取PDF文件信息"""
@@ -838,6 +1062,182 @@ def list_pdf_images(filename):
         'total': len(image_files)
     })
 
+def draw_ocr_boxes(image_path, text_items):
+    """
+    在图片上绘制OCR识别框和文本标注（支持中文）
+    使用统一颜色方案：框线用亮色，标签用白底黑字，清晰易读
+    
+    Args:
+        image_path: 原始图片路径
+        text_items: 文本项列表，每项包含 location (left, top, width, height) 和 text
+        
+    Returns:
+        base64编码的结果图片 (data:image/jpeg;base64,...)
+    """
+    try:
+        # 用 PIL 读取图片
+        pil_img = Image.open(image_path).convert('RGB')
+        img_width, img_height = pil_img.size
+        
+        # 转换为 OpenCV BGR 格式
+        img_cv = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        
+        # 尝试加载中文字体（用大号字体让文字更清晰）
+        _script_dir = os.path.dirname(os.path.abspath(__file__))
+        _project_root = os.path.dirname(_script_dir)
+        font_paths = [
+            os.path.join(_project_root, 'frontend', 'static', 'fonts', 'NotoSansSC.ttf'),
+            'C:/Windows/Fonts/msyh.ttc',
+            'C:/Windows/Fonts/simhei.ttf',
+            'C:/Windows/Fonts/simsun.ttc',
+            'C:/Windows/Fonts/yahei.ttf',
+            'C:/Windows/Fonts/msyhbd.ttc',
+        ]
+        font_large = None  # 用于标签的大字体
+        font_small = None  # 用于序号的小字体
+        for fp in font_paths:
+            if os.path.exists(fp):
+                try:
+                    font_large = ImageFont.truetype(fp, 20)
+                    font_small = ImageFont.truetype(fp, 16)
+                    break
+                except:
+                    continue
+        if font_large is None:
+            font_large = ImageFont.load_default()
+            font_small = ImageFont.load_default()
+        
+        # 使用统一的颜色方案：红色
+        # 框线颜色 (BGR)
+        box_color_bgr = (0, 0, 255)      # 红色 (OpenCV BGR)
+        box_color_rgb = (255, 0, 0)      # 红色 (PIL RGB)
+        
+        # 标签背景色：白色半透明效果（用纯白）
+        label_bg_bgr = (255, 255, 255)   # 白色 (OpenCV BGR)
+        label_text_color = (0, 0, 0)     # 黑色文字
+        
+        print(f"[draw_ocr_boxes] 图片尺寸: {img_width}x{img_height}, text_items数量: {len(text_items)}")
+        
+        for i, item in enumerate(text_items):
+            location = item.get('location', {})
+            left = int(location.get('left', 0))
+            top = int(location.get('top', 0))
+            w = int(location.get('width', 50))
+            h = int(location.get('height', 20))
+            
+            # 确保坐标在图片范围内
+            left = max(0, min(left, img_width - 1))
+            top = max(0, min(top, img_height - 1))
+            right = min(left + w, img_width)
+            bottom = min(top + h, img_height)
+            
+            if right <= left or bottom <= top:
+                continue
+            
+            text = item.get('text', '')
+            
+            # ---- 1. 绘制矩形框（亮蓝色，线宽2） ----
+            cv2.rectangle(img_cv, (left, top), (right, bottom), box_color_bgr, 2)
+            
+            # ---- 2. 绘制序号标签（白底黑字，放在框左上角） ----
+            label = f"#{i+1}"
+            
+            # 用 PIL 计算标签尺寸
+            pil_tmp = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+            draw_tmp = ImageDraw.Draw(pil_tmp)
+            bbox = draw_tmp.textbbox((0, 0), label, font=font_small)
+            label_w = bbox[2] - bbox[0] + 12  # 加内边距
+            label_h = bbox[3] - bbox[1] + 6   # 加内边距
+            
+            # 标签位置：框的左上角
+            label_x = left
+            label_y = top - label_h - 2
+            if label_y < 0:
+                label_y = top + 2
+            
+            # 绘制白色标签背景
+            cv2.rectangle(img_cv,
+                         (label_x, label_y),
+                         (label_x + label_w, label_y + label_h),
+                         label_bg_bgr, -1)
+            # 绘制标签边框（用框线颜色）
+            cv2.rectangle(img_cv,
+                         (label_x, label_y),
+                         (label_x + label_w, label_y + label_h),
+                         box_color_bgr, 1)
+            
+            # 用 PIL 绘制黑色序号文字
+            pil_tmp2 = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+            draw_tmp2 = ImageDraw.Draw(pil_tmp2)
+            draw_tmp2.text((label_x + 6, label_y + 3), label, fill=label_text_color, font=font_small)
+            img_cv = cv2.cvtColor(np.array(pil_tmp2), cv2.COLOR_RGB2BGR)
+        
+        # 编码输出
+        final_img = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+        output_buffer = io.BytesIO()
+        final_img.save(output_buffer, format='JPEG', quality=95)
+        img_base64 = base64.b64encode(output_buffer.getvalue()).decode('utf-8')
+        
+        return f'data:image/jpeg;base64,{img_base64}'
+        
+    except Exception as e:
+        print(f"[draw_ocr_boxes] 错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def format_results_as_json(results):
+    """
+    将OCR结果格式化为结构化的JSON字符串（用于前端展示）
+    
+    Args:
+        results: OCR处理结果字典
+        
+    Returns:
+        格式化的JSON字符串
+    """
+    try:
+        text_items = results.get('text_items', [])
+        image_info = results.get('image_info', {})
+        analysis = results.get('analysis', {})
+        
+        formatted = {
+            '识别统计': {
+                '总识别项数': results.get('total_items', 0),
+                '处理时间(秒)': results.get('processing_time', 0),
+                'OCR引擎': results.get('ocr_engine', 'unknown'),
+                '图片宽度': image_info.get('width', 0),
+                '图片高度': image_info.get('height', 0),
+            },
+            '类型分布': analysis.get('type_distribution', {}),
+            '识别详情': []
+        }
+        
+        for i, item in enumerate(text_items):
+            location = item.get('location', {})
+            detail = {
+                '序号': i + 1,
+                '内容': item.get('text', ''),
+                '类型': item.get('type', 'text'),
+                '区域': item.get('region', ''),
+                '坐标': {
+                    'left': location.get('left', 0),
+                    'top': location.get('top', 0),
+                    'width': location.get('width', 0),
+                    'height': location.get('height', 0)
+                },
+                '置信度': item.get('confidence', 0)
+            }
+            formatted['识别详情'].append(detail)
+        
+        return json.dumps(formatted, ensure_ascii=False, indent=2)
+        
+    except Exception as e:
+        print(f"[format_results_as_json] 错误: {e}")
+        return json.dumps({'error': str(e)}, ensure_ascii=False, indent=2)
+
+
 def generate_excel(results, excel_path):
     """生成Excel文件（用于图片处理结果）"""
     wb = Workbook()
@@ -970,6 +1370,721 @@ def generate_pdf_excel(pdf_result, excel_path):
     
     wb.save(excel_path)
 
+# ============================================================
+# 实时安全帽检测 API
+# ============================================================
+
+# 全局缓存安全帽检测模型（线程安全）
+_safety_helmet_lock = threading.Lock()
+_safety_helmet_pipeline = None
+
+# 最大重试次数
+_HELMET_MAX_RETRIES = 3
+_HELMET_RETRY_DELAY = 5
+
+def _init_safety_helmet_pipeline():
+    """初始化安全帽检测 pipeline（内部方法，已持有锁时调用）"""
+    global _safety_helmet_pipeline
+    try:
+        from modelscope.pipelines import pipeline
+        from modelscope.utils.constant import Tasks
+        _safety_helmet_pipeline = pipeline(
+            Tasks.image_object_detection,
+            model='iic/cv_tinynas_object-detection_damoyolo_safety-helmet',
+            trust_remote_code=True
+        )
+        print("[SafetyHelmet] DAMO-YOLO 安全帽检测模型已加载")
+        return True
+    except Exception as e:
+        print(f"[SafetyHelmet] 加载安全帽检测模型失败: {e}")
+        _safety_helmet_pipeline = None
+        return False
+
+def _get_safety_helmet_pipeline():
+    """获取或初始化 ModelScope 安全帽检测 pipeline（延迟加载，线程安全，带重试）"""
+    global _safety_helmet_pipeline
+    if _safety_helmet_pipeline is None:
+        with _safety_helmet_lock:
+            if _safety_helmet_pipeline is None:
+                for attempt in range(1, _HELMET_MAX_RETRIES + 1):
+                    print(f"[SafetyHelmet] 尝试初始化 (第 {attempt}/{_HELMET_MAX_RETRIES} 次)...")
+                    if _init_safety_helmet_pipeline():
+                        break
+                    if attempt < _HELMET_MAX_RETRIES:
+                        print(f"[SafetyHelmet] 等待 {_HELMET_RETRY_DELAY} 秒后重试...")
+                        import time
+                        time.sleep(_HELMET_RETRY_DELAY)
+                    else:
+                        print(f"[SafetyHelmet] 初始化失败，已重试 {_HELMET_MAX_RETRIES} 次")
+    return _safety_helmet_pipeline
+
+def preload_safety_helmet():
+    """预加载安全帽检测模型（在应用启动时调用）"""
+    print("[SafetyHelmet] 正在预加载安全帽检测模型...")
+    pipeline = _get_safety_helmet_pipeline()
+    if pipeline is not None:
+        print("[SafetyHelmet] 安全帽检测模型预加载成功")
+        # 预热模型
+        try:
+            import numpy as np
+            test_img = np.ones((100, 100, 3), dtype=np.uint8) * 255
+            pipeline(test_img)
+            print("[SafetyHelmet] 安全帽检测模型预热完成")
+        except Exception as e:
+            print(f"[SafetyHelmet] 模型预热失败（不影响后续使用）: {e}")
+    else:
+        print("[SafetyHelmet] 安全帽检测模型预加载失败，将在首次请求时重试")
+
+@app.route('/api/safety_helmet_detection', methods=['POST'])
+def safety_helmet_detection():
+    """
+    实时安全帽检测 API
+    使用 ModelScope DAMO-YOLO 模型 (iic/cv_tinynas_object-detection_damoyolo_safety-helmet)
+    检测安全帽佩戴情况，返回 'safety hat' 和 'no safety hat' 两类结果
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': '没有文件部分'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': '没有选择文件'}), 400
+    
+    try:
+        image_bytes = file.read()
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'error': '无法解码图片'}), 400
+        
+        img_height, img_width = img.shape[:2]
+        
+        # 保存临时文件供 ModelScope pipeline 使用
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, f'safety_helmet_{uuid.uuid4().hex}.jpg')
+        cv2.imwrite(temp_path, img)
+        
+        try:
+            pipeline = _get_safety_helmet_pipeline()
+            
+            if pipeline is not None:
+                result = pipeline(temp_path)
+                
+                scores = result.get('scores', [])
+                labels = result.get('labels', [])
+                boxes = result.get('boxes', [])
+                
+                detections = []
+                for i, box in enumerate(boxes):
+                    if len(box) >= 4:
+                        x1, y1, x2, y2 = box[:4]
+                        confidence = float(scores[i]) if i < len(scores) else 0.0
+                        label = str(labels[i]) if i < len(labels) else 'unknown'
+                        
+                        x1 = max(0, int(x1))
+                        y1 = max(0, int(y1))
+                        x2 = min(img_width, int(x2))
+                        y2 = min(img_height, int(y2))
+                        
+                        detections.append({
+                            'bbox': {
+                                'x1': float(x1),
+                                'y1': float(y1),
+                                'x2': float(x2),
+                                'y2': float(y2),
+                                'width': float(x2 - x1),
+                                'height': float(y2 - y1)
+                            },
+                            'label': label,
+                            'confidence': round(confidence, 4)
+                        })
+                
+                detector_name = 'ModelScope DAMO-YOLO (Safety Helmet)'
+            else:
+                return jsonify({
+                    'error': '安全帽检测模型未加载',
+                    'suggestion': 'ModelScope DAMO-YOLO 模型初始化失败。请检查: '
+                                 '1) 服务器网络是否可访问 modelscope.cn; '
+                                 '2) 是否在 Docker 构建时预下载了模型; '
+                                 '3) 可尝试 docker build --network=host 重新构建。'
+                }), 500
+        finally:
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+        
+        # 在图片上绘制检测框
+        img_draw = img.copy()
+        for det in detections:
+            bbox = det['bbox']
+            x1 = int(bbox['x1'])
+            y1 = int(bbox['y1'])
+            x2 = int(bbox['x2'])
+            y2 = int(bbox['y2'])
+            
+            # 根据标签选择颜色：安全帽=绿色，未戴安全帽=红色
+            if det['label'] == 'safety hat':
+                color = (0, 255, 0)  # 绿色
+                label_text = f"Safety Hat {det['confidence']:.2f}"
+            else:
+                color = (0, 0, 255)  # 红色
+                label_text = f"No Hat {det['confidence']:.2f}"
+            
+            cv2.rectangle(img_draw, (x1, y1), (x2, y2), color, 2)
+            
+            (label_w, label_h), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+            cv2.rectangle(img_draw, (x1, y1 - label_h - 10), (x1 + label_w + 10, y1), color, -1)
+            cv2.putText(img_draw, label_text, (x1 + 5, y1 - 5),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        
+        _, buffer_draw = cv2.imencode('.jpg', img_draw, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        img_result_base64 = base64.b64encode(buffer_draw).decode('utf-8')
+        
+        # 统计
+        safety_hat_count = sum(1 for d in detections if d['label'] == 'safety hat')
+        no_safety_hat_count = sum(1 for d in detections if d['label'] == 'no safety hat')
+        
+        return jsonify({
+            'success': True,
+            'detection_count': len(detections),
+            'safety_hat_count': safety_hat_count,
+            'no_safety_hat_count': no_safety_hat_count,
+            'detections': detections,
+            'image_width': img_width,
+            'image_height': img_height,
+            'result_image': f'data:image/jpeg;base64,{img_result_base64}',
+            'detector': detector_name,
+            'model_ref': 'https://modelscope.cn/models/iic/cv_tinynas_object-detection_damoyolo_safety-helmet'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'安全帽检测失败: {str(e)}'}), 500
+
+# ============================================================
+# 车牌识别 API（基于 PaddleOCR 全图扫描 + 车牌号过滤）
+# ============================================================
+
+# 全局缓存 PaddleOCR 实例（用于车牌文字识别）
+_license_ocr_lock = threading.Lock()
+_license_ocr_instance = None
+
+# 最大重试次数
+_LICENSE_OCR_MAX_RETRIES = 3
+# 重试间隔（秒）
+_LICENSE_OCR_RETRY_DELAY = 5
+
+def _init_license_ocr():
+    """初始化 PaddleOCR 实例（内部方法，已持有锁时调用）"""
+    global _license_ocr_instance
+    try:
+        from paddleocr import PaddleOCR
+        # 使用 PP-OCRv5 模型，优化车牌识别效果
+        _license_ocr_instance = PaddleOCR(
+            lang='ch',
+            ocr_version='PP-OCRv5',
+            text_det_box_thresh=0.13,
+            text_det_unclip_ratio=2.5,
+            text_rec_score_thresh=0.1,
+            use_doc_unwarping=False
+        )
+        print("[LicensePlate] PaddleOCR 车牌识别模型已加载 (PP-OCRv5)")
+        return True
+    except Exception as e:
+        print(f"[LicensePlate] 加载 PaddleOCR 失败: {e}")
+        _license_ocr_instance = None
+        return False
+
+def _get_license_ocr():
+    """获取或初始化 PaddleOCR 实例（延迟加载，线程安全，带重试机制）"""
+    global _license_ocr_instance
+    if _license_ocr_instance is None:
+        with _license_ocr_lock:
+            if _license_ocr_instance is None:
+                # 带重试的初始化
+                for attempt in range(1, _LICENSE_OCR_MAX_RETRIES + 1):
+                    print(f"[LicensePlate] 尝试初始化 PaddleOCR (第 {attempt}/{_LICENSE_OCR_MAX_RETRIES} 次)...")
+                    if _init_license_ocr():
+                        break
+                    if attempt < _LICENSE_OCR_MAX_RETRIES:
+                        print(f"[LicensePlate] 等待 {_LICENSE_OCR_RETRY_DELAY} 秒后重试...")
+                        import time
+                        time.sleep(_LICENSE_OCR_RETRY_DELAY)
+                    else:
+                        print(f"[LicensePlate] PaddleOCR 初始化失败，已重试 {_LICENSE_OCR_MAX_RETRIES} 次")
+    return _license_ocr_instance
+
+def preload_license_ocr():
+    """预加载车牌识别模型（在应用启动时调用）"""
+    print("[LicensePlate] 正在预加载车牌识别模型...")
+    ocr = _get_license_ocr()
+    if ocr is not None:
+        print("[LicensePlate] 车牌识别模型预加载成功")
+        # 执行一次预测以预热模型
+        try:
+            import numpy as np
+            test_img = np.ones((100, 100, 3), dtype=np.uint8) * 255
+            ocr.predict(test_img)
+            print("[LicensePlate] 车牌识别模型预热完成")
+        except Exception as e:
+            print(f"[LicensePlate] 模型预热失败（不影响后续使用）: {e}")
+    else:
+        print("[LicensePlate] 车牌识别模型预加载失败，将在首次请求时重试")
+
+def _is_license_plate_text(text):
+    """
+    判断文本是否可能是车牌号
+    
+    中国车牌号规则:
+    - 新能源: 6位 (省+字母+数字/字母混合)
+    - 普通蓝牌: 7位 (省+字母+5位数字/字母)
+    - 包含汉字、字母、数字混合
+    - 长度通常为 6-8 个字符
+    """
+    if not text:
+        return False
+    
+    # 去除空格
+    text = text.strip()
+    
+    # 车牌号通常长度在 6-8 个字符
+    if len(text) < 6 or len(text) > 8:
+        return False
+    
+    # 检查是否包含字母和数字的混合
+    has_digit = any(c.isdigit() for c in text)
+    has_alpha = any(c.isalpha() for c in text)
+    
+    # 车牌必须包含字母和数字（或纯数字/纯字母的短车牌）
+    if not (has_digit or has_alpha):
+        return False
+    
+    # 检查是否包含常见车牌汉字（省份简称）
+    province_chars = {'京', '津', '沪', '渝', '冀', '豫', '云', '辽', '黑', '湘',
+                      '皖', '鲁', '新', '苏', '浙', '赣', '鄂', '桂', '甘', '晋',
+                      '蒙', '陕', '吉', '闽', '贵', '粤', '川', '青', '藏', '琼',
+                      '宁', '港', '澳', '台', '使', '领'}
+    
+    has_province = any(c in province_chars for c in text)
+    
+    # 如果有省份简称，大概率是车牌
+    if has_province:
+        return True
+    
+    # 没有省份简称但长度合适且包含字母数字混合，也可能是车牌（如部分识别不全的情况）
+    if has_digit and has_alpha and len(text) >= 6:
+        return True
+    
+    return False
+
+@app.route('/api/license_plate_detection', methods=['POST'])
+def license_plate_detection():
+    """
+    车牌识别 API
+    
+    使用 PaddleOCR 全图扫描，自动检测并识别车牌号。
+    通过车牌号格式规则（长度、字符组成、省份简称等）过滤出车牌结果。
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': '没有文件部分'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': '没有选择文件'}), 400
+    
+    try:
+        image_bytes = file.read()
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'error': '无法解码图片'}), 400
+        
+        img_height, img_width = img.shape[:2]
+        
+        # 使用 PaddleOCR 全图扫描
+        ocr = _get_license_ocr()
+        
+        detections = []
+        
+        if ocr is not None:
+            try:
+                # 使用 PaddleOCR predict() 方法进行全图 OCR 识别
+                # 需要将 BGR 转为 RGB
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                ocr_result = ocr.predict(img_rgb)
+                
+                if ocr_result and len(ocr_result) > 0:
+                    ocr_data = ocr_result[0]
+                    if isinstance(ocr_data, dict):
+                        rec_texts = ocr_data.get('rec_texts', [])
+                        rec_scores = ocr_data.get('rec_scores', [])
+                        rec_polys = ocr_data.get('rec_polys', [])
+                        
+                        for i in range(len(rec_texts)):
+                            text = rec_texts[i]
+                            confidence = float(rec_scores[i]) if i < len(rec_scores) else 0.0
+                            
+                            # 判断是否为车牌号
+                            if _is_license_plate_text(text):
+                                # 获取多边形坐标
+                                poly = rec_polys[i] if i < len(rec_polys) else None
+                                
+                                if poly is not None and isinstance(poly, np.ndarray):
+                                    xs = poly[:, 0]
+                                    ys = poly[:, 1]
+                                else:
+                                    continue
+                                
+                                x1, y1 = int(min(xs)), int(min(ys))
+                                x2, y2 = int(max(xs)), int(max(ys))
+                                
+                                detections.append({
+                                    'bbox': {
+                                        'x1': float(x1),
+                                        'y1': float(y1),
+                                        'x2': float(x2),
+                                        'y2': float(y2),
+                                        'width': float(x2 - x1),
+                                        'height': float(y2 - y1)
+                                    },
+                                    'confidence': round(confidence, 4),
+                                    'plate_text': text,
+                                    'plate_text_confidence': round(confidence, 4)
+                                })
+                
+                detector_name = 'PaddleOCR (License Plate Recognition)'
+            except Exception as ocr_err:
+                error_msg = str(ocr_err)
+                print(f"[LicensePlate] OCR 识别失败: {error_msg}")
+                # 判断是否是模型下载相关错误
+                if 'download' in error_msg.lower() or 'connection' in error_msg.lower() or 'timeout' in error_msg.lower() or 'http' in error_msg.lower():
+                    return jsonify({
+                        'error': f'OCR模型加载失败: {error_msg}',
+                        'suggestion': '请检查服务器网络连接，确保可以访问PaddleOCR模型下载地址。'
+                                     '如果使用Docker，请尝试: docker build --network=host 或在Dockerfile中预下载模型。'
+                                     '也可以手动下载模型后挂载到 /root/.paddleocr 目录。'
+                    }), 500
+                return jsonify({'error': f'OCR识别失败: {error_msg}'}), 500
+        else:
+            return jsonify({
+                'error': 'OCR 模型未加载',
+                'suggestion': 'PaddleOCR模型初始化失败。请检查: '
+                             '1) 服务器网络是否可访问PaddleOCR模型下载地址; '
+                             '2) 是否在Docker构建时预下载了模型; '
+                             '3) 模型文件是否完整。'
+                             '可尝试重启容器或重新构建镜像。'
+            }), 500
+        
+        # 在图片上绘制检测框和识别结果
+        # 使用 PIL 绘制中文文本（cv2.putText 不支持中文）
+        from PIL import ImageDraw, ImageFont
+        
+        img_draw = img.copy()
+        img_pil = Image.fromarray(cv2.cvtColor(img_draw, cv2.COLOR_BGR2RGB))
+        draw = ImageDraw.Draw(img_pil)
+        
+        # 尝试加载中文字体（优先使用项目自带字体，兼容 Windows/Linux/macOS）
+        _script_dir = os.path.dirname(os.path.abspath(__file__))
+        _project_root = os.path.dirname(_script_dir)
+        font_paths = [
+            os.path.join(_project_root, 'frontend', 'static', 'fonts', 'NotoSansSC.ttf'),
+            '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',  # Linux 文泉驿
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',  # Linux Noto
+            'C:/Windows/Fonts/msyh.ttc',       # 微软雅黑 (Windows)
+            'C:/Windows/Fonts/simhei.ttf',      # 黑体 (Windows)
+            'C:/Windows/Fonts/simsun.ttc',      # 宋体 (Windows)
+        ]
+        chinese_font = None
+        for fp in font_paths:
+            if os.path.exists(fp):
+                chinese_font = ImageFont.truetype(fp, 24)
+                break
+        if chinese_font is None:
+            # fallback: 使用默认字体
+            chinese_font = ImageFont.load_default()
+        
+        for det in detections:
+            bbox = det['bbox']
+            x1 = int(bbox['x1'])
+            y1 = int(bbox['y1'])
+            x2 = int(bbox['x2'])
+            y2 = int(bbox['y2'])
+            
+            # 绘制矩形框（蓝色）
+            color_bgr = (255, 0, 0)
+            color_rgb = (0, 0, 255)  # PIL 使用 RGB
+            cv2.rectangle(img_draw, (x1, y1), (x2, y2), color_bgr, 3)
+            
+            # 绘制标签：车牌号（使用 PIL 支持中文）
+            plate_text = det.get('plate_text', '')
+            label_text = f"{plate_text}"
+            
+            # 使用 PIL 绘制中文文本
+            bbox_text = draw.textbbox((0, 0), label_text, font=chinese_font)
+            label_w = bbox_text[2] - bbox_text[0]
+            label_h = bbox_text[3] - bbox_text[1]
+            
+            # 标签背景（用 cv2 绘制）
+            cv2.rectangle(img_draw, (x1, y1 - label_h - 12), (x1 + label_w + 12, y1), color_bgr, -1)
+            
+            # 用 PIL 绘制中文文本在 cv2 图像上
+            img_pil = Image.fromarray(cv2.cvtColor(img_draw, cv2.COLOR_BGR2RGB))
+            draw = ImageDraw.Draw(img_pil)
+            draw.text((x1 + 6, y1 - label_h - 6), label_text, font=chinese_font, fill=(255, 255, 255))
+            img_draw = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
+            
+            # 在框下方显示置信度（纯英文数字，cv2 可以正常显示）
+            conf_text = f"conf: {det['confidence']:.2f}"
+            cv2.putText(img_draw, conf_text, (x1, y2 + 20),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, color_bgr, 2)
+        
+        _, buffer_draw = cv2.imencode('.jpg', img_draw, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        img_result_base64 = base64.b64encode(buffer_draw).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'detection_count': len(detections),
+            'detections': detections,
+            'image_width': img_width,
+            'image_height': img_height,
+            'result_image': f'data:image/jpeg;base64,{img_result_base64}',
+            'detector': detector_name,
+            'model_ref': 'https://modelscope.cn/models/iic/cv_resnet18_license-plate-detection_damo'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'车牌检测失败: {str(e)}'}), 500
+
+# ============================================================
+# 全身关键点检测 API
+# ============================================================
+
+# 全局缓存 Keypoint R-CNN 模型（线程安全）
+_keypoint_model_lock = threading.Lock()
+_keypoint_model = None
+_keypoint_device = None
+
+# COCO 关键点名称 (17个关键点)
+KEYPOINT_NAMES = [
+    'nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear',
+    'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow',
+    'left_wrist', 'right_wrist', 'left_hip', 'right_hip',
+    'left_knee', 'right_knee', 'left_ankle', 'right_ankle'
+]
+
+# 骨架连接
+KEYPOINT_SKELETON = [
+    (0, 1), (0, 2), (1, 3), (2, 4),
+    (5, 6), (5, 7), (7, 9), (6, 8), (8, 10),
+    (5, 11), (6, 12), (11, 12),
+    (11, 13), (12, 14), (13, 15), (14, 16)
+]
+
+# 关键点颜色
+KEYPOINT_COLORS = [
+    (0, 0, 255), (255, 0, 0), (0, 255, 0), (0, 255, 255), (255, 0, 255),
+    (255, 255, 0), (128, 0, 255), (0, 128, 255), (255, 128, 0),
+    (0, 255, 128), (128, 255, 0), (255, 0, 128), (128, 0, 0),
+    (0, 0, 128), (0, 128, 0), (128, 128, 0), (0, 128, 128)
+]
+
+# 最大重试次数
+_KEYPOINT_MAX_RETRIES = 3
+_KEYPOINT_RETRY_DELAY = 5
+
+def _init_keypoint_model():
+    """初始化 Keypoint R-CNN 模型（内部方法，已持有锁时调用）"""
+    global _keypoint_model, _keypoint_device
+    try:
+        import torch
+        import torchvision
+        _keypoint_model = torchvision.models.detection.keypointrcnn_resnet50_fpn(
+            weights=torchvision.models.detection.KeypointRCNN_ResNet50_FPN_Weights.DEFAULT
+        )
+        _keypoint_model.eval()
+        _keypoint_device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        _keypoint_model.to(_keypoint_device)
+        print(f"[KeypointDetection] Keypoint R-CNN 模型已加载 (设备: {_keypoint_device})")
+        return True
+    except Exception as e:
+        print(f"[KeypointDetection] 加载 Keypoint R-CNN 模型失败: {e}")
+        _keypoint_model = None
+        return False
+
+def _get_keypoint_model():
+    """获取或初始化 Keypoint R-CNN 模型（延迟加载，线程安全，带重试）"""
+    global _keypoint_model, _keypoint_device
+    if _keypoint_model is None:
+        with _keypoint_model_lock:
+            if _keypoint_model is None:
+                for attempt in range(1, _KEYPOINT_MAX_RETRIES + 1):
+                    print(f"[KeypointDetection] 尝试初始化 (第 {attempt}/{_KEYPOINT_MAX_RETRIES} 次)...")
+                    if _init_keypoint_model():
+                        break
+                    if attempt < _KEYPOINT_MAX_RETRIES:
+                        print(f"[KeypointDetection] 等待 {_KEYPOINT_RETRY_DELAY} 秒后重试...")
+                        import time
+                        time.sleep(_KEYPOINT_RETRY_DELAY)
+                    else:
+                        print(f"[KeypointDetection] 初始化失败，已重试 {_KEYPOINT_MAX_RETRIES} 次")
+    return _keypoint_model, _keypoint_device
+
+def preload_keypoint():
+    """预加载关键点检测模型（在应用启动时调用）"""
+    print("[KeypointDetection] 正在预加载关键点检测模型...")
+    model, device = _get_keypoint_model()
+    if model is not None:
+        print(f"[KeypointDetection] 关键点检测模型预加载成功 (设备: {device})")
+        # 预热模型
+        try:
+            import torch
+            import numpy as np
+            test_img = np.ones((100, 100, 3), dtype=np.uint8) * 128
+            img_tensor = torch.from_numpy(test_img).permute(2, 0, 1).float().div(255.0).unsqueeze(0).to(device)
+            with torch.no_grad():
+                model(img_tensor)
+            print("[KeypointDetection] 关键点检测模型预热完成")
+        except Exception as e:
+            print(f"[KeypointDetection] 模型预热失败（不影响后续使用）: {e}")
+    else:
+        print("[KeypointDetection] 关键点检测模型预加载失败，将在首次请求时重试")
+
+@app.route('/api/keypoint_detection', methods=['POST'])
+def keypoint_detection():
+    """
+    全身关键点检测 API
+    使用 PyTorch Keypoint R-CNN (ResNet50-FPN) 模型
+    检测 17 个 COCO 人体关键点
+    参考模型: iic/cv_hrnetw48_human-wholebody-keypoint_image (ModelScope)
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': '没有文件部分'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': '没有选择文件'}), 400
+    
+    try:
+        image_bytes = file.read()
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'error': '无法解码图片'}), 400
+        
+        img_height, img_width = img.shape[:2]
+        
+        # 使用 Keypoint R-CNN 模型
+        model, device = _get_keypoint_model()
+        
+        if model is not None:
+            import torch
+            # 转换为 RGB (torchvision 需要 RGB)
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img_tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).float().div(255.0).unsqueeze(0).to(device)
+            
+            with torch.no_grad():
+                predictions = model(img_tensor)
+            
+            scores = predictions[0]['scores'].cpu().numpy()
+            boxes = predictions[0]['boxes'].cpu().numpy()
+            keypoints = predictions[0]['keypoints'].cpu().numpy()
+            
+            # 过滤低置信度检测
+            confidence_threshold = 0.5
+            valid_indices = scores > confidence_threshold
+            
+            persons = []
+            for idx in range(len(scores)):
+                if not valid_indices[idx]:
+                    continue
+                
+                score = float(scores[idx])
+                box = boxes[idx]
+                kps = keypoints[idx]
+                
+                x1, y1, x2, y2 = map(int, box)
+                x1 = max(0, x1); y1 = max(0, y1)
+                x2 = min(img_width, x2); y2 = min(img_height, y2)
+                
+                person_kps = []
+                for j, kp in enumerate(kps):
+                    x, y, conf = int(kp[0]), int(kp[1]), float(kp[2])
+                    person_kps.append({
+                        'name': KEYPOINT_NAMES[j] if j < len(KEYPOINT_NAMES) else f'kp_{j}',
+                        'x': x, 'y': y,
+                        'confidence': round(conf, 4)
+                    })
+                
+                persons.append({
+                    'bbox': {
+                        'x1': float(x1), 'y1': float(y1),
+                        'x2': float(x2), 'y2': float(y2),
+                        'width': float(x2 - x1), 'height': float(y2 - y1)
+                    },
+                    'confidence': round(score, 4),
+                    'keypoints': person_kps
+                })
+            
+            detector_name = 'PyTorch Keypoint R-CNN (ResNet50-FPN)'
+        else:
+            return jsonify({
+                'error': '关键点检测模型未加载',
+                'suggestion': 'PyTorch Keypoint R-CNN 模型初始化失败。请检查: '
+                             '1) 服务器网络是否可访问 PyTorch 模型下载地址; '
+                             '2) 是否在 Docker 构建时预下载了模型; '
+                             '3) 可尝试 docker build --network=host 重新构建。'
+            }), 500
+        
+        # 在图片上绘制检测结果
+        img_draw = img.copy()
+        for person in persons:
+            bbox = person['bbox']
+            x1, y1, x2, y2 = int(bbox['x1']), int(bbox['y1']), int(bbox['x2']), int(bbox['y2'])
+            
+            # 绘制检测框
+            cv2.rectangle(img_draw, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(img_draw, f"Person {person['confidence']:.2f}", (x1, y1-10),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            
+            # 绘制关键点
+            for j, kp in enumerate(person['keypoints']):
+                if kp['confidence'] > 0.3:
+                    color = KEYPOINT_COLORS[j % len(KEYPOINT_COLORS)]
+                    cv2.circle(img_draw, (kp['x'], kp['y']), 4, color, -1)
+                    cv2.circle(img_draw, (kp['x'], kp['y']), 5, (255, 255, 255), 1)
+            
+            # 绘制骨架
+            for (start, end) in KEYPOINT_SKELETON:
+                kps_list = person['keypoints']
+                if start < len(kps_list) and end < len(kps_list):
+                    if kps_list[start]['confidence'] > 0.3 and kps_list[end]['confidence'] > 0.3:
+                        pt1 = (kps_list[start]['x'], kps_list[start]['y'])
+                        pt2 = (kps_list[end]['x'], kps_list[end]['y'])
+                        cv2.line(img_draw, pt1, pt2, (0, 255, 255), 2)
+        
+        # 编码结果图片
+        _, buffer_draw = cv2.imencode('.jpg', img_draw, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        img_result_base64 = base64.b64encode(buffer_draw).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'person_count': len(persons),
+            'persons': persons,
+            'image_width': img_width,
+            'image_height': img_height,
+            'result_image': f'data:image/jpeg;base64,{img_result_base64}',
+            'detector': detector_name,
+            'model_ref': 'https://modelscope.cn/models/iic/cv_hrnetw48_human-wholebody-keypoint_image'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'关键点检测失败: {str(e)}'}), 500
+
 if __name__ == '__main__':
     print("启动OCR工业图片识别系统...")
     print(f"上传目录: {app.config['UPLOAD_FOLDER']}")
@@ -981,6 +2096,24 @@ if __name__ == '__main__':
     print(f"OCR引擎: {engine_info['current_engine']} (类型: {engine_info['engine_type']})")
     print(f"PaddleOCR可用: {engine_info['paddleocr_available']}")
     print(f"OpenAI VL可用: {engine_info['openai_vl_available']}")
+    
+    # 预加载所有 AI 模型
+    print("\n" + "=" * 60)
+    print("[启动预加载] 正在预加载各功能模型...")
+    print("=" * 60)
+    
+    # 1. 车牌识别模型 (PaddleOCR PP-OCRv5)
+    preload_license_ocr()
+    
+    # 2. 安全帽检测模型 (ModelScope DAMO-YOLO)
+    preload_safety_helmet()
+    
+    # 3. 关键点检测模型 (PyTorch Keypoint R-CNN)
+    preload_keypoint()
+    
+    print("=" * 60)
+    print("[启动预加载] 所有模型预加载完成")
+    print("=" * 60 + "\n")
     
     print(f"API服务运行在 http://127.0.0.1:{Config.PORT}")
     

@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛意AI - 车牌识别</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        /* 车牌识别页面样式 */
+        .plate-page .content-grid {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .plate-page .left-column,
+        .plate-page .right-column {
+            display: none;
+        }
+        .plate-page .plate-full-column {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .plate-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 0;
+        }
+
+        .plate-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .plate-header h2 {
+            color: #4a6572;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .plate-header h2 i {
+            color: #3498db;
+        }
+
+        .plate-header .header-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .plate-body {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .plate-left-panel {
+            width: 380px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .plate-right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .plate-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .plate-card h3 {
+            color: #4a6572;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .plate-card h3 i {
+            color: #3498db;
+        }
+
+        /* 上传区域 */
+        .plate-upload-area {
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            padding: 15px 15px;
+            text-align: center;
+            background: linear-gradient(135deg, #ebf5fb, #d6eaf8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .plate-upload-area:hover {
+            background: linear-gradient(135deg, #d6eaf8, #aed6f1);
+            border-color: #2471a3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.15);
+        }
+
+        .plate-upload-area .upload-icon {
+            font-size: 2.5rem;
+            color: #3498db;
+            margin-bottom: 6px;
+        }
+
+        .plate-upload-area .upload-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+
+        .plate-upload-area .upload-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        /* 预览区域 */
+        .plate-preview-container {
+            position: relative;
+            display: none;
+        }
+
+        .plate-preview-container img {
+            max-width: 100%;
+            max-height: 120px;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+        }
+
+        .plate-file-info {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .plate-file-info .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .plate-file-info .info-label {
+            color: #7f8c8d;
+        }
+
+        .plate-file-info .info-value {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        /* 检测按钮 */
+        .btn-detect-plate {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(90deg, #3498db, #2471a3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-detect-plate:hover:not(:disabled) {
+            background: linear-gradient(90deg, #2471a3, #1a5276);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.35);
+        }
+
+        .btn-detect-plate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* 结果图片区域 */
+        .plate-result-image-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .plate-result-image-wrapper {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            min-height: 150px;
+            position: relative;
+        }
+
+        .plate-result-image-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .plate-result-placeholder {
+            text-align: center;
+            color: #adb5bd;
+        }
+
+        .plate-result-placeholder i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .plate-result-placeholder p {
+            font-size: 1rem;
+        }
+
+        /* JSON 结果区域 */
+        .plate-json-container {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .plate-json-container pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* 检测统计 */
+        .plate-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .plate-stat-card {
+            text-align: center;
+            padding: 15px 10px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .plate-stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .plate-stat-card .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* 加载动画 */
+        .plate-loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .plate-loading.active {
+            display: block;
+        }
+
+        .plate-loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #3498db;
+            border-radius: 50%;
+            animation: p-spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes p-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .plate-loading .loading-text {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+
+        /* 示例图片选择 */
+        .plate-sample-images {
+            margin: 15px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+        }
+
+        .plate-sample-images .sample-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .plate-sample-images .sample-grid {
+            display: flex;
+            gap: 10px;
+        }
+
+        .plate-sample-images .sample-item {
+            flex: 1;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: white;
+            padding: 6px;
+        }
+
+        .plate-sample-images .sample-item:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+
+        .plate-sample-images .sample-item.selected {
+            border-color: #3498db;
+            background: #ebf5fb;
+        }
+
+        .plate-sample-images .sample-item img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .plate-sample-images .sample-item span {
+            display: block;
+            font-size: 0.75rem;
+            color: #2c3e50;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* 全屏查看器（与 index.html 统一） */
+        .plate-fullscreen-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            animation: plateFadeIn 0.3s ease;
+        }
+        .plate-fullscreen-viewer.active { display: flex; }
+        .plate-fullscreen-content {
+            width: 95%;
+            height: 95%;
+            background: #1a1a1a;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: plateScaleIn 0.3s ease;
+        }
+        .plate-fullscreen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #2c3e50;
+            color: white;
+        }
+        .plate-fullscreen-header h3 { margin: 0; font-size: 1.2rem; }
+        .plate-fullscreen-close {
+            background: none; border: none; color: white;
+            font-size: 1.5rem; cursor: pointer; padding: 5px;
+        }
+        .plate-fullscreen-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        #plateFullscreenImage {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+            cursor: move;
+            image-rendering: auto;
+            image-rendering: crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            -ms-interpolation-mode: bicubic;
+        }
+        .plate-fullscreen-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 30px;
+        }
+        .plate-control-btn {
+            background: #3498db;
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background 0.3s ease;
+        }
+        .plate-control-btn:hover { background: #2980b9; }
+        .plate-control-btn.zoom-in { background: #2ecc71; }
+        .plate-control-btn.zoom-out { background: #e74c3c; }
+        .plate-control-btn.zoom-reset { background: #f39c12; }
+        .plate-control-btn.rotate-left { background: #9b59b6; }
+        .plate-control-btn.rotate-right { background: #34495e; }
+        .plate-control-btn.download-btn { background: #1abc9c; }
+        .plate-fullscreen-info {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        @keyframes plateFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes plateScaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* 预览图片和结果图片可点击放大 */
+        .plate-preview-container img,
+        .plate-result-image-wrapper img {
+            cursor: zoom-in;
+            transition: transform 0.2s ease;
+        }
+
+        .plate-preview-container img:hover,
+        .plate-result-image-wrapper img:hover {
+            transform: scale(1.02);
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .plate-body {
+                flex-direction: column;
+            }
+            .plate-left-panel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 管理系统风格头部 -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-logo">
+                    <img src="static/images/logo.png" alt="赛意AI" class="logo-image">
+                    <span class="admin-logo-text"> AI </span>
+                </div>
+                
+                <nav class="admin-nav" style="display: none;">
+                    <a href="index.html" class="nav-item">
+                        <i class="fas fa-image"></i>
+                        <span>图片识别</span>
+                    </a>
+                    <a href="pdf_ocr.html" class="nav-item">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>PDF识别</span>
+                    </a>
+                    <a href="license_plate_detection.html" class="nav-item active">
+                        <i class="fas fa-car"></i>
+                        <span>车牌识别</span>
+                    </a>
+                </nav>
+                
+                <div class="admin-user-info">
+                    <div class="user-notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">管理员</span>
+                            <span class="user-role">系统管理员</span>
+                        </div>
+                        <button class="user-menu-btn">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主体布局 -->
+        <div class="main-layout">
+            <!-- 左侧固定菜单栏 -->
+            <aside class="sidebar">
+                <nav class="sidebar-menu">
+                    <div class="menu-section">
+                        <a href="JavaScript:viod(0)" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="menu-text">首页</div>
+                        </a>
+                        <a href="index.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-image"></i>
+                            </div>
+                            <div class="menu-text">工业图纸识别</div>
+                        </a>
+                        <a href="image_ocr.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-image"></i>
+                            </div>
+                            <div class="menu-text">图片识别多场景</div>
+                        </a>
+                        <a href="pdf_ocr.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="menu-text">PDF识别</div>
+                        </a>
+                        <a href="safety_helmet_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-hard-hat"></i>
+                            </div>
+                            <div class="menu-text">实时安全帽检测</div>
+                        </a>
+                        <a href="license_plate_detection.html" class="menu-item active">
+                            <div class="menu-icon">
+                                <i class="fas fa-car"></i>
+                            </div>
+                            <div class="menu-text">车牌识别</div>
+                        </a>
+                        <a href="face_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-smile"></i>
+                            </div>
+                            <div class="menu-text">人脸检测</div>
+                        </a>
+                        <a href="keypoint_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-male"></i>
+                            </div>
+                            <div class="menu-text">全身关键点检测</div>
+                        </a>
+                        <a href="paddle_ocr.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="menu-text">在线官方案例</div>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- 主要内容区域 -->
+            <main class="main-content-area plate-page">
+                <div class="content-grid">
+                    <div class="plate-full-column">
+                        <div class="plate-wrapper">
+                            <!-- 头部 -->
+                            <div class="plate-header">
+                                <h2>
+                                    <i class="fas fa-car"></i>
+                                    车牌识别
+                                </h2>
+                                <div class="header-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    基于 ModelScope ResNet18 模型 (iic/cv_resnet18_license-plate-detection_damo)
+                                </div>
+                            </div>
+
+                            <!-- 主体 -->
+                            <div class="plate-body">
+                                <!-- 左侧面板：上传和设置 -->
+                                <div class="plate-left-panel">
+                                    <!-- 上传区域 -->
+                                    <div class="plate-card">
+                                        <h3><i class="fas fa-cloud-upload-alt"></i> 上传图片</h3>
+                                        <div class="plate-upload-area" id="uploadArea">
+                                            <div class="upload-icon">
+                                                <i class="fas fa-image"></i>
+                                            </div>
+                                            <div class="upload-text">点击选择或拖放图片</div>
+                                            <div class="upload-hint">支持 JPG、PNG、JPEG 格式</div>
+                                            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
+                                        </div>
+
+                                        <!-- 预览 -->
+                                        <div class="plate-preview-container" id="previewContainer">
+                                            <img id="imagePreview" src="" alt="图片预览">
+                                            <div class="plate-file-info">
+                                                <div class="info-row">
+                                                    <span class="info-label">文件名:</span>
+                                                    <span class="info-value" id="fileName">-</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="info-label">文件大小:</span>
+                                                    <span class="info-value" id="fileSize">-</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="info-label">图片尺寸:</span>
+                                                    <span class="info-value" id="imageDims">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 默认图片选择 -->
+                                        <div class="plate-sample-images">
+                                            <div class="sample-label">或选择示例图片：</div>
+                                            <div class="sample-grid">
+                                                <div class="sample-item selected" data-src="static/images/demo/18.jpg">
+                                                    <img src="static/images/demo/18.jpg" alt="示例18">
+                                                    <span>18.jpg</span>
+                                                </div>
+                                                <div class="sample-item" data-src="static/images/demo/19.jpg">
+                                                    <img src="static/images/demo/19.jpg" alt="示例7">
+                                                    <span>19.jpg</span>
+                                                </div>
+                                                 <div class="sample-item" data-src="static/images/demo/20.png">
+                                                    <img src="static/images/demo/20.png" alt="示例7">
+                                                    <span>20.png</span>
+                                                </div>
+                                                 <div class="sample-item" data-src="static/images/demo/21.jpeg">
+                                                    <img src="static/images/demo/21.jpeg" alt="示例7">
+                                                    <span>21.jpeg</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 检测按钮 -->
+                                        <button class="btn-detect-plate" id="detectBtn">
+                                            <i class="fas fa-search"></i>
+                                            开始检测
+                                        </button>
+
+                                        <!-- 加载动画 -->
+                                        <div class="plate-loading" id="loadingIndicator">
+                                            <div class="spinner"></div>
+                                            <span class="loading-text">正在调用模型进行车牌检测...</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 检测统计 -->
+                                    <div class="plate-card" id="statsCard" style="display: none;">
+                                        <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
+                                        <div class="plate-stats">
+                                            <div class="plate-stat-card" style="background: linear-gradient(135deg, #3498db, #2471a3);">
+                                                <div class="stat-value" id="plateCount">0</div>
+                                                <div class="stat-label">检测到车牌</div>
+                                            </div>
+                                            <div class="plate-stat-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                                                <div class="stat-value" id="imgWidth">0</div>
+                                                <div class="stat-label">图片宽度</div>
+                                            </div>
+                                            <div class="plate-stat-card" style="background: linear-gradient(135deg, #e67e22, #d35400);">
+                                                <div class="stat-value" id="imgHeight">0</div>
+                                                <div class="stat-label">图片高度</div>
+                                            </div>
+                                        </div>
+                                        <!-- 车牌识别结果列表 -->
+                                        <div id="plateResultsList" style="margin-top: 12px; display: none;">
+                                            <h4 style="color: #4a6572; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                                <i class="fas fa-car" style="color: #3498db;"></i> 识别结果
+                                            </h4>
+                                            <div id="plateResultsContainer"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 右侧面板：结果展示 -->
+                                <div class="plate-right-panel">
+                                    <!-- 结果图片 -->
+                                    <div class="plate-card plate-result-image-container">
+                                        <h3><i class="fas fa-eye"></i> 检测结果</h3>
+                                        <div class="plate-result-image-wrapper" id="resultImageWrapper">
+                                            <div class="plate-result-placeholder" id="resultPlaceholder">
+                                                <i class="fas fa-image"></i>
+                                                <p>上传图片并点击"开始检测"查看结果</p>
+                                            </div>
+                                            <img id="resultImage" src="" alt="检测结果" style="display: none;">
+                                        </div>
+                                    </div>
+
+                                    <!-- JSON 数据 -->
+                                    <div class="plate-card">
+                                        <h3><i class="fas fa-file-code"></i> JSON 数据</h3>
+                                        <div class="plate-json-container">
+                                            <pre id="jsonOutput">{
+    "message": "等待检测..."
+}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 简化底部信息 -->
+        <footer class="simple-footer">
+            <div class="footer-content">
+                <p>© 2026 赛意AI | 技术支持: sie@chinasie.com</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // 车牌识别页面 JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const previewContainer = document.getElementById('previewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const imageDims = document.getElementById('imageDims');
+            const detectBtn = document.getElementById('detectBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const statsCard = document.getElementById('statsCard');
+            const plateCount = document.getElementById('plateCount');
+            const imgWidth = document.getElementById('imgWidth');
+            const imgHeight = document.getElementById('imgHeight');
+            const plateResultsList = document.getElementById('plateResultsList');
+            const plateResultsContainer = document.getElementById('plateResultsContainer');
+            const resultImage = document.getElementById('resultImage');
+            const resultPlaceholder = document.getElementById('resultPlaceholder');
+            const jsonOutput = document.getElementById('jsonOutput');
+
+            let selectedFile = null;
+            let selectedSampleSrc = 'static/images/demo/18.jpg';
+
+            // 默认选中18.jpg并加载预览
+            (function loadDefaultSample() {
+                var img = new Image();
+                img.onload = function() {
+                    imagePreview.src = selectedSampleSrc;
+                    previewContainer.style.display = 'block';
+                    imageDims.textContent = img.width + ' × ' + img.height;
+                };
+                img.src = selectedSampleSrc;
+                fileName.textContent = '18.jpg';
+                fileSize.textContent = '-';
+                detectBtn.disabled = false;
+            })();
+
+            // 示例图片选择
+            const sampleItems = document.querySelectorAll('.sample-item');
+            sampleItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    sampleItems.forEach(function(si) { si.classList.remove('selected'); });
+                    this.classList.add('selected');
+
+                    const src = this.getAttribute('data-src');
+                    selectedSampleSrc = src;
+                    selectedFile = null;
+
+                    var img = new Image();
+                    img.onload = function() {
+                        imagePreview.src = src;
+                        previewContainer.style.display = 'block';
+                        imageDims.textContent = img.width + ' × ' + img.height;
+                    };
+                    img.src = src;
+
+                    fileName.textContent = src.split('/').pop();
+                    fileSize.textContent = '-';
+                    detectBtn.disabled = false;
+                });
+            });
+
+            // 点击上传区域触发文件选择
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // 拖放支持
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#2471a3';
+                uploadArea.style.background = 'linear-gradient(135deg, #d6eaf8, #aed6f1)';
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#3498db';
+                uploadArea.style.background = 'linear-gradient(135deg, #ebf5fb, #d6eaf8)';
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#3498db';
+                uploadArea.style.background = 'linear-gradient(135deg, #ebf5fb, #d6eaf8)';
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            // 文件选择
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            // 处理文件
+            function handleFile(file) {
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!validTypes.includes(file.type)) {
+                    alert('请选择 JPG 或 PNG 格式的图片');
+                    return;
+                }
+
+                selectedFile = file;
+                selectedSampleSrc = null;
+
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+
+                var img = new Image();
+                img.onload = function() {
+                    imageDims.textContent = img.width + ' × ' + img.height;
+                };
+                img.src = URL.createObjectURL(file);
+
+                detectBtn.disabled = false;
+            }
+
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+
+            // 开始检测
+            detectBtn.addEventListener('click', function() {
+                if (!selectedFile && !selectedSampleSrc) return;
+
+                detectBtn.disabled = true;
+                detectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
+                loadingIndicator.classList.add('active');
+                statsCard.style.display = 'none';
+                plateResultsList.style.display = 'none';
+                resultImage.style.display = 'none';
+                resultPlaceholder.style.display = 'block';
+                jsonOutput.textContent = '{\n    "status": "正在检测..."\n}';
+
+                var formData = new FormData();
+
+                if (selectedFile) {
+                    formData.append('file', selectedFile);
+                    doDetect(formData);
+                } else if (selectedSampleSrc) {
+                    fetch(selectedSampleSrc)
+                        .then(function(resp) { return resp.blob(); })
+                        .then(function(blob) {
+                            var filename = selectedSampleSrc.split('/').pop();
+                            var file = new File([blob], filename, { type: blob.type });
+                            formData.append('file', file);
+                            doDetect(formData);
+                        })
+                        .catch(function(err) {
+                            jsonOutput.textContent = '{\n    "error": "' + err.message + '"\n}';
+                            alert('加载示例图片失败: ' + err.message);
+                            detectBtn.disabled = false;
+                            detectBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
+                            loadingIndicator.classList.remove('active');
+                        });
+                }
+            });
+
+            function doDetect(formData) {
+                fetch('/api/license_plate_detection', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function(response) {
+                    return response.json().then(function(data) {
+                        return { status: response.status, data: data };
+                    });
+                })
+                .then(function(result) {
+                    if (result.data.success) {
+                        // 显示结果图片
+                        resultImage.src = result.data.result_image;
+                        resultImage.style.display = 'block';
+                        resultPlaceholder.style.display = 'none';
+
+                        // 显示统计
+                        plateCount.textContent = result.data.detection_count;
+                        imgWidth.textContent = result.data.image_width;
+                        imgHeight.textContent = result.data.image_height;
+                        statsCard.style.display = 'block';
+
+                        // 显示车牌识别结果列表
+                        if (result.data.detections && result.data.detections.length > 0) {
+                            plateResultsList.style.display = 'block';
+                            plateResultsContainer.innerHTML = '';
+                            result.data.detections.forEach(function(det, idx) {
+                                var plateText = det.plate_text || '未识别';
+                                var plateConf = det.plate_text_confidence || 0;
+                                var detConf = det.confidence || 0;
+                                var card = document.createElement('div');
+                                card.style.cssText = 'background: #f8f9fa; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; border-left: 4px solid #3498db;';
+                                card.innerHTML = '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                                    '<span style="font-size: 1.1rem; font-weight: 700; color: #2c3e50; letter-spacing: 2px;">' +
+                                    '<i class="fas fa-car" style="color: #3498db; margin-right: 6px;"></i>' +
+                                    (plateText || '未识别') + '</span>' +
+                                    '<span style="font-size: 0.8rem; color: #7f8c8d;">检测 ' + (detConf * 100).toFixed(1) + '%</span>' +
+                                    '</div>' +
+                                    '<div style="font-size: 0.75rem; color: #95a5a6; margin-top: 4px;">' +
+                                    'OCR置信度: ' + (plateConf * 100).toFixed(1) + '% | ' +
+                                    '位置: (' + Math.round(det.bbox.x1) + ', ' + Math.round(det.bbox.y1) + ') - (' + Math.round(det.bbox.x2) + ', ' + Math.round(det.bbox.y2) + ')' +
+                                    '</div>';
+                                plateResultsContainer.appendChild(card);
+                            });
+                        } else {
+                            plateResultsList.style.display = 'none';
+                        }
+
+                        // 显示 JSON
+                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                    } else {
+                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                        alert('检测失败: ' + (result.data.error || '未知错误'));
+                    }
+                })
+                .catch(function(err) {
+                    jsonOutput.textContent = '{\n    "error": "' + err.message + '"\n}';
+                    alert('请求失败: ' + err.message);
+                })
+                .finally(function() {
+                    detectBtn.disabled = false;
+                    detectBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
+                    loadingIndicator.classList.remove('active');
+                });
+            }
+
+            // 图片点击放大 - 使用全屏查看器（与 index.html 统一）
+            function initImageZoom(imgElement) {
+                if (!imgElement) return;
+                imgElement.style.cursor = 'zoom-in';
+                imgElement.addEventListener('click', function() {
+                    if (this.src && this.src !== '') {
+                        openPlateFullscreenViewer(this.src);
+                    }
+                });
+            }
+
+            // 初始化预览图片和结果图片的点击放大
+            var previewImg = document.getElementById('imagePreview');
+            var resultImg = document.getElementById('resultImage');
+            initImageZoom(previewImg);
+            initImageZoom(resultImg);
+        });
+    </script>
+
+    <!-- 全屏查看器（与 index.html 统一） -->
+    <div class="plate-fullscreen-viewer" id="plateFullscreenViewer">
+        <div class="plate-fullscreen-content">
+            <div class="plate-fullscreen-header">
+                <h3>图片全屏查看</h3>
+                <button class="plate-fullscreen-close" onclick="closePlateFullscreenViewer()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="plate-fullscreen-body">
+                <img id="plateFullscreenImage" src="" alt="全屏图片">
+                <div class="plate-fullscreen-controls">
+                    <button class="plate-control-btn zoom-in" onclick="plateZoomIn()" title="放大"><i class="fas fa-search-plus"></i></button>
+                    <button class="plate-control-btn zoom-out" onclick="plateZoomOut()" title="缩小"><i class="fas fa-search-minus"></i></button>
+                    <button class="plate-control-btn zoom-reset" onclick="plateZoomReset()" title="重置"><i class="fas fa-sync-alt"></i></button>
+                    <button class="plate-control-btn rotate-left" onclick="plateRotateLeft()" title="左旋"><i class="fas fa-undo"></i></button>
+                    <button class="plate-control-btn rotate-right" onclick="plateRotateRight()" title="右旋"><i class="fas fa-redo"></i></button>
+                    <button class="plate-control-btn download-btn" onclick="plateDownloadImage()" title="下载"><i class="fas fa-download"></i></button>
+                </div>
+                <div class="plate-fullscreen-info">
+                    <span id="plateFullscreenInfo">缩放: 100% | 旋转: 0°</span>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+// 全屏查看器功能（与 index.html 统一）
+(function() {
+    var viewer = document.getElementById('plateFullscreenViewer');
+    var img = document.getElementById('plateFullscreenImage');
+    var info = document.getElementById('plateFullscreenInfo');
+    var scale = 1, rotation = 0;
+
+    function updateTransform() {
+        img.style.transform = 'scale(' + scale + ') rotate(' + rotation + 'deg)';
+        info.textContent = '缩放: ' + Math.round(scale * 100) + '% | 旋转: ' + rotation + '°';
+    }
+
+    window.openPlateFullscreenViewer = function(src) {
+        img.src = src;
+        scale = 1; rotation = 0;
+        updateTransform();
+        viewer.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closePlateFullscreenViewer = function() {
+        viewer.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    window.plateZoomIn = function() { scale = Math.min(scale + 0.25, 5); updateTransform(); };
+    window.plateZoomOut = function() { scale = Math.max(scale - 0.25, 0.25); updateTransform(); };
+    window.plateZoomReset = function() { scale = 1; rotation = 0; updateTransform(); };
+    window.plateRotateLeft = function() { rotation = (rotation - 90) % 360; updateTransform(); };
+    window.plateRotateRight = function() { rotation = (rotation + 90) % 360; updateTransform(); };
+    window.plateDownloadImage = function() {
+        var link = document.createElement('a');
+        link.download = 'plate_image_' + Date.now() + '.png';
+        link.href = img.src;
+        link.click();
+    };
+
+    viewer.addEventListener('click', function(e) {
+        if (e.target === viewer) closePlateFullscreenViewer();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && viewer.classList.contains('active')) closePlateFullscreenViewer();
+    });
+})();
+</script>
+</body>
+</html>

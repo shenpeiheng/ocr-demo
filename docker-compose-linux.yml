@@ -17,9 +17,22 @@ services:
       - OPENBLAS_NUM_THREADS=4
       - MKL_NUM_THREADS=4
       - UPLOAD_FOLDER=/app/frontend/uploads
-      - MODELSCOPE_API_KEY=ms-83c39231-b66e-4ed8-8a2b-52c9ded22a51
+      # PaddleOCR 模型目录
+      - PADDLEOCR_MODEL_DIR=/root/.paddleocr
+      # ModelScope 模型缓存目录
+      - MODELSCOPE_CACHE=/root/.cache/modelscope
+      # PyTorch 模型缓存目录
+      - TORCH_HOME=/root/.cache/torch
+    env_file:
+      - .env
     volumes:
       - ./uploads:/app/frontend/uploads
+      # 持久化 PaddleOCR 模型文件
+      - paddleocr_models:/root/.paddleocr
+      # 持久化 ModelScope 模型文件
+      - modelscope_models:/root/.cache/modelscope
+      # 持久化 PyTorch 模型文件
+      - torch_models:/root/.cache/torch
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/api', timeout=2)"]
@@ -27,3 +40,12 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+# 定义持久化卷
+volumes:
+  paddleocr_models:
+    driver: local
+  modelscope_models:
+    driver: local
+  torch_models:
+    driver: local

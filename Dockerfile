@@ -1,6 +1,7 @@
 # OCR工业图片识别系统 - Dockerfile
 # 使用Python 3.9作为基础镜像
 FROM python:3.9-slim
+
 # 设置工作目录
 WORKDIR /app
 
@@ -16,29 +17,53 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     wget \
     ca-certificates \
+    fonts-wqy-microhei \
     && rm -rf /var/lib/apt/lists/*
 
+# 创建并激活虚拟环境
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# 升级pip
 RUN /opt/venv/bin/pip install --upgrade pip
-RUN /opt/venv/bin/pip install \
-        Flask==2.3.3 \
-        Flask-CORS==4.0.0 \
-        Pillow==10.0.0 \
-        openpyxl==3.1.2 \
-        numpy==1.26.4 \
-        opencv-python==4.6.0.66 \
-        python-dotenv==1.0.0 \
-        setuptools==70.0.0
 
+# 安装核心依赖（合并为一个RUN以减少层数）
+RUN /opt/venv/bin/pip install \
+    Flask==2.3.3 \
+    Flask-CORS==4.0.0 \
+    Pillow==10.0.0 \
+    openpyxl==3.1.2 \
+    numpy==1.26.4 \
+    opencv-python==4.6.0.66 \
+    python-dotenv==1.0.0 \
+    setuptools==70.0.0 \
+    pdf2image==1.16.3 \
+    PyMuPDF==1.23.8 \
+    pdfplumber==0.10.3 \
+    modelscope==1.36.3 \
+    addict==2.4.0 \
+    simplejson
+
+# 安装PaddlePaddle（CPU版本）
 RUN /opt/venv/bin/pip install paddlepaddle==3.2.2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
-RUN /opt/venv/bin/pip install paddleocr==3.3.2
-RUN /opt/venv/bin/pip install \
-        pdf2image==1.16.3 \
-        PyMuPDF==1.23.8 \
-        pdfplumber==0.10.3
 
-# 复制项目文件（包括预下载脚本）
+# 安装PaddleOCR
+RUN /opt/venv/bin/pip install paddleocr==3.3.2
+
+# 安装PyTorch（CPU版本）
+RUN /opt/venv/bin/pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cpu
+
+# 复制模型预下载脚本
+COPY scripts/download_models.py /app/scripts/download_models.py
+
+# ============================================================
+# 预下载所有 AI 模型（构建阶段）
+# 避免运行时首次调用因网络问题下载超时
+# ============================================================
+RUN /opt/venv/bin/python /app/scripts/download_models.py && \
+    echo "[DockerBuild] 所有模型预下载完成"
+
+# 复制剩余项目文件
 COPY . .
 
 # 创建必要的目录

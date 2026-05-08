@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赛意AI - PaddleOCR</title>
+    <title>赛意AI - 在线案例</title>
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="static/css/all.min.css">
     <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
     <style>
-        /* PaddleOCR 页面样式 - 全屏 iframe 布局 */
+        /* PaddleOCR 页面样式 - 卡片网格布局 */
         .paddleocr-wrapper {
             display: flex;
             flex-direction: column;
@@ -55,96 +55,154 @@
             color: #f39c12;
         }
 
-        .paddleocr-iframe-container {
+        /* 卡片网格容器 */
+        .paddleocr-card-grid {
             flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            padding: 0;
+            overflow-y: auto;
+            align-content: start;
+        }
+
+        /* 单个卡片 */
+        .paddleocr-card {
             background: white;
             border-radius: 12px;
-            overflow: hidden;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             border: 1px solid #eaeaea;
-            position: relative;
-            min-height: 0;
+            padding: 32px 28px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-        }
-
-        .paddleocr-iframe-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        }
-
-        .paddleocr-placeholder {
             text-align: center;
-            padding: 60px 40px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .paddleocr-placeholder i {
-            font-size: 5rem;
-            color: #2a91d6;
-            margin-bottom: 20px;
-            opacity: 0.8;
+        .paddleocr-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2a91d6, #5dade2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .paddleocr-placeholder h3 {
-            font-size: 1.5rem;
+        .paddleocr-card:hover::before {
+            opacity: 1;
+        }
+
+        .paddleocr-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+            border-color: #c8d6e5;
+        }
+
+        .paddleocr-card-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+            font-size: 2rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .paddleocr-card-icon.icon-blue {
+            background: linear-gradient(135deg, #2a91d6, #5dade2);
+        }
+
+        .paddleocr-card-icon.icon-green {
+            background: linear-gradient(135deg, #27ae60, #58d68d);
+        }
+
+        .paddleocr-card-icon.icon-orange {
+            background: linear-gradient(135deg, #e67e22, #f0b27a);
+        }
+
+        .paddleocr-card-icon.icon-purple {
+            background: linear-gradient(135deg, #8e44ad, #bb8fce);
+        }
+
+        .paddleocr-card-icon.icon-red {
+            background: linear-gradient(135deg, #e74c3c, #f1948a);
+        }
+
+        .paddleocr-card-icon.icon-teal {
+            background: linear-gradient(135deg, #1abc9c, #76d7c4);
+        }
+
+        .paddleocr-card h3 {
+            font-size: 1.2rem;
             color: #2c3e50;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
 
-        .paddleocr-placeholder p {
+        .paddleocr-card p {
             color: #7f8c8d;
-            font-size: 1rem;
-            margin-bottom: 24px;
-            max-width: 480px;
+            font-size: 0.9rem;
             line-height: 1.6;
+            margin-bottom: 20px;
+            flex: 1;
         }
 
-        .btn-open {
+        .paddleocr-card .btn-open {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 14px 36px;
+            gap: 8px;
+            padding: 10px 24px;
             background: linear-gradient(90deg, #2a91d6, #1a7bc4);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
+            margin-top: auto;
         }
 
-        .btn-open:hover {
+        .paddleocr-card .btn-open:hover {
             background: linear-gradient(90deg, #1a7bc4, #0f6aad);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(42, 145, 214, 0.35);
         }
 
-        .btn-open i {
-            font-size: 1.2rem;
-        }
-
-        .paddleocr-notice {
-            margin-top: 20px;
-            padding: 12px 20px;
-            background: #fff8e1;
-            border-radius: 8px;
-            border-left: 4px solid #f39c12;
-            font-size: 0.9rem;
-            color: #856404;
-            text-align: left;
-            max-width: 520px;
-        }
-
-        .paddleocr-notice i {
+        .paddleocr-card .btn-open i {
             font-size: 1rem;
-            margin-right: 8px;
-            color: #f39c12;
+        }
+
+        .paddleocr-card .card-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e8f4fd;
+            color: #2a91d6;
+        }
+
+        .paddleocr-card .card-tag.tag-new {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+
+        .paddleocr-card .card-tag.tag-hot {
+            background: #fef5e7;
+            color: #e67e22;
         }
 
         /* 覆盖内容网格布局，使 PaddleOCR 页面全屏显示 */
@@ -164,6 +222,24 @@
             flex-direction: column;
             flex: 1;
             min-height: 0;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .paddleocr-card-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .paddleocr-card {
+                padding: 24px 20px;
+            }
+
+            .paddleocr-card-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.6rem;
+            }
         }
     </style>
 </head>
@@ -188,7 +264,7 @@
                     </a>
                     <a href="paddle_ocr.html" class="nav-item active">
                         <i class="fas fa-eye"></i>
-                        <span>PaddleOCR</span>
+                        <span>在线案例</span>
                     </a>
                 </nav>
                 
@@ -245,12 +321,36 @@
                             </div>
                             <div class="menu-text">PDF识别</div>
                         </a>
+                        
+                        <a href="safety_helmet_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-hard-hat"></i>
+                            </div>
+                            <div class="menu-text">实时安全帽检测</div>
+                        </a>
+                        <a href="license_plate_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-car"></i>
+                            </div>
+                            <div class="menu-text">车牌识别</div>
+                        </a>
+                        <a href="face_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-smile"></i>
+                            </div>
+                            <div class="menu-text">人脸检测</div>
+                        </a>
+                        <a href="keypoint_detection.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-male"></i>
+                            </div>
+                            <div class="menu-text">全身关键点检测</div>
+                        </a>
                         <a href="paddle_ocr.html" class="menu-item active">
                             <div class="menu-icon">
                                 <i class="fas fa-eye"></i>
                             </div>
-                            <div class="menu-text">PaddleOCR</div>
-                            <div class="menu-badge">新</div>
+                            <div class="menu-text">在线官方案例</div>
                         </a>
                     </div>
                 </nav>
@@ -264,27 +364,15 @@
                             <div class="paddleocr-header">
                                 <h2>
                                     <i class="fas fa-eye"></i>
-                                    PaddleOCR 在线体验
+                                    在线体验
                                 </h2>
                                 <div class="header-hint">
                                     <i class="fas fa-info-circle"></i>
-                                    由百度 AI Studio 提供技术支持
+                                    由 AI Studio 提供技术支持
                                 </div>
                             </div>
-                            <div class="paddleocr-iframe-container">
-                                <div class="paddleocr-placeholder">
-                                    <i class="fas fa-external-link-alt"></i>
-                                    <h3>PaddleOCR 在线工具</h3>
-                                    <p>PaddleOCR 是百度推出的 OCR 工具套件，支持文字检测、文本识别、表格识别等功能。由于安全策略限制，该页面需要在百度 AI Studio 中打开。</p>
-                                    <a href="https://aistudio.baidu.com/paddleocr/task" target="_blank" rel="noopener noreferrer" class="btn-open">
-                                        <i class="fas fa-external-link-alt"></i>
-                                        在新窗口打开 PaddleOCR
-                                    </a>
-                                    <div class="paddleocr-notice">
-                                        <i class="fas fa-lightbulb"></i>
-                                        点击按钮将在新标签页中打开百度 AI Studio 的 PaddleOCR 在线体验工具，您可以使用百度账号登录后体验完整功能。
-                                    </div>
-                                </div>
+                            <div class="paddleocr-card-grid" id="paddleocrCardGrid">
+                                <!-- 由 JavaScript 动态渲染 -->
                             </div>
                         </div>
                     </div>
@@ -299,5 +387,118 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        /**
+         * PaddleOCR 在线工具卡片数据
+         * ============================
+         * 如需添加新卡片，只需在此数组中新增一个对象即可。
+         * 每个卡片支持以下字段：
+         *   - id:        唯一标识（必填）
+         *   - icon:      FontAwesome 图标类名（必填）
+         *   - iconColor: 图标背景色主题，可选值：blue / green / orange / purple / red / teal（必填）
+         *   - title:     卡片标题（必填）
+         *   - desc:      卡片描述文字（必填）
+         *   - url:       跳转链接（必填）
+         *   - tag:       可选标签文字，如 "新上线"、"热门" 等
+         *   - tagType:   标签样式，可选值：''（默认蓝底）/ 'new'（绿底）/ 'hot'（橙底）
+         */
+        const paddleocrTools = [
+            {
+                id: 'paddleocr-general',
+                icon: 'fa-external-link-alt',
+                iconColor: 'blue',
+                title: 'PaddleOCR 在线工具',
+                desc: 'PaddleOCR 是百度推出的 OCR 工具套件，支持文字检测、文本识别、表格识别等功能。',
+                url: 'https://aistudio.baidu.com/paddleocr/task/new',
+                tag: '推荐',
+                tagType: 'hot'
+            },
+            {
+                id: 'paddleocr-text-det',
+                icon: 'fa-arrows-alt',
+                iconColor: 'green',
+                title: 'MinerU',
+                desc: 'LLM与Agent 的智能文档解析引擎全面支持主流Agent 框架与MCP协议，助力AI应用开箱即用。',
+                url: 'https://mineru.net/OpenSourceTools/Extractor',
+                tag: '智能文档',
+                tagType: 'new'
+            },
+            // {
+            //     id: 'paddleocr-text-rec',
+            //     icon: 'fa-font',
+            //     iconColor: 'orange',
+            //     title: '文本识别',
+            //     desc: '基于 CRNN / SVTR 系列算法，将检测到的文字区域识别为可编辑文本，支持中英文及多语种识别，准确率高。',
+            //     url: 'https://aistudio.baidu.com/paddleocr/task/new?type=rec',
+            //     tag: '热门',
+            //     tagType: 'hot'
+            // },
+            // {
+            //     id: 'paddleocr-table',
+            //     icon: 'fa-table',
+            //     iconColor: 'purple',
+            //     title: '表格识别',
+            //     desc: '基于 TableMaster 算法，自动识别图片中的表格结构并提取表格数据，支持有线表格和无线表格的识别。',
+            //     url: 'https://aistudio.baidu.com/paddleocr/task/new?type=table'
+            // },
+            // {
+            //     id: 'paddleocr-layout',
+            //     icon: 'fa-layer-group',
+            //     iconColor: 'teal',
+            //     title: '版面分析',
+            //     desc: '基于 PP-Structure 系列模型，对文档图片进行版面结构分析，识别标题、段落、图片、表格等版面元素。',
+            //     url: 'https://aistudio.baidu.com/paddleocr/task/new?type=layout'
+            // }
+        ];
+
+        /** 图标颜色映射 */
+        const iconColorMap = {
+            blue: 'icon-blue',
+            green: 'icon-green',
+            orange: 'icon-orange',
+            purple: 'icon-purple',
+            red: 'icon-red',
+            teal: 'icon-teal'
+        };
+
+        /** 标签类型映射 */
+        const tagTypeMap = {
+            new: 'tag-new',
+            hot: 'tag-hot'
+        };
+
+        /** 渲染卡片网格 */
+        function renderPaddleocrCards() {
+            const container = document.getElementById('paddleocrCardGrid');
+            if (!container) return;
+
+            container.innerHTML = paddleocrTools.map(tool => {
+                const colorClass = iconColorMap[tool.iconColor] || 'icon-blue';
+                const tagClass = tool.tagType ? (tagTypeMap[tool.tagType] || '') : '';
+                const tagHtml = tool.tag
+                    ? `<span class="card-tag ${tagClass}">${tool.tag}</span>`
+                    : '';
+
+                return `
+                    <div class="paddleocr-card">
+                        ${tagHtml}
+                        <div class="paddleocr-card-icon ${colorClass}">
+                            <i class="fas ${tool.icon}"></i>
+                        </div>
+                        <h3>${tool.title}</h3>
+                        <p>${tool.desc}</p>
+                        <a href="${tool.url}" target="_blank" rel="noopener noreferrer" class="btn-open">
+                            <i class="fas fa-external-link-alt"></i>
+                            在新窗口打开
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // DOM 加载完成后渲染
+        document.addEventListener('DOMContentLoaded', renderPaddleocrCards);
+    </script>
 </body>
 </html>

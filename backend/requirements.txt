@@ -12,3 +12,6 @@ paddleocr==3.3.2
 pdf2image==1.16.3
 PyMuPDF==1.23.8
 pdfplumber==0.10.3
+# 人脸检测依赖 (ModelScope RetinaFace)
+modelscope==1.36.3
+addict==2.4.0

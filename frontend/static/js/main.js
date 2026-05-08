@@ -1446,6 +1446,8 @@ function initFullscreenViewer() {
         translateY = 0;
         updateImageTransform();
     }
+    // 暴露到全局，供 onclick 使用
+    window.closeFullscreenViewer = closeFullscreenViewer;
     
     // 打开全屏查看器
     function openFullscreenViewer(imageSrc) {
@@ -1453,6 +1455,8 @@ function initFullscreenViewer() {
         fullscreenViewer.classList.add('active');
         updateImageTransform();
     }
+    // 暴露到全局，供 onclick 使用
+    window.openFullscreenViewer = openFullscreenViewer;
     
     // 绑定图片预览点击事件（保持原样，使用data URL）
     const imagePreview = document.getElementById('imagePreview');

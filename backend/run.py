@@ -151,6 +151,9 @@ def start_server(host='0.0.0.0', port=5000, debug=True):
     print("  GET  /api/download/excel/<file> - 下载Excel")
     print("  GET  /api/download/json/<file>  - 下载JSON")
     print("  GET  /uploads/<file>      - 访问上传的文件")
+    print("  POST /api/safety_helmet_detection - 实时安全帽检测 (DAMO-YOLO)")
+    print("  POST /api/face_detection  - 人脸检测 (RetinaFace)")
+    print("  POST /api/keypoint_detection - 全身关键点检测 (Keypoint R-CNN)")
     
     print("=" * 60)
     
