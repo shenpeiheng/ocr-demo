@@ -105,7 +105,7 @@ class OpenAIVLProcessor:
                     'ocr_engine': 'OpenAI VL',
                     'model': self.model,
                     'prompt_used': prompt[:100] + "..." if len(prompt) > 100 else prompt,
-                    'raw_response': response.get('content', '')[:500] + "..." if len(response.get('content', '')) > 500 else response.get('content', '')
+                    'raw_response': response.get('content', '')
                 }
                 
                 logger.info(f"OpenAI VL处理完成，识别到 {results['total_items']} 个信息项，耗时 {processing_time:.2f}秒")

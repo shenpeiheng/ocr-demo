@@ -19,6 +19,7 @@ services:
       - OPENBLAS_NUM_THREADS=4
       - MKL_NUM_THREADS=4
       - UPLOAD_FOLDER=/app/frontend/uploads
+      - MODELSCOPE_API_KEY=ms-83c39231-b66e-4ed8-8a2b-52c9ded22a51
     volumes:
       # 挂载上传目录以持久化数据
       - ./frontend/uploads:/app/frontend/uploads

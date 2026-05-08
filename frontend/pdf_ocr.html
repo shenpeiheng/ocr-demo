@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF OCR识别系统</title>
+    <title>赛意AI</title>
     <link rel="stylesheet" href="static/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">    
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div class="container">
@@ -15,11 +14,11 @@
         <header class="admin-header">
             <div class="admin-header-content">
                 <div class="admin-logo">
-                    <img src="static/images/logo.png" alt="OCR系统Logo" class="logo-image">
-                    <span class="admin-logo-text">PDF OCR识别系统</span>
+                    <img src="static/images/logo.png" alt="赛意AI" class="logo-image">
+                    <span class="admin-logo-text"> AI </span>
                 </div>
                 
-                <nav class="admin-nav">
+                <nav class="admin-nav" style="display: none;">
                     <a href="index.html" class="nav-item">
                         <i class="fas fa-image"></i>
                         <span>图片识别</span>
@@ -71,91 +70,50 @@
             <aside class="sidebar">
                 <nav class="sidebar-menu">
                     <div class="menu-section">
+                        <a href="JavaScript:viod(0)" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="menu-text">首页</div>
+                            <!--<div class="menu-badge">3</div>-->
+                        </a>
                         <a href="index.html" class="menu-item">
                             <div class="menu-icon">
-                                <i class="fas fa-image"></i>
+                                <i class="fas fa-file-image"></i>
                             </div>
-                            <div class="menu-text">图片识别</div>
+                            <div class="menu-text">工业图纸识别</div>
+                        </a>
+                        <a href="image_ocr.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-image"></i>
+                            </div>
+                            <div class="menu-text">图片识别多场景</div>
                         </a>
                         <a href="pdf_ocr.html" class="menu-item active">
                             <div class="menu-icon">
                                 <i class="fas fa-file-pdf"></i>
                             </div>
                             <div class="menu-text">PDF识别</div>
+                            <!--<div class="menu-badge new">新</div>-->
+                        </a>
+                        <a href="paddle_ocr.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="menu-text">PaddleOCR</div>
                             <div class="menu-badge">新</div>
                         </a>
-                        <a href="#" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-history"></i>
-                            </div>
-                            <div class="menu-text">历史记录</div>
-                            <div class="menu-badge">12</div>
-                        </a>
-                        <a href="#" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-chart-bar"></i>
-                            </div>
-                            <div class="menu-text">数据分析</div>
-                        </a>
                     </div>
                     
-                    <div class="menu-section">
-                        <div class="menu-section-title">PDF工具</div>
-                        <a href="#" class="menu-item" id="pdfInfoBtn">
-                            <div class="menu-icon">
-                                <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div class="menu-text">PDF信息</div>
-                        </a>
-                        <a href="#" class="menu-item" id="extractTextBtn">
-                            <div class="menu-icon">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <div class="menu-text">提取文本</div>
-                        </a>
-                        <a href="#" class="menu-item" id="convertImagesBtn">
-                            <div class="menu-icon">
-                                <i class="fas fa-images"></i>
-                            </div>
-                            <div class="menu-text">转换为图像</div>
-                        </a>
-                        <a href="#" class="menu-item" id="batchProcessBtn">
-                            <div class="menu-icon">
-                                <i class="fas fa-tasks"></i>
-                            </div>
-                            <div class="menu-text">批量处理</div>
-                        </a>
-                    </div>
                     
-                    <div class="menu-section">
-                        <div class="menu-section-title">导出选项</div>
-                        <a href="#" class="menu-item" id="exportExcelBtnSide">
-                            <div class="menu-icon">
-                                <i class="fas fa-file-excel"></i>
-                            </div>
-                            <div class="menu-text">导出Excel</div>
-                        </a>
-                        <a href="#" class="menu-item" id="exportJsonBtnSide">
-                            <div class="menu-icon">
-                                <i class="fas fa-file-code"></i>
-                            </div>
-                            <div class="menu-text">导出JSON</div>
-                        </a>
-                        <a href="#" class="menu-item" id="exportImagesBtnSide">
-                            <div class="menu-icon">
-                                <i class="fas fa-file-archive"></i>
-                            </div>
-                            <div class="menu-text">导出图像</div>
-                        </a>
-                    </div>
                 </nav>
                 
-                <div class="sidebar-footer">
+                <!--<div class="sidebar-footer">
                     <div class="system-status">
                         <div class="status-indicator online"></div>
                         <span>系统在线</span>
                     </div>
-                </div>
+                </div>-->
             </aside>
 
             <!-- 主要内容区域 -->
@@ -561,7 +519,7 @@
         <!-- 简化底部信息 -->
         <footer class="simple-footer">
             <div class="footer-content">
-                <p>© 2025 OCR工业图片识别系统 | 专为PDF和工业图纸识别优化 | 技术支持: sie@chinasie.com</p>
+                <p>© 2026 赛意AI | 技术支持: sie@chinasie.com</p>
             </div>
         </footer>
     </div>

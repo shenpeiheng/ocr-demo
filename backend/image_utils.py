@@ -108,32 +108,83 @@ def resize_with_padding(image_path: str, target_size: int = 990, output_path: st
         logger.error(f"图片填充白边失败: {e}")
         raise
 
-def preprocess_image_for_ocr(image_path: str, target_size: int = 990) -> str:
+def preprocess_image_for_ocr(image_path: str, target_size: int = 990, max_size: int = 2048, max_file_size: int = 5 * 1024 * 1024) -> str:
     """
-    为OCR预处理图片：检查尺寸并调整到目标尺寸
+    为OCR预处理图片：检查尺寸并调整到目标尺寸，同时确保不超过最大尺寸限制和文件大小限制
     
     Args:
         image_path: 原始图片路径
-        target_size: 目标尺寸
+        target_size: 目标最小尺寸（当图片小于此值时进行填充）
+        max_size: 最大尺寸限制（当图片任意一边超过此值时等比缩小，默认2048）
+        max_file_size: 最大文件大小限制（默认5MB）
         
     Returns:
         str: 处理后的图片路径（如果不需要处理则返回原路径）
     """
     try:
-        # 检查图片尺寸
-        width, height, needs_resize = check_image_size(image_path, target_size)
+        # 打开图片获取尺寸
+        with Image.open(image_path) as img:
+            width, height = img.size
         
+        # 检查文件大小
+        file_size = os.path.getsize(image_path)
+        needs_compress = file_size > max_file_size
+        
+        # 生成输出路径
+        base_name = os.path.splitext(image_path)[0]
+        ext = os.path.splitext(image_path)[1]
+        preprocessed_path = f"{base_name}_preprocessed{ext}"
+        
+        # 1. 检查是否超过最大尺寸限制（需要缩小）
+        if width > max_size or height > max_size:
+            logger.info(f"图片尺寸{width}x{height}超过最大限制{max_size}x{max_size}，进行等比缩小")
+            
+            # 计算缩放比例，使最大边不超过 max_size
+            scale = min(max_size / width, max_size / height)
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            
+            # 等比缩小并压缩
+            with Image.open(image_path) as img:
+                img_resized = img.resize((new_width, new_height), Image.LANCZOS)
+                # 如果文件大，使用较低质量压缩
+                quality = 60 if needs_compress else 85
+                img_resized.save(preprocessed_path, quality=quality, optimize=True)
+            
+            logger.info(f"图片已从{width}x{height}缩小到{new_width}x{new_height}，质量={quality}，保存到: {preprocessed_path}")
+            
+            # 缩小后如果还小于 target_size，再填充到 target_size
+            if new_width < target_size or new_height < target_size:
+                logger.info(f"缩小后尺寸{new_width}x{new_height}仍小于目标尺寸{target_size}，进行填充")
+                return resize_with_padding(preprocessed_path, target_size, preprocessed_path)
+            
+            return preprocessed_path
+        
+        # 2. 检查是否小于最小尺寸（需要放大/填充）
+        needs_resize = width < target_size or height < target_size
         if needs_resize:
             logger.info(f"图片尺寸{width}x{height}小于目标尺寸{target_size}，进行等比缩放和填充白边")
-            # 生成预处理后的图片路径
-            base_name = os.path.splitext(image_path)[0]
-            ext = os.path.splitext(image_path)[1]
-            preprocessed_path = f"{base_name}_preprocessed{ext}"
             
             return resize_with_padding(image_path, target_size, preprocessed_path)
-        else:
-            logger.info(f"图片尺寸{width}x{height}已满足要求，无需处理")
-            return image_path
+        
+        # 3. 尺寸在合理范围内，但文件大小超过限制，需要压缩
+        if needs_compress:
+            logger.info(f"图片尺寸{width}x{height}满足要求，但文件大小{file_size}超过限制{max_file_size}，进行压缩")
+            
+            with Image.open(image_path) as img:
+                # 逐步降低质量直到文件大小符合要求
+                for quality in [70, 50, 30, 20]:
+                    img.save(preprocessed_path, quality=quality, optimize=True)
+                    if os.path.getsize(preprocessed_path) <= max_file_size:
+                        logger.info(f"图片压缩完成，质量={quality}，文件大小={os.path.getsize(preprocessed_path)}")
+                        return preprocessed_path
+                
+                logger.info(f"图片压缩完成（最低质量20），文件大小={os.path.getsize(preprocessed_path)}")
+                return preprocessed_path
+        
+        # 4. 尺寸和文件大小都在合理范围内，无需处理
+        logger.info(f"图片尺寸{width}x{height}已满足要求，无需处理")
+        return image_path
             
     except Exception as e:
         logger.error(f"图片预处理失败: {e}")

@@ -188,8 +188,8 @@ def process_with_openai_vl():
         else:
             prompt = get_prompt(prompt_name)
         
-        # 图片预处理：检查尺寸并调整到990x990（如果需要）
-        preprocessed_path = preprocess_image_for_ocr(filepath, target_size=990)
+        # 图片预处理：检查尺寸并调整，确保不超过2048x2048（ModelScope API限制）
+        preprocessed_path = preprocess_image_for_ocr(filepath, target_size=990, max_size=2048)
         use_preprocessed = preprocessed_path != filepath
         
         # 使用OpenAI VL处理图片
@@ -296,6 +296,56 @@ def process_with_paddleocr():
     except Exception as e:
         return jsonify({'error': f'PaddleOCR处理失败: {str(e)}'}), 500
 
+@app.route('/api/process/custom', methods=['POST'])
+def process_with_custom_prompt():
+    """使用自定义提示词处理图片，返回原始文本结果"""
+    data = request.json
+    if not data or 'filename' not in data:
+        return jsonify({'error': '缺少文件名参数'}), 400
+    
+    if 'prompt' not in data or not data['prompt'].strip():
+        return jsonify({'error': '缺少提示词参数'}), 400
+    
+    filename = data['filename']
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    
+    if not os.path.exists(filepath):
+        return jsonify({'error': '文件不存在'}), 404
+    
+    if is_pdf_file(filename):
+        return jsonify({'error': '自定义提示词暂不支持PDF文件'}), 400
+    
+    try:
+        prompt = data['prompt']
+        
+        # 图片预处理：检查尺寸并调整，确保不超过2048x2048（ModelScope API限制）
+        preprocessed_path = preprocess_image_for_ocr(filepath, target_size=990, max_size=2048)
+        
+        # 使用OpenAI VL处理图片（强制使用openai_vl引擎）
+        results = ocr_processor.process_image_with_engine(preprocessed_path, 'openai_vl', prompt)
+        
+        # 提取原始响应文本
+        raw_text = results.get('raw_response', '')
+        # 如果raw_response被截断，尝试从results中获取完整内容
+        if not raw_text and 'text_items' in results:
+            # 从text_items构建文本
+            text_parts = []
+            for item in results.get('text_items', []):
+                text_parts.append(f"{item.get('text', '')}")
+            raw_text = '\n'.join(text_parts)
+        
+        return jsonify({
+            'success': True,
+            'message': '自定义提示词处理成功',
+            'filename': filename,
+            'engine': 'openai_vl',
+            'raw_text': raw_text,
+            'results': results
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'自定义提示词处理失败: {str(e)}'}), 500
+
 @app.route('/api/prompts', methods=['GET'])
 def get_prompts():
     """获取可用提示词列表"""
@@ -342,8 +392,8 @@ def process_image_file(filename, filepath, data):
         prompt_name = data.get('prompt', 'mechanical_drawing_standard')
         custom_prompt = data.get('custom_prompt')
         
-        # 图片预处理：检查尺寸并调整到990x990（如果需要）
-        preprocessed_path = preprocess_image_for_ocr(filepath, target_size=990)
+        # 图片预处理：检查尺寸并调整，确保不超过2048x2048（ModelScope API限制）
+        preprocessed_path = preprocess_image_for_ocr(filepath, target_size=990, max_size=2048)
         use_preprocessed = preprocessed_path != filepath
         
         # 选择处理方式

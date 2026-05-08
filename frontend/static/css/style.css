@@ -1,5 +1,14 @@
 /* OCR工业图片识别系统 - 样式文件 */
 
+/* 本地字体定义（优先使用本地字体，回退到系统字体） */
+@font-face {
+    font-family: 'Noto Sans SC';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('../fonts/NotoSansSC.ttf') format('truetype');
+}
+
 /* 基础样式重置 */
 * {
     margin: 0;
@@ -8,19 +17,21 @@
 }
 
 body {
-    font-family: 'Noto Sans SC', sans-serif;
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #f5f7fa 0%, #e3e8f1 100%);
     color: #333;
     line-height: 1.6;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .container {
     max-width: 100%;
     margin: 0 auto;
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 /* 主体布局 */
@@ -94,7 +105,7 @@ body {
     align-items: center;
     gap: 12px;
     padding: 12px 20px;
-    color: #bdc3c7;
+    color: #454b50;
     text-decoration: none;
     transition: all 0.3s ease;
     border-left: 3px solid transparent;
@@ -102,13 +113,13 @@ body {
 }
 
 .menu-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-left-color: #7fb3d5;
+    background: rgba(255, 255, 255, 0.8);
+    border-left-color: #2a91d6;
 }
 
 .menu-item.active {
-    background: rgba(255, 255, 255, 0.05);
-    border-left-color: #7fb3d5;
+    background: rgba(255, 255, 255, 0.8);
+    border-left-color: #2a91d6;
 }
 
 .menu-icon {
@@ -166,7 +177,7 @@ body {
     background: #e74c3c;
 }
 
-/* 主要内容区域 */
+/* 主要内容区域 - 滚动条在这里 */
 .main-content-area {
     flex: 1;
     padding: 5px;
@@ -386,6 +397,7 @@ body {
     background: white;
     border-radius: 12px;
     padding: 25px;
+    height: 100%;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     margin-bottom: 10px;
     border: 1px solid #eaeaea;
@@ -1196,6 +1208,12 @@ body {
     display: block;
 }
 
+/* 在右侧结果区域中，tab-pane.active 使用 flex 布局以支持内部滚动 */
+.right-column .tab-pane.active {
+    display: flex;
+    flex-direction: column;
+}
+
 /* 表格样式 */
 .table-container {
     overflow-x: auto;
@@ -1886,7 +1904,7 @@ input:checked + .slider:before {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
-    font-family: 'Noto Sans SC', sans-serif;
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
     font-size: 14px;
     background: white;
 }
@@ -1901,7 +1919,7 @@ input:checked + .slider:before {
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
-    font-family: 'Noto Sans SC', sans-serif;
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
     font-size: 14px;
     resize: vertical;
     margin-top: 10px;
@@ -2142,4 +2160,180 @@ input:checked + .slider:before {
         width: 100%;
         justify-content: center;
     }
+}
+
+/* 预设提示词按钮样式 */
+.prompt-preset-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.preset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 20px;
+    background: #f8f9fa;
+    color: #555;
+    font-size: 13px;
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.preset-btn:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.preset-btn:hover i {
+    color: white;
+}
+
+.preset-btn i {
+    font-size: 12px;
+    color: #3498db;
+    transition: color 0.2s ease;
+}
+
+.preset-btn:active {
+    transform: scale(0.96);
+}
+
+.preset-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.preset-btn.active i {
+    color: white;
+}
+
+/* 右侧提示词输入区域样式 */
+.prompt-input-area {
+    display: flex;
+    flex-direction: column;
+    height: 30%;
+    padding: 5px;
+}
+
+.prompt-input-header {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.prompt-textarea {
+    flex: 1;
+    width: 100%;
+    min-height: 10px;
+    padding: 1px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.8;
+    resize: vertical;
+    background: #fafbfc;
+    color: #2c3e50;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+}
+
+.prompt-textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    background: white;
+}
+
+.prompt-textarea::placeholder {
+    color: #b0b0b0;
+    font-size: 14px;
+}
+
+.prompt-input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+}
+
+.prompt-tips {
+    font-size: 13px;
+    color: #95a5a6;
+}
+
+.prompt-tips i {
+    margin-right: 5px;
+    color: #f39c12;
+}
+
+/* 输出结果区域样式 */
+.output-divider {
+    height: 1px;
+    background: #e0e0e0;
+    margin: 15px 0;
+}
+
+.output-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.output-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.output-header i {
+    color: #3498db;
+}
+
+.output-textarea {
+    flex: 1;
+    width: 100%;
+    min-height: 200px;
+    padding: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.8;
+    resize: vertical;
+    background: #fafbfc;
+    color: #2c3e50;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.output-textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    background: white;
+}
+
+.output-textarea::placeholder {
+    color: #b0b0b0;
+    font-size: 14px;
+}
+
+.output-textarea[readonly] {
+    background: #f5f5f5;
+    cursor: default;
 }

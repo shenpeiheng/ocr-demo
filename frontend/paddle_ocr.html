@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛意AI - PaddleOCR</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        /* PaddleOCR 页面样式 - 全屏 iframe 布局 */
+        .paddleocr-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 0;
+        }
+
+        .paddleocr-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .paddleocr-header h2 {
+            color: #4a6572;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .paddleocr-header h2 i {
+            color: #2a91d6;
+        }
+
+        .paddleocr-header .header-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .paddleocr-header .header-hint i {
+            color: #f39c12;
+        }
+
+        .paddleocr-iframe-container {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+            position: relative;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .paddleocr-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .paddleocr-placeholder {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .paddleocr-placeholder i {
+            font-size: 5rem;
+            color: #2a91d6;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .paddleocr-placeholder h3 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .paddleocr-placeholder p {
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin-bottom: 24px;
+            max-width: 480px;
+            line-height: 1.6;
+        }
+
+        .btn-open {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 36px;
+            background: linear-gradient(90deg, #2a91d6, #1a7bc4);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-open:hover {
+            background: linear-gradient(90deg, #1a7bc4, #0f6aad);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(42, 145, 214, 0.35);
+        }
+
+        .btn-open i {
+            font-size: 1.2rem;
+        }
+
+        .paddleocr-notice {
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: #fff8e1;
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+            font-size: 0.9rem;
+            color: #856404;
+            text-align: left;
+            max-width: 520px;
+        }
+
+        .paddleocr-notice i {
+            font-size: 1rem;
+            margin-right: 8px;
+            color: #f39c12;
+        }
+
+        /* 覆盖内容网格布局，使 PaddleOCR 页面全屏显示 */
+        .paddleocr-page .content-grid {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .paddleocr-page .left-column,
+        .paddleocr-page .right-column {
+            display: none;
+        }
+
+        .paddleocr-page .paddleocr-full-column {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 管理系统风格头部 -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-logo">
+                    <img src="static/images/logo.png" alt="赛意AI" class="logo-image">
+                    <span class="admin-logo-text"> AI </span>
+                </div>
+                
+                <nav class="admin-nav" style="display: none;">
+                    <a href="index.html" class="nav-item">
+                        <i class="fas fa-image"></i>
+                        <span>图片识别</span>
+                    </a>
+                    <a href="pdf_ocr.html" class="nav-item">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>PDF识别</span>
+                    </a>
+                    <a href="paddle_ocr.html" class="nav-item active">
+                        <i class="fas fa-eye"></i>
+                        <span>PaddleOCR</span>
+                    </a>
+                </nav>
+                
+                <div class="admin-user-info">
+                    <div class="user-notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">管理员</span>
+                            <span class="user-role">系统管理员</span>
+                        </div>
+                        <button class="user-menu-btn">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主体布局 -->
+        <div class="main-layout">
+            <!-- 左侧固定菜单栏 -->
+            <aside class="sidebar">
+                <nav class="sidebar-menu">
+                    <div class="menu-section">
+                        <a href="JavaScript:viod(0)" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="menu-text">首页</div>
+                        </a>
+                        <a href="index.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-image"></i>
+                            </div>
+                            <div class="menu-text">工业图纸识别</div>
+                        </a>
+                        <a href="image_ocr.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-image"></i>
+                            </div>
+                            <div class="menu-text">图片识别多场景</div>
+                        </a>
+                        <a href="pdf_ocr.html" class="menu-item">
+                            <div class="menu-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="menu-text">PDF识别</div>
+                        </a>
+                        <a href="paddle_ocr.html" class="menu-item active">
+                            <div class="menu-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="menu-text">PaddleOCR</div>
+                            <div class="menu-badge">新</div>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- 主要内容区域 -->
+            <main class="main-content-area paddleocr-page">
+                <div class="content-grid">
+                    <div class="paddleocr-full-column">
+                        <div class="paddleocr-wrapper">
+                            <div class="paddleocr-header">
+                                <h2>
+                                    <i class="fas fa-eye"></i>
+                                    PaddleOCR 在线体验
+                                </h2>
+                                <div class="header-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    由百度 AI Studio 提供技术支持
+                                </div>
+                            </div>
+                            <div class="paddleocr-iframe-container">
+                                <div class="paddleocr-placeholder">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    <h3>PaddleOCR 在线工具</h3>
+                                    <p>PaddleOCR 是百度推出的 OCR 工具套件，支持文字检测、文本识别、表格识别等功能。由于安全策略限制，该页面需要在百度 AI Studio 中打开。</p>
+                                    <a href="https://aistudio.baidu.com/paddleocr/task" target="_blank" rel="noopener noreferrer" class="btn-open">
+                                        <i class="fas fa-external-link-alt"></i>
+                                        在新窗口打开 PaddleOCR
+                                    </a>
+                                    <div class="paddleocr-notice">
+                                        <i class="fas fa-lightbulb"></i>
+                                        点击按钮将在新标签页中打开百度 AI Studio 的 PaddleOCR 在线体验工具，您可以使用百度账号登录后体验完整功能。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 简化底部信息 -->
+        <footer class="simple-footer">
+            <div class="footer-content">
+                <p>© 2026 赛意AI | 技术支持: sie@chinasie.com</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

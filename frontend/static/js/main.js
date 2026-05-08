@@ -22,6 +22,7 @@ const fileSize = document.getElementById('fileSize');
 const imageDimensions = document.getElementById('imageDimensions');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
+const progressPercent = document.getElementById('progressPercent');
 const statusUpload = document.getElementById('statusUpload');
 const statusProcess = document.getElementById('statusProcess');
 const statusResults = document.getElementById('statusResults');
@@ -71,12 +72,20 @@ function bindEvents() {
     uploadBtn.addEventListener('click', handleUpload);
     
     // 处理按钮
-    processBtn.addEventListener('click', handleProcess);
+    if (processBtn) {
+        processBtn.addEventListener('click', handleProcess);
+    }
     
     // 导出按钮
-    exportExcelBtn.addEventListener('click', () => exportResults('excel'));
-    exportJsonBtn.addEventListener('click', () => exportResults('json'));
-    exportImageBtn.addEventListener('click', exportAnnotatedImage);
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', () => exportResults('excel'));
+    }
+    if (exportJsonBtn) {
+        exportJsonBtn.addEventListener('click', () => exportResults('json'));
+    }
+    if (exportImageBtn) {
+        exportImageBtn.addEventListener('click', exportAnnotatedImage);
+    }
     
     // 拖放功能
     uploadArea.addEventListener('dragover', handleDragOver);
@@ -206,7 +215,7 @@ function previewFile(file) {
     
     // 启用上传按钮
     uploadBtn.disabled = false;
-    processBtn.disabled = true;
+    if (processBtn) processBtn.disabled = true;
     
     // 更新进度状态
     updateProgress(0, '选择文件完成，准备上传');
@@ -260,7 +269,7 @@ async function handleUpload() {
         updateStatus('process', 'active');
         
         // 启用处理按钮
-        processBtn.disabled = false;
+        if (processBtn) processBtn.disabled = false;
         
         showSuccess('文件上传成功！');
         
@@ -287,8 +296,10 @@ async function handleProcess() {
     
     try {
         // 更新UI状态
-        processBtn.disabled = true;
-        processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 识别中...';
+        if (processBtn) {
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 识别中...';
+        }
         updateProgress(70, '正在进行OCR识别处理');
         
         // 发送处理请求
@@ -328,9 +339,9 @@ async function handleProcess() {
         updateStatus('results', 'completed');
         
         // 启用导出按钮
-        exportExcelBtn.disabled = false;
-        exportJsonBtn.disabled = false;
-        exportImageBtn.disabled = false;
+        if (exportExcelBtn) exportExcelBtn.disabled = false;
+        if (exportJsonBtn) exportJsonBtn.disabled = false;
+        if (exportImageBtn) exportImageBtn.disabled = false;
         
         showSuccess('图片识别完成！');
         
@@ -340,7 +351,9 @@ async function handleProcess() {
         updateProgress(0, '识别失败');
         updateStatus('process', 'error');
     } finally {
-        processBtn.innerHTML = '<i class="fas fa-cogs"></i> 开始识别';
+        if (processBtn) {
+            processBtn.innerHTML = '<i class="fas fa-cogs"></i> 开始识别';
+        }
     }
 }
 
@@ -403,13 +416,13 @@ function displayResults(data) {
         displayTextItems = allTextItems;
     }
     
-    // 更新过滤计数显示
+    // 更新过滤计数显示（安全判断）
     if (chineseFilterCount) {
         chineseFilterCount.textContent = chineseItems.length;
     }
     
-    // 更新摘要信息（使用显示的数据）
-    totalItems.textContent = displayTextItems.length;
+    // 更新摘要信息（安全判断，兼容 image_ocr.html 等页面）
+    if (totalItems) totalItems.textContent = displayTextItems.length;
     
     // 计算平均置信度（使用显示的数据）
     const avgConf = displayTextItems.length > 0
@@ -432,28 +445,35 @@ function displayResults(data) {
     console.log(`置信度变化: ${((avgConf - originalAvg) * 100).toFixed(2)}%`);
     console.log('=====================');
     
-    avgConfidence.textContent = displayTextItems.length > 0 ? `${(avgConf * 100).toFixed(2)}%` : '0.00%';
+    if (avgConfidence) avgConfidence.textContent = displayTextItems.length > 0 ? `${(avgConf * 100).toFixed(2)}%` : '0.00%';
     
     // 计算尺寸标注数量（使用显示的数据）
     const dimensionItems = displayTextItems.filter(item => item.type === 'dimension');
-    dimensionCount.textContent = dimensionItems.length;
+    if (dimensionCount) dimensionCount.textContent = dimensionItems.length;
     
-    // 更新处理时间
-    processingTime.textContent = `${(processingTimeMs / 1000).toFixed(2)}s`;
+    // 更新处理时间（安全判断）
+    if (processingTime) processingTime.textContent = `${(processingTimeMs / 1000).toFixed(2)}s`;
     
-    // 更新文本内容表格（使用显示的数据）
-    updateTextResultsTable(displayTextItems);
+    // 更新文本内容表格（安全判断）
+    if (typeof updateTextResultsTable === 'function') {
+        updateTextResultsTable(displayTextItems);
+    }
     
-    // 更新坐标表格（使用显示的数据）
-    updateCoordinateTable(displayTextItems);
+    // 更新坐标表格（安全判断）
+    if (typeof updateCoordinateTable === 'function') {
+        updateCoordinateTable(displayTextItems);
+    }
     
-    // 更新可视化（使用显示的数据）
-    updateVisualization();
+    // 更新可视化（安全判断）
+    if (typeof updateVisualization === 'function') {
+        updateVisualization();
+    }
     
 }
 
 // 更新文本结果表格
 function updateTextResultsTable(textItems) {
+    if (!textResultsBody) return;
     textResultsBody.innerHTML = '';
     
     if (textItems.length === 0) {
@@ -507,6 +527,7 @@ function updateTextResultsTable(textItems) {
 
 // 更新坐标表格
 function updateCoordinateTable(textItems) {
+    if (!coordinateResultsBody) return;
     coordinateResultsBody.innerHTML = '';
     
     if (textItems.length === 0) {
@@ -548,6 +569,10 @@ function updateCoordinateTable(textItems) {
 // 更新可视化
 function updateVisualization() {
     if (!currentResults || !currentResults.text_items || !imagePreview.src) {
+        return;
+    }
+    // 安全判断：如果可视化元素不存在则跳过（兼容 image_ocr.html 等页面）
+    if (!visualizationPlaceholder || !visualizationCanvas) {
         return;
     }
     
@@ -820,6 +845,7 @@ function viewItemDetails(item) {
 function updateProgress(percent, text) {
     progressFill.style.width = `${percent}%`;
     progressText.textContent = text;
+    progressPercent.textContent = `${percent}%`;
 }
 
 function updateStatus(stage, state) {
@@ -1159,33 +1185,37 @@ function showModal(title, content) {
 }
 
 function resetResults() {
-    // 重置摘要
-    totalItems.textContent = '0';
-    avgConfidence.textContent = '0%';
-    dimensionCount.textContent = '0';
-    processingTime.textContent = '0s';
+    // 重置摘要（安全判断，兼容 image_ocr.html 等页面）
+    if (totalItems) totalItems.textContent = '0';
+    if (avgConfidence) avgConfidence.textContent = '0%';
+    if (dimensionCount) dimensionCount.textContent = '0';
+    if (processingTime) processingTime.textContent = '0s';
     
-    // 重置表格
-    textResultsBody.innerHTML = `
-        <tr>
-            <td colspan="5" class="empty-message">暂无识别结果</td>
-        </tr>
-    `;
+    // 重置表格（安全判断）
+    if (textResultsBody) {
+        textResultsBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty-message">暂无识别结果</td>
+            </tr>
+        `;
+    }
     
-    coordinateResultsBody.innerHTML = `
-        <tr>
-            <td colspan="6" class="empty-message">暂无坐标信息</td>
-        </tr>
-    `;
+    if (coordinateResultsBody) {
+        coordinateResultsBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-message">暂无坐标信息</td>
+            </tr>
+        `;
+    }
     
-    // 重置可视化
-    visualizationPlaceholder.style.display = 'flex';
-    visualizationCanvas.style.display = 'none';
+    // 重置可视化（安全判断）
+    if (visualizationPlaceholder) visualizationPlaceholder.style.display = 'flex';
+    if (visualizationCanvas) visualizationCanvas.style.display = 'none';
     
-    // 禁用导出按钮
-    exportExcelBtn.disabled = true;
-    exportJsonBtn.disabled = true;
-    exportImageBtn.disabled = true;
+    // 禁用导出按钮（安全判断）
+    if (exportExcelBtn) exportExcelBtn.disabled = true;
+    if (exportJsonBtn) exportJsonBtn.disabled = true;
+    if (exportImageBtn) exportImageBtn.disabled = true;
     
     // 清除当前结果
     currentResults = null;
