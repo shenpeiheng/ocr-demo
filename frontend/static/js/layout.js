@@ -41,11 +41,14 @@
                     '<span class="admin-logo-text"> AI </span>' +
                 '</div>' +
                 '<nav class="admin-nav" style="display: flex;">' +
-                    '<a href="rpa.html" class="nav-item active">' +
-                        '<i class="fas fa-cube"></i><span>RPA智能自动化</span>' +
-                    '</a>' +
-                    '<a href="#" class="nav-item active">' +
+                    '<a href="http://192.168.181.189:6200/mermaid" target="_blank" class="nav-item active">' +
                         '<i class="fas fa-image"></i><span>AI Draw</span>' +
+                    '</a>' +
+                    '<a href="https://aistudio.baidu.com/paddleocr/task/new" target="_blank" class="nav-item active">' +
+                        '<i class="fas fa-cube"></i><span>PaddleOCR</span>' +
+                    '</a>' +
+                    '<a href="https://mineru.net/OpenSourceTools/Extractor" target="_blank" class="nav-item active">' +
+                        '<i class="fas fa-cube"></i><span>MinerU</span>' +
                     '</a>' +
                 '</nav>' +
                 '<div class="admin-user-info">' +
