@@ -41,100 +41,113 @@ body {
     overflow: hidden;
 }
 
-/* 侧边栏样式 */
+/* 侧边栏样式 - 浅色可折叠风格 */
 .sidebar {
     width: 240px;
-    color: white;
+    background: #f5f7fa;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     transition: width 0.3s ease;
+    border-right: 1px solid #e8eaef;
 }
 
 .sidebar-header {
-    padding: 20px;
-    border-bottom: 1px solid #3a506b;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8eaef;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
 }
 
 .sidebar-logo {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 1.2rem;
+    gap: 10px;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: white;
+    color: #2c3e50;
 }
 
 .logo-image {
-    height: 32px;
+    height: 28px;
     width: auto;
-    margin-right: 10px;
 }
 
 .sidebar-logo-image {
     height: 24px;
     width: auto;
-    margin-right: 10px;
 }
 
 .sidebar-logo i {
-    font-size: 1.5rem;
-    color: #7fb3d5;
+    font-size: 1.3rem;
+    color: #5d9cec;
 }
 
 .sidebar-menu {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px 0;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: #d0d5dd;
+    border-radius: 2px;
 }
 
 .menu-section {
-    margin-bottom: 5px;
+    margin-bottom: 0;
 }
 
-.menu-section-title {
-    padding: 0 20px 10px 20px;
-    font-size: 0.8rem;
-    color: #7f8c8d;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-}
-
+/* 顶级菜单项 */
 .menu-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
+    gap: 10px;
+    padding: 11px 20px;
     color: #454b50;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    cursor: pointer;
     border-left: 3px solid transparent;
-    margin: 2px 0;
+    font-size: 14px;
+    margin: 1px 0;
 }
 
 .menu-item:hover {
+    color: #2a91d6;
     background: rgba(255, 255, 255, 0.8);
-    border-left-color: #2a91d6;
 }
 
 .menu-item.active {
+    color: #2a91d6;
     background: rgba(255, 255, 255, 0.8);
     border-left-color: #2a91d6;
+    font-weight: 600;
 }
 
 .menu-icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    flex-shrink: 0;
 }
 
 .menu-text {
     flex: 1;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .menu-badge {
@@ -144,6 +157,136 @@ body {
     padding: 2px 8px;
     border-radius: 10px;
     font-weight: 600;
+}
+
+/* 可折叠分组标题 */
+.menu-group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 20px;
+    color: #303133;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    user-select: none;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 1px 0;
+}
+
+.menu-group-header:hover {
+    color: #2a91d6;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.menu-group-header.expanded {
+    color: #2a91d6;
+    font-weight: 600;
+}
+
+/* 子菜单有激活项时，父级也高亮 */
+.menu-group-header.has-active {
+    color: #2a91d6;
+    font-weight: 600;
+    border-left-color: #2a91d6;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.menu-group-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.menu-group-title {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 折叠箭头 */
+.menu-group-arrow {
+    font-size: 0.65rem;
+    color: #aab2bd;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.menu-group-header.expanded .menu-group-arrow {
+    transform: rotate(-90deg);
+}
+
+/* 子菜单容器 - 默认折叠 */
+.menu-sub-items {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding-left: 20px;
+}
+
+.menu-sub-items.expanded {
+    max-height: 400px;
+}
+
+/* 子菜单项 - 加大缩进 */
+.menu-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px 9px 28px;
+    color: #606266;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    border-radius: 6px;
+    margin: 1px 8px;
+}
+
+.menu-sub-item:hover {
+    color: #2a91d6;
+    background: #e8f0fe;
+}
+
+.menu-sub-item.active {
+    color: #2a91d6;
+    background: #d9ecff;
+    font-weight: 600;
+}
+
+.menu-sub-item .menu-text {
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.menu-sub-item.active .menu-text {
+    font-weight: 600;
+}
+
+/* 子菜单小圆点 */
+.menu-sub-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c0c4cc;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.menu-sub-item:hover .menu-sub-dot {
+    background: #2a91d6;
+}
+
+.menu-sub-item.active .menu-sub-dot {
+    background: #2a91d6;
+    box-shadow: 0 0 6px rgba(42, 145, 214, 0.6);
 }
 
 /* 侧边栏底部 */
@@ -260,9 +403,8 @@ body {
 .admin-nav {
     display: flex;
     gap: 5px;
-    flex: 1;
-    justify-content: center;
-    margin: 0 30px;
+    margin-left: auto;
+    margin-right: 30px;
 }
 
 .nav-item {
@@ -2765,6 +2907,588 @@ input:checked + .slider:before {
     border-color: #3498db;
     transform: translateY(-1px);
     box-shadow: 0 3px 8px rgba(52, 152, 219, 0.15);
+}
+
+/* ============================================================
+   RPA 智能自动化页面样式
+   ============================================================ */
+
+/* Hero 视频区域 */
+.rpa-hero {
+    margin-bottom: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Hero 视频区域 */
+.rpa-hero-video {
+    position: relative;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.rpa-hero-video video {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+/* 网格布局 */
+.rpa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.rpa-card-full {
+    grid-column: 1 / -1;
+}
+
+/* 卡片样式 */
+.rpa-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eaeaea;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rpa-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.rpa-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px 0;
+}
+
+.rpa-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.rpa-card-primary .rpa-card-icon {
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+}
+
+.rpa-card-success .rpa-card-icon {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+}
+
+.rpa-card-info .rpa-card-icon {
+    background: linear-gradient(135deg, #63b3ed, #4299e1);
+}
+
+.rpa-card-links .rpa-card-icon {
+    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+}
+
+.rpa-card-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+.rpa-card-body {
+    padding: 16px 24px 24px;
+}
+
+.rpa-card-desc {
+    font-size: 14px;
+    color: #718096;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+/* 地址列表 */
+.rpa-address-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.rpa-address-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    gap: 12px;
+}
+
+.rpa-address-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4a5568;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 90px;
+}
+
+.rpa-address-label i {
+    color: #4299e1;
+    font-size: 14px;
+}
+
+.rpa-address-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.rpa-address-value code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    color: #2d3748;
+    background: #edf2f7;
+    padding: 4px 12px;
+    border-radius: 4px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 地址链接 - 点击可进入 */
+.rpa-address-link {
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+    display: block;
+}
+
+.rpa-address-link code {
+    display: block;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.rpa-address-link:hover code {
+    background: #bee3f8;
+    color: #2b6cb0;
+}
+
+/* 小号进入按钮 */
+.rpa-btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.rpa-btn-enter {
+    background: #ebf8ff;
+    color: #3182ce;
+    border: 1px solid #bee3f8;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rpa-btn-enter:hover {
+    background: #3182ce;
+    color: white;
+    border-color: #3182ce;
+}
+
+.rpa-copy-btn {
+    background: none;
+    border: 1px solid #e2e8f0;
+    color: #a0aec0;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.rpa-copy-btn:hover {
+    background: #4299e1;
+    border-color: #4299e1;
+    color: white;
+}
+
+/* 按钮样式 */
+.rpa-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.rpa-btn-primary {
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    color: white;
+    width: 100%;
+    justify-content: center;
+}
+
+.rpa-btn-primary:hover {
+    background: linear-gradient(135deg, #3182ce, #2b6cb0);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+}
+
+.rpa-btn-download {
+    background: #edf2f7;
+    color: #2d3748;
+    padding: 8px 16px;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.rpa-btn-download:hover {
+    background: #4299e1;
+    color: white;
+}
+
+/* 下载列表 */
+.rpa-download-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.rpa-download-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.2s ease;
+}
+
+.rpa-download-item:hover {
+    border-color: #4299e1;
+}
+
+.rpa-download-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #2d3748;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+}
+
+.rpa-download-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.rpa-download-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 2px;
+}
+
+.rpa-download-meta {
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+/* 版本信息 */
+.rpa-version-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #718096;
+    padding: 10px 16px;
+    background: #fffbeb;
+    border-radius: 8px;
+    border: 1px solid #fef3c7;
+}
+
+.rpa-version-info i {
+    color: #d69e2e;
+    font-size: 14px;
+}
+
+.rpa-version-info a {
+    color: #4299e1;
+    text-decoration: none;
+}
+
+.rpa-version-info a:hover {
+    text-decoration: underline;
+}
+
+/* 使用说明步骤 */
+.rpa-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.rpa-step {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.2s ease;
+}
+
+.rpa-step:hover {
+    border-color: #63b3ed;
+}
+
+.rpa-step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.rpa-step-content {
+    flex: 1;
+}
+
+.rpa-step-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 6px;
+}
+
+.rpa-step-content p {
+    font-size: 14px;
+    color: #4a5568;
+    line-height: 1.7;
+    margin-bottom: 10px;
+}
+
+.rpa-step-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #ebf8ff;
+    border-radius: 6px;
+    border-left: 3px solid #4299e1;
+    font-size: 13px;
+    color: #2b6cb0;
+}
+
+.rpa-step-tip i {
+    font-size: 14px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+/* 相关资源链接 */
+.rpa-links-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.rpa-link-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 16px;
+    background: #f7fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    gap: 6px;
+}
+
+.rpa-link-item:hover {
+    border-color: #a78bfa;
+    background: #f5f3ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(167, 139, 250, 0.15);
+}
+
+.rpa-link-item i {
+    font-size: 24px;
+    color: #a78bfa;
+    margin-bottom: 4px;
+}
+
+.rpa-link-item span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a202c;
+}
+
+.rpa-link-item small {
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+/* 底部状态栏 */
+.rpa-status-bar {
+    display: flex;
+    gap: 16px;
+    padding: 16px 24px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.rpa-status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4a5568;
+}
+
+.rpa-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.rpa-status-online {
+    background: #48bb78;
+    box-shadow: 0 0 6px rgba(72, 187, 120, 0.5);
+}
+
+.rpa-status-text {
+    color: #718096;
+    font-weight: 500;
+}
+
+/* Toast 提示 */
+.rpa-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #2d3748;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.rpa-toast.rpa-toast-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+    .rpa-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rpa-hero {
+        padding: 0;
+    }
+
+    .rpa-hero-video video {
+        max-height: 300px;
+    }
+
+    .rpa-links-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .rpa-status-bar {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .rpa-address-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .rpa-address-value {
+        width: 100%;
+    }
+
+    .rpa-address-value code {
+        flex: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .rpa-links-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rpa-download-item {
+        flex-wrap: wrap;
+    }
+
+    .rpa-btn-download {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 .sample-images-section .sample-item.selected {

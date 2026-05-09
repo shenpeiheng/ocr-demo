@@ -245,116 +245,11 @@
 </head>
 <body>
     <div class="container">
-        <!-- 管理系统风格头部 -->
-        <header class="admin-header">
-            <div class="admin-header-content">
-                <div class="admin-logo">
-                    <img src="static/images/logo.png" alt="赛意AI" class="logo-image">
-                    <span class="admin-logo-text"> AI </span>
-                </div>
-                
-                <nav class="admin-nav" style="display: none;">
-                    <a href="index.html" class="nav-item">
-                        <i class="fas fa-image"></i>
-                        <span>图片识别</span>
-                    </a>
-                    <a href="pdf_ocr.html" class="nav-item">
-                        <i class="fas fa-file-pdf"></i>
-                        <span>PDF识别</span>
-                    </a>
-                    <a href="paddle_ocr.html" class="nav-item active">
-                        <i class="fas fa-eye"></i>
-                        <span>在线案例</span>
-                    </a>
-                </nav>
-                
-                <div class="admin-user-info">
-                    <div class="user-notifications">
-                        <button class="notification-btn">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge">3</span>
-                        </button>
-                    </div>
-                    <div class="user-profile">
-                        <div class="user-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="user-details">
-                            <span class="user-name">管理员</span>
-                            <span class="user-role">系统管理员</span>
-                        </div>
-                        <button class="user-menu-btn">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <div id="header-placeholder"></div>
 
         <!-- 主体布局 -->
         <div class="main-layout">
-            <!-- 左侧固定菜单栏 -->
-            <aside class="sidebar">
-                <nav class="sidebar-menu">
-                    <div class="menu-section">
-                        <a href="JavaScript:viod(0)" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-home"></i>
-                            </div>
-                            <div class="menu-text">首页</div>
-                        </a>
-                        <a href="index.html" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-file-image"></i>
-                            </div>
-                            <div class="menu-text">工业图纸识别</div>
-                        </a>
-                        <a href="image_ocr.html" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-file-image"></i>
-                            </div>
-                            <div class="menu-text">图片识别多场景</div>
-                        </a>
-                        <a href="pdf_ocr.html" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-file-pdf"></i>
-                            </div>
-                            <div class="menu-text">PDF识别</div>
-                        </a>
-                        
-                        <a href="safety_helmet_detection.html" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-hard-hat"></i>
-                            </div>
-                            <div class="menu-text">实时安全帽检测</div>
-                        </a>
-                        <a href="license_plate_detection.html" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-car"></i>
-                            </div>
-                            <div class="menu-text">车牌识别</div>
-                        </a>
-                        <a href="face_detection.html" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-smile"></i>
-                            </div>
-                            <div class="menu-text">人脸检测</div>
-                        </a>
-                        <a href="keypoint_detection.html" class="menu-item">
-                            <div class="menu-icon">
-                                <i class="fas fa-male"></i>
-                            </div>
-                            <div class="menu-text">全身关键点检测</div>
-                        </a>
-                        <a href="paddle_ocr.html" class="menu-item active">
-                            <div class="menu-icon">
-                                <i class="fas fa-eye"></i>
-                            </div>
-                            <div class="menu-text">在线官方案例</div>
-                        </a>
-                    </div>
-                </nav>
-            </aside>
+            <div id="sidebar-placeholder"></div>
 
             <!-- 主要内容区域 -->
             <main class="main-content-area paddleocr-page">
@@ -380,14 +275,10 @@
             </main>
         </div>
 
-        <!-- 简化底部信息 -->
-        <footer class="simple-footer">
-            <div class="footer-content">
-                <p>© 2026 赛意AI | 技术支持: sie@chinasie.com</p>
-            </div>
-        </footer>
+        <div id="footer-placeholder"></div>
     </div>
 
+    <script src="static/js/layout.js"></script>
     <script>
         /**
          * PaddleOCR 在线工具卡片数据

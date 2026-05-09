@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPA智能自动化 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <!-- 公共头部（由 layout.js 动态加载） -->
+        <div id="header-placeholder"></div>
+
+        <!-- 主体布局 -->
+        <div class="main-layout">
+            <!-- 公共侧边栏（由 layout.js 动态加载） -->
+            <div id="sidebar-placeholder"></div>
+
+            <!-- 主要内容区域 -->
+            <main class="main-content-area">
+                <!-- 视频展示区域 -->
+                <div class="rpa-hero">
+                    <div class="rpa-hero-video">
+                        <video autoplay muted loop playsinline controls poster="static/images/rpa-poster.jpg">
+                            <source src="https://oss-beijing-m8.openstorage.cn/astron-web/prod/%E6%98%9F%E8%BE%B0RPA.mp4" type="video/mp4">
+                            您的浏览器不支持视频播放
+                        </video>
+                    </div>
+                </div>
+
+                <!-- 核心功能卡片 -->
+                <div class="rpa-grid">
+                    <!-- 后端管理地址 -->
+                    <div class="rpa-card rpa-card-primary">
+                        <div class="rpa-card-header">
+                            <div class="rpa-card-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <h2>后端管理地址</h2>
+                        </div>
+                        <div class="rpa-card-body">
+                            <p class="rpa-card-desc">通过管理后台进行任务配置、流程监控、日志查看与系统管理。</p>
+                            <div class="rpa-address-list">
+                                <div class="rpa-address-item">
+                                    <div class="rpa-address-label">
+                                        <i class="fas fa-globe"></i>
+                                        <span>管理控制台</span>
+                                    </div>
+                                    <div class="rpa-address-value">
+                                        <a href="http://192.168.181.189:8100" target="_blank" class="rpa-address-link">
+                                            <code>http://192.168.181.189:8100</code>
+                                            <code>账号/密码: admin/123 </code>
+                                        </a>
+                                        <button class="rpa-copy-btn" onclick="copyText(this)" title="复制">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <a href="http://192.168.181.189:8100" target="_blank" class="rpa-btn rpa-btn-sm rpa-btn-enter">
+                                            <i class="fas fa-external-link-alt"></i> 进入
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="rpa-address-item">
+                                    <div class="rpa-address-label">
+                                        <i class="fas fa-code"></i>
+                                        <span>API 接口</span>
+                                    </div>
+                                    <div class="rpa-address-value">
+                                        <a href="http://192.168.181.189:32742" target="_blank" class="rpa-address-link">
+                                            <code>http://192.168.181.189:32742</code>
+                                        </a>
+                                        <button class="rpa-copy-btn" onclick="copyText(this)" title="复制">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <a href="http://192.168.181.189:32742" target="_blank" class="rpa-btn rpa-btn-sm rpa-btn-enter">
+                                            <i class="fas fa-external-link-alt"></i> 进入
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 下载客户端 -->
+                    <div class="rpa-card rpa-card-success">
+                        <div class="rpa-card-header">
+                            <div class="rpa-card-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <h2>下载客户端</h2>
+                        </div>
+                        <div class="rpa-card-body">
+                            <p class="rpa-card-desc">安装后即可快速接入自动化流程。<a target="_blank" href="https://github.com/iflytek/astron-rpa">https://github.com/iflytek/astron-rpa</a></p>
+                            <div class="rpa-download-list">
+                                <div class="rpa-download-item">
+                                    <div class="rpa-download-icon">
+                                        <i class="fab fa-windows"></i>
+                                    </div>
+                                    <div class="rpa-download-info">
+                                        <div class="rpa-download-name">Windows 客户端</div>
+                                        <div class="rpa-download-meta">v1.1.6 · 64位 · 安装包 314MB</div>
+                                        <div class="rpa-download-meta"> --- </div>
+                                        <div class="rpa-download-meta">AstronRPA-1.1.6-x64.exe</div>
+                                        <div class="rpa-download-meta"> --- </div>
+                                        <div class="rpa-download-meta">账号/密码：sie_shenpeiheng/123456</div>
+                                    </div>
+                                    <a href="https://release-assets.githubusercontent.com/github-production-release-asset/1060619404/5a9eec3c-5018-4622-ad39-bfe5ffee0bba?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-05-09T02%3A39%3A22Z&rscd=attachment%3B+filename%3DAstronRPA-1.1.6-x64.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-05-09T01%3A38%3A36Z&ske=2026-05-09T02%3A39%3A22Z&sks=b&skv=2018-11-09&sig=ZGWzx8k0O5QsBT38Y%2B5dxj07KdEyfm%2FOULdDuBzhK%2Bw%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc3ODI5NTUzMSwibmJmIjoxNzc4MjkxOTMxLCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.5V_ChtGM21D-ZaTXUXb1Gx3RC6uIlC2GQn4B-IDbmcA&response-content-disposition=attachment%3B%20filename%3DAstronRPA-1.1.6-x64.exe&response-content-type=application%2Foctet-stream" class="rpa-btn rpa-btn-download">
+                                        <i class="fas fa-download"></i> 下载
+                                    </a>
+                                </div>
+                                <!--<div class="rpa-download-item">
+                                    <div class="rpa-download-icon">
+                                        <i class="fab fa-apple"></i>
+                                    </div>
+                                    <div class="rpa-download-info">
+                                        <div class="rpa-download-name">macOS 客户端</div>
+                                        <div class="rpa-download-meta">v2.1.0 · Intel/Apple Silicon · DMG 52MB</div>
+                                    </div>
+                                    <a href="#" class="rpa-btn rpa-btn-download">
+                                        <i class="fas fa-download"></i> 下载
+                                    </a>
+                                </div>
+                                <div class="rpa-download-item">
+                                    <div class="rpa-download-icon">
+                                        <i class="fab fa-linux"></i>
+                                    </div>
+                                    <div class="rpa-download-info">
+                                        <div class="rpa-download-name">Linux 客户端</div>
+                                        <div class="rpa-download-meta">v2.1.0 · AppImage · 压缩包 38MB</div>
+                                    </div>
+                                    <a href="#" class="rpa-btn rpa-btn-download">
+                                        <i class="fas fa-download"></i> 下载
+                                    </a>
+                                </div>-->
+                            </div>
+                            <!--<div class="rpa-version-info">
+                                <i class="fas fa-info-circle"></i>
+                                <span>最新版本：v2.1.0 | 更新日期：2026-04-28 | </span>
+                                <a href="#">查看更新日志</a>
+                            </div>-->
+                        </div>
+                    </div>
+
+                    <!-- 使用说明 -->
+                    <div class="rpa-card rpa-card-info rpa-card-full">
+                        <div class="rpa-card-header">
+                            <div class="rpa-card-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <h2>使用说明</h2>
+                        </div>
+                        <div class="rpa-card-body">
+                            <p class="rpa-card-desc">快速上手 RPA 智能自动化平台。</p>
+                            <div class="rpa-steps">
+                                <div class="rpa-step">
+                                    <pre>
+安装好后在安装目录下的 resources/conf.yaml 中修改服务端地址：
+```yaml
+remote_addr: http://192.168.181.189:32742/
+skip_engine_start: false
+app_auth_type: casdoor
+app_edition: saas
+```
+                                    </pre>
+                                </div>
+                                <div class="rpa-step">
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 底部系统状态 -->
+                <!--<div class="rpa-status-bar">
+                    <div class="rpa-status-item">
+                        <span class="rpa-status-dot rpa-status-online"></span>
+                        <span>管理服务</span>
+                        <span class="rpa-status-text">运行中</span>
+                    </div>
+                    <div class="rpa-status-item">
+                        <span class="rpa-status-dot rpa-status-online"></span>
+                        <span>客户端连接</span>
+                        <span class="rpa-status-text">3 台在线</span>
+                    </div>
+                    <div class="rpa-status-item">
+                        <span class="rpa-status-dot rpa-status-online"></span>
+                        <span>任务队列</span>
+                        <span class="rpa-status-text">0 等待中</span>
+                    </div>
+                    <div class="rpa-status-item">
+                        <span class="rpa-status-dot rpa-status-online"></span>
+                        <span>API 服务</span>
+                        <span class="rpa-status-text">正常</span>
+                    </div>
+                </div>-->
+            </main>
+        </div>
+
+        <!-- 公共底部（由 layout.js 动态加载） -->
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="static/js/layout.js"></script>
+    <script>
+        /**
+         * 复制文本到剪贴板
+         */
+        function copyText(btn) {
+            var code = btn.parentElement.querySelector('code');
+            if (!code) return;
+
+            var text = code.textContent;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showCopyToast(btn);
+                }).catch(function() {
+                    fallbackCopy(text, btn);
+                });
+            } else {
+                fallbackCopy(text, btn);
+            }
+        }
+
+        function fallbackCopy(text, btn) {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showCopyToast(btn);
+            } catch (e) {
+                // ignore
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showCopyToast(btn) {
+            var toast = document.createElement('div');
+            toast.className = 'rpa-toast';
+            toast.textContent = '已复制';
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.classList.add('rpa-toast-show');
+            }, 10);
+            setTimeout(function() {
+                toast.classList.remove('rpa-toast-show');
+                setTimeout(function() {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
