@@ -44,7 +44,7 @@
                     '<a href="http://218.13.91.107:6200/mermaid" target="_blank" class="nav-item active">' +
                         '<i class="fas fa-image"></i><span>AI Draw</span>' +
                     '</a>' +
-                    '<a href="http://218.13.91.107:6202/" target="_blank" class="nav-item active">' +
+                    '<a href="http://218.13.91.107:6201/" target="_blank" class="nav-item active">' +
                         '<i class="fas fa-code"></i><span>VsCode在线</span>' +
                     '</a>' +
                     '<a href="https://aistudio.baidu.com/paddleocr/task/new" target="_blank" class="nav-item active">' +
