@@ -2085,6 +2085,137 @@ def keypoint_detection():
     except Exception as e:
         return jsonify({'error': f'关键点检测失败: {str(e)}'}), 500
 
+# ============================================================
+# 精密压力表指针读数识别 API
+# ============================================================
+
+@app.route('/api/gauge_detection', methods=['POST'])
+def gauge_detection():
+    """
+    精密压力表指针读数识别 API
+    
+    使用计算机视觉算法自动检测压力表表盘、定位指针轴心、
+    提取指针并计算角度，最终映射为表盘读数。
+    
+    支持两种模式：
+    - 自动模式：全自动检测表盘和指针
+    - 手动模式：用户指定表盘参数，算法精确定位
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': '没有文件部分'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': '没有选择文件'}), 400
+    
+    try:
+        image_bytes = file.read()
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'error': '无法解码图片'}), 400
+        
+        img_height, img_width = img.shape[:2]
+        
+        # 获取请求参数
+        auto_detect = request.form.get('auto_detect', 'true').lower() == 'true'
+        refine_center = request.form.get('refine_center', 'true').lower() == 'true'
+        auto_scale = request.form.get('auto_scale', 'true').lower() == 'true'
+        
+        # 手动参数（当 auto_detect=False 时使用）
+        center_x = request.form.get('center_x', type=int)
+        center_y = request.form.get('center_y', type=int)
+        radius = request.form.get('radius', type=int)
+        start_angle = request.form.get('start_angle', 0, type=float)
+        end_angle = request.form.get('end_angle', 270, type=float)
+        min_value = request.form.get('min_value', 0, type=float)
+        max_value = request.form.get('max_value', 100, type=float)
+        
+        # 导入压力表读取器
+        from gauge_reader import PrecisionGaugeReader
+        
+        reader = PrecisionGaugeReader()
+        
+        # 设置手动参数或自动检测
+        if not auto_detect and center_x is not None and center_y is not None and radius is not None:
+            reader.set_gauge_params(
+                (center_x, center_y), radius,
+                start_angle, end_angle, min_value, max_value
+            )
+        
+        # 执行读取
+        result = reader.read_gauge(img, auto_scale=auto_scale, refine_center=refine_center)
+        
+        if not result['success']:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', '压力表读数失败'),
+                'image_width': img_width,
+                'image_height': img_height
+            }), 400
+        
+        # 生成标注图像
+        annotated = reader.draw_result(img, result)
+        _, buffer = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 95])
+        img_result_base64 = base64.b64encode(buffer).decode('utf-8')
+        
+        # 生成中间过程可视化图像
+        debug_images = {}
+        debug_info = result.get('debug_info', {})
+        
+        # 指针掩码可视化
+        pointer_mask = debug_info.get('pointer_mask')
+        if pointer_mask is not None and np.any(pointer_mask):
+            mask_vis = np.zeros((img_height, img_width, 3), dtype=np.uint8)
+            mask_vis[pointer_mask > 0] = [0, 0, 255]
+            overlay = cv2.addWeighted(img, 0.7, mask_vis, 0.3, 0)
+            _, buf = cv2.imencode('.jpg', overlay, [cv2.IMWRITE_JPEG_QUALITY, 90])
+            debug_images['pointer_mask'] = base64.b64encode(buf).decode('utf-8')
+        
+        # 极坐标图像可视化
+        polar_img = debug_info.get('polar_image')
+        if polar_img is not None:
+            # 将极坐标图像缩放以便显示
+            polar_vis = cv2.resize(polar_img, (360, 200), interpolation=cv2.INTER_NEAREST)
+            polar_color = cv2.cvtColor(polar_vis, cv2.COLOR_GRAY2BGR)
+            _, buf = cv2.imencode('.jpg', polar_color, [cv2.IMWRITE_JPEG_QUALITY, 90])
+            debug_images['polar'] = base64.b64encode(buf).decode('utf-8')
+        
+        polar_processed = debug_info.get('polar_processed')
+        if polar_processed is not None:
+            polar_vis = cv2.resize(polar_processed, (360, 200), interpolation=cv2.INTER_NEAREST)
+            polar_color = cv2.cvtColor(polar_vis, cv2.COLOR_GRAY2BGR)
+            _, buf = cv2.imencode('.jpg', polar_color, [cv2.IMWRITE_JPEG_QUALITY, 90])
+            debug_images['polar_processed'] = base64.b64encode(buf).decode('utf-8')
+        
+        # 确保所有数值类型为 Python 原生类型（避免 numpy 类型 JSON 序列化问题）
+        response_data = {
+            'success': True,
+            'reading': float(result['reading']),
+            'pointer_angle': float(result['pointer_angle']),
+            'center': [float(c) for c in result['center']],
+            'radius': int(result['radius']),
+            'start_angle': float(result['start_angle']),
+            'end_angle': float(result['end_angle']),
+            'min_value': float(result['min_value']),
+            'max_value': float(result['max_value']),
+            'image_width': int(img_width),
+            'image_height': int(img_height),
+            'result_image': f'data:image/jpeg;base64,{img_result_base64}',
+            'debug_images': debug_images,
+            'detector': 'PrecisionGaugeReader (CV-based)'
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'压力表检测失败: {str(e)}'}), 500
+
+
 if __name__ == '__main__':
     print("启动OCR工业图片识别系统...")
     print(f"上传目录: {app.config['UPLOAD_FOLDER']}")

@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛意AI - 精密压力表检测</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        /* 压力表检测页面样式 - 覆盖默认网格布局 */
+        .gauge-page .content-grid {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .gauge-page .left-column,
+        .gauge-page .right-column {
+            display: none;
+        }
+        .gauge-page .gauge-full-column {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .gauge-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 0;
+        }
+
+        .gauge-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .gauge-header h2 {
+            color: #4a6572;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .gauge-header h2 i {
+            color: #e74c3c;
+        }
+
+        .gauge-header .header-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .gauge-body {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .gauge-left-panel {
+            width: 380px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .gauge-right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        /* 卡片样式（统一风格） */
+        .gauge-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .gauge-card h3 {
+            color: #4a6572;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .gauge-card h3 i {
+            color: #e74c3c;
+        }
+
+        /* 上传区域 */
+        .gauge-upload-area {
+            border: 3px dashed #e74c3c;
+            border-radius: 15px;
+            padding: 15px 15px;
+            text-align: center;
+            background: linear-gradient(135deg, #fef0f0, #fde8e8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .gauge-upload-area:hover {
+            background: linear-gradient(135deg, #fde8e8, #fcd5d5);
+            border-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.15);
+        }
+
+        .gauge-upload-area .upload-icon {
+            font-size: 2.5rem;
+            color: #e74c3c;
+            margin-bottom: 6px;
+        }
+
+        .gauge-upload-area .upload-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+
+        .gauge-upload-area .upload-hint {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        /* 预览区域 */
+        .gauge-preview-container {
+            position: relative;
+            display: none;
+        }
+
+        .gauge-preview-container img {
+            max-width: 100%;
+            max-height: 120px;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+            cursor: zoom-in;
+        }
+
+        .gauge-file-info {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .gauge-file-info .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .gauge-file-info .info-label {
+            color: #7f8c8d;
+        }
+
+        .gauge-file-info .info-value {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        /* 示例图片选择 */
+        .gauge-sample-images {
+            margin-top: 12px;
+        }
+
+        .gauge-sample-images .sample-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+
+        .gauge-sample-images .sample-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .gauge-sample-images .sample-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: white;
+        }
+
+        .gauge-sample-images .sample-item:hover {
+            border-color: #e74c3c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
+        }
+
+        .gauge-sample-images .sample-item.selected {
+            border-color: #e74c3c;
+            background: #fef0f0;
+        }
+
+        .gauge-sample-images .sample-item img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .gauge-sample-images .sample-item span {
+            font-size: 0.7rem;
+            color: #7f8c8d;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* 检测按钮 */
+        .btn-detect {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-detect:hover:not(:disabled) {
+            background: linear-gradient(90deg, #c0392b, #a93226);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.35);
+        }
+
+        .btn-detect:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* 加载动画 */
+        .gauge-loading {
+            display: none;
+            text-align: center;
+            padding: 15px 0;
+        }
+
+        .gauge-loading.active {
+            display: block;
+        }
+
+        .gauge-loading .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f0f0f0;
+            border-top: 3px solid #e74c3c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .gauge-loading .loading-text {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        /* 检测统计 */
+        .gauge-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .gauge-stat-card {
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .gauge-stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .gauge-stat-card .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        /* 结果图片区域 */
+        .gauge-result-image-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .gauge-result-image-wrapper {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            border: 2px dashed #e0e0e0;
+        }
+
+        .gauge-result-image-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            cursor: zoom-in;
+        }
+
+        .gauge-result-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: #bdc3c7;
+        }
+
+        .gauge-result-placeholder i {
+            font-size: 3rem;
+        }
+
+        .gauge-result-placeholder p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* JSON 数据 */
+        .gauge-json-container {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        .gauge-json-container pre {
+            margin: 0;
+            color: #ecf0f1;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* 全屏查看器 */
+        .gauge-fullscreen-viewer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .gauge-fullscreen-viewer.active {
+            display: flex;
+        }
+
+        .gauge-fullscreen-content {
+            width: 95%;
+            height: 95%;
+            background: #1a1a1a;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .gauge-fullscreen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #2c3e50;
+            color: white;
+        }
+
+        .gauge-fullscreen-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: white;
+            border: none;
+            padding: 0;
+        }
+
+        .gauge-fullscreen-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .gauge-fullscreen-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .gauge-fullscreen-body img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .gauge-fullscreen-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 30px;
+        }
+
+        .gauge-control-btn {
+            background: #3498db;
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background 0.3s ease;
+        }
+
+        .gauge-control-btn:hover { background: #2980b9; }
+        .gauge-control-btn.zoom-in { background: #2ecc71; }
+        .gauge-control-btn.zoom-out { background: #e74c3c; }
+        .gauge-control-btn.zoom-reset { background: #f39c12; }
+        .gauge-control-btn.rotate-left { background: #9b59b6; }
+        .gauge-control-btn.rotate-right { background: #34495e; }
+        .gauge-control-btn.download-btn { background: #1abc9c; }
+
+        .gauge-fullscreen-info {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .gauge-body {
+                flex-direction: column;
+            }
+            .gauge-left-panel {
+                width: 100%;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .gauge-header {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            .gauge-sample-images .sample-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 公共头部（由 layout.js 动态加载） -->
+        <div id="header-placeholder"></div>
+
+        <!-- 主体布局 -->
+        <div class="main-layout">
+            <!-- 公共侧边栏（由 layout.js 动态加载） -->
+            <div id="sidebar-placeholder"></div>
+
+            <!-- 主要内容区域 -->
+            <main class="main-content-area gauge-page">
+            <div class="content-grid">
+                <div class="left-column" style="display:none;"></div>
+                <div class="right-column" style="display:none;"></div>
+
+                <div class="gauge-full-column">
+                    <div class="gauge-wrapper">
+                        <!-- 页面头部 -->
+                        <div class="gauge-header">
+                            <h2>
+                                <i class="fas fa-tachometer-alt"></i>
+                                精密压力表指针读数识别
+                            </h2>
+                            <div class="header-hint">
+                                <i class="fas fa-info-circle"></i>
+                                基于计算机视觉，自动检测表盘、定位轴心、识别指针读数
+                            </div>
+                        </div>
+
+                        <!-- 主体 -->
+                        <div class="gauge-body">
+                            <!-- 左侧面板 -->
+                            <div class="gauge-left-panel">
+                                <!-- 上传区域 -->
+                                <div class="gauge-card">
+                                    <h3><i class="fas fa-cloud-upload-alt"></i> 上传图片</h3>
+                                    <div class="gauge-upload-area" id="uploadArea">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-tachometer-alt"></i>
+                                        </div>
+                                        <div class="upload-text">点击选择或拖放图片</div>
+                                        <div class="upload-hint">支持 JPG、PNG、JPEG 格式</div>
+                                        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
+                                    </div>
+
+                                    <!-- 预览 -->
+                                    <div class="gauge-preview-container" id="previewContainer">
+                                        <img id="imagePreview" src="" alt="图片预览">
+                                        <div class="gauge-file-info">
+                                            <div class="info-row">
+                                                <span class="info-label">文件名:</span>
+                                                <span class="info-value" id="fileName">-</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">文件大小:</span>
+                                                <span class="info-value" id="fileSize">-</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <span class="info-label">图片尺寸:</span>
+                                                <span class="info-value" id="imageDims">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 默认图片选择 -->
+                                    <div class="gauge-sample-images">
+                                        <div class="sample-label">或选择示例图片：</div>
+                                        <div class="sample-grid">
+                                            <div class="sample-item selected" data-src="static/images/demo/1.jpg">
+                                                <img src="static/images/demo/1.jpg" alt="示例1">
+                                                <span>1.jpg</span>
+                                            </div>
+                                            <div class="sample-item" data-src="static/images/demo/4.jpg">
+                                                <img src="static/images/demo/4.jpg" alt="示例4">
+                                                <span>4.jpg</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 检测按钮 -->
+                                    <button class="btn-detect" id="detectBtn" disabled>
+                                        <i class="fas fa-search"></i>
+                                        开始检测
+                                    </button>
+
+                                    <!-- 加载动画 -->
+                                    <div class="gauge-loading" id="loadingIndicator">
+                                        <div class="spinner"></div>
+                                        <span class="loading-text">正在分析压力表盘...</span>
+                                    </div>
+                                </div>
+
+                                <!-- 检测统计 -->
+                                <div class="gauge-card" id="statsCard" style="display: none;">
+                                    <h3><i class="fas fa-chart-bar"></i> 检测结果</h3>
+                                    <div class="gauge-stats">
+                                        <div class="gauge-stat-card" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                                            <div class="stat-value" id="readingValue">0.000</div>
+                                            <div class="stat-label">表盘读数</div>
+                                        </div>
+                                        <div class="gauge-stat-card" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                                            <div class="stat-value" id="angleValue">0.0°</div>
+                                            <div class="stat-label">指针角度</div>
+                                        </div>
+                                        <div class="gauge-stat-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                                            <div class="stat-value" id="centerValue" style="font-size:1.1rem;">(0, 0)</div>
+                                            <div class="stat-label">表盘中心</div>
+                                        </div>
+                                        <div class="gauge-stat-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                                            <div class="stat-value" id="radiusValue">0 px</div>
+                                            <div class="stat-label">表盘半径</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 右侧面板 -->
+                            <div class="gauge-right-panel">
+                                <!-- 结果图片 -->
+                                <div class="gauge-card gauge-result-image-container">
+                                    <h3><i class="fas fa-eye"></i> 检测结果</h3>
+                                    <div class="gauge-result-image-wrapper" id="resultImageWrapper">
+                                        <div class="gauge-result-placeholder" id="resultPlaceholder">
+                                            <i class="fas fa-image"></i>
+                                            <p>上传图片并点击"开始检测"查看结果</p>
+                                        </div>
+                                        <img id="resultImage" src="" alt="检测结果" style="display: none;">
+                                    </div>
+                                </div>
+
+                                <!-- JSON 数据 -->
+                                <div class="gauge-card">
+                                    <h3><i class="fas fa-file-code"></i> JSON 数据</h3>
+                                    <div class="gauge-json-container">
+                                        <pre id="jsonOutput">{
+    "message": "等待检测..."
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 公共底部（由 layout.js 动态加载） -->
+    <div id="footer-placeholder"></div>
+</div>
+
+    <!-- 全屏查看器 -->
+    <div class="gauge-fullscreen-viewer" id="gaugeFullscreenViewer">
+        <div class="gauge-fullscreen-content">
+            <div class="gauge-fullscreen-header">
+                <h3>图片全屏查看</h3>
+                <button class="gauge-fullscreen-close" onclick="closeGaugeFullscreenViewer()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="gauge-fullscreen-body">
+                <img id="gaugeFullscreenImage" src="" alt="全屏图片">
+                <div class="gauge-fullscreen-controls">
+                    <button class="gauge-control-btn zoom-in" onclick="gaugeZoomIn()" title="放大"><i class="fas fa-search-plus"></i></button>
+                    <button class="gauge-control-btn zoom-out" onclick="gaugeZoomOut()" title="缩小"><i class="fas fa-search-minus"></i></button>
+                    <button class="gauge-control-btn zoom-reset" onclick="gaugeZoomReset()" title="重置"><i class="fas fa-sync-alt"></i></button>
+                    <button class="gauge-control-btn rotate-left" onclick="gaugeRotateLeft()" title="左旋"><i class="fas fa-undo"></i></button>
+                    <button class="gauge-control-btn rotate-right" onclick="gaugeRotateRight()" title="右旋"><i class="fas fa-redo"></i></button>
+                    <button class="gauge-control-btn download-btn" onclick="gaugeDownloadImage()" title="下载"><i class="fas fa-download"></i></button>
+                </div>
+                <div class="gauge-fullscreen-info">
+                    <span id="gaugeFullscreenInfo">缩放: 100% | 旋转: 0°</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script>
+        // 压力表检测页面 JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const previewContainer = document.getElementById('previewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const imageDims = document.getElementById('imageDims');
+            const detectBtn = document.getElementById('detectBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const statsCard = document.getElementById('statsCard');
+            const readingValue = document.getElementById('readingValue');
+            const angleValue = document.getElementById('angleValue');
+            const centerValue = document.getElementById('centerValue');
+            const radiusValue = document.getElementById('radiusValue');
+            const resultImage = document.getElementById('resultImage');
+            const resultPlaceholder = document.getElementById('resultPlaceholder');
+            const jsonOutput = document.getElementById('jsonOutput');
+
+            let selectedFile = null;
+            let selectedSampleSrc = 'static/images/demo/1.jpg';
+
+            // 默认选中并加载预览
+            (function loadDefaultSample() {
+                var img = new Image();
+                img.onload = function() {
+                    imagePreview.src = selectedSampleSrc;
+                    previewContainer.style.display = 'block';
+                    imageDims.textContent = img.width + ' × ' + img.height;
+                };
+                img.src = selectedSampleSrc;
+                fileName.textContent = '1.jpeg';
+                fileSize.textContent = '-';
+                detectBtn.disabled = false;
+            })();
+
+            // 示例图片选择
+            const sampleItems = document.querySelectorAll('.sample-item');
+            sampleItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    sampleItems.forEach(function(si) { si.classList.remove('selected'); });
+                    this.classList.add('selected');
+
+                    const src = this.getAttribute('data-src');
+                    selectedSampleSrc = src;
+                    selectedFile = null;
+
+                    const img = new Image();
+                    img.onload = function() {
+                        imagePreview.src = src;
+                        previewContainer.style.display = 'block';
+                        imageDims.textContent = img.width + ' × ' + img.height;
+                    };
+                    img.src = src;
+
+                    fileName.textContent = src.split('/').pop();
+                    fileSize.textContent = '-';
+                    detectBtn.disabled = false;
+                });
+            });
+
+            // 点击上传区域触发文件选择
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // 拖放支持
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#c0392b';
+                uploadArea.style.background = 'linear-gradient(135deg, #fde8e8, #fcd5d5)';
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#e74c3c';
+                uploadArea.style.background = 'linear-gradient(135deg, #fef0f0, #fde8e8)';
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#e74c3c';
+                uploadArea.style.background = 'linear-gradient(135deg, #fef0f0, #fde8e8)';
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            // 文件选择
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            // 处理文件
+            function handleFile(file) {
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!validTypes.includes(file.type)) {
+                    alert('请选择 JPG 或 PNG 格式的图片');
+                    return;
+                }
+
+                selectedFile = file;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+
+                const img = new Image();
+                img.onload = function() {
+                    imageDims.textContent = img.width + ' × ' + img.height;
+                };
+                img.src = URL.createObjectURL(file);
+
+                detectBtn.disabled = false;
+            }
+
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+
+            // 开始检测
+            detectBtn.addEventListener('click', function() {
+                if (!selectedFile && !selectedSampleSrc) return;
+
+                detectBtn.disabled = true;
+                detectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
+                loadingIndicator.classList.add('active');
+                statsCard.style.display = 'none';
+                resultImage.style.display = 'none';
+                resultPlaceholder.style.display = 'block';
+                jsonOutput.textContent = '{\n    "status": "正在检测..."\n}';
+
+                const formData = new FormData();
+
+                if (selectedFile) {
+                    formData.append('file', selectedFile);
+                    doDetect(formData);
+                } else if (selectedSampleSrc) {
+                    fetch(selectedSampleSrc)
+                        .then(function(resp) { return resp.blob(); })
+                        .then(function(blob) {
+                            var filename = selectedSampleSrc.split('/').pop();
+                            var file = new File([blob], filename, { type: blob.type });
+                            formData.append('file', file);
+                            doDetect(formData);
+                        })
+                        .catch(function(err) {
+                            jsonOutput.textContent = '{\n    "error": "' + err.message + '"\n}';
+                            alert('加载示例图片失败: ' + err.message);
+                            detectBtn.disabled = false;
+                            detectBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
+                            loadingIndicator.classList.remove('active');
+                        });
+                }
+            });
+
+            function getApiBaseUrl() {
+                var pathname = window.location.pathname;
+                var match = pathname.match(/^(\/proxy\/\d+)/);
+                if (match) {
+                    return match[1];
+                }
+                return '';
+            }
+
+            function doDetect(formData) {
+                fetch(getApiBaseUrl() + '/api/gauge_detection', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function(response) {
+                    return response.json().then(function(data) {
+                        return { status: response.status, data: data };
+                    });
+                })
+                .then(function(result) {
+                    if (result.data.success) {
+                        resultImage.src = result.data.result_image;
+                        resultImage.style.display = 'block';
+                        resultPlaceholder.style.display = 'none';
+
+                        readingValue.textContent = result.data.reading;
+                        angleValue.textContent = result.data.pointer_angle + '°';
+                        centerValue.textContent = '(' + result.data.center[0].toFixed(1) + ', ' + result.data.center[1].toFixed(1) + ')';
+                        radiusValue.textContent = result.data.radius + ' px';
+                        statsCard.style.display = 'block';
+
+                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                    } else {
+                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                        alert('检测失败: ' + (result.data.error || '未知错误'));
+                    }
+                })
+                .catch(function(err) {
+                    jsonOutput.textContent = '{\n    "error": "' + err.message + '"\n}';
+                    alert('请求失败: ' + err.message);
+                })
+                .finally(function() {
+                    detectBtn.disabled = false;
+                    detectBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
+                    loadingIndicator.classList.remove('active');
+                });
+            }
+
+            // 图片点击放大
+            function initImageZoom(imgElement) {
+                if (!imgElement) return;
+                imgElement.style.cursor = 'zoom-in';
+                imgElement.addEventListener('click', function() {
+                    if (this.src && this.src !== '') {
+                        openGaugeFullscreenViewer(this.src);
+                    }
+                });
+            }
+
+            initImageZoom(imagePreview);
+            initImageZoom(resultImage);
+        });
+    </script>
+
+    <script>
+    // 全屏查看器功能
+    (function() {
+        var viewer = document.getElementById('gaugeFullscreenViewer');
+        var img = document.getElementById('gaugeFullscreenImage');
+        var info = document.getElementById('gaugeFullscreenInfo');
+        var scale = 1, rotation = 0;
+
+        function updateTransform() {
+            img.style.transform = 'scale(' + scale + ') rotate(' + rotation + 'deg)';
+            info.textContent = '缩放: ' + Math.round(scale * 100) + '% | 旋转: ' + rotation + '°';
+        }
+
+        window.openGaugeFullscreenViewer = function(src) {
+            img.src = src;
+            scale = 1; rotation = 0;
+            updateTransform();
+            viewer.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeGaugeFullscreenViewer = function() {
+            viewer.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        window.gaugeZoomIn = function() { scale = Math.min(scale + 0.25, 5); updateTransform(); };
+        window.gaugeZoomOut = function() { scale = Math.max(scale - 0.25, 0.25); updateTransform(); };
+        window.gaugeZoomReset = function() { scale = 1; rotation = 0; updateTransform(); };
+        window.gaugeRotateLeft = function() { rotation = (rotation - 90) % 360; updateTransform(); };
+        window.gaugeRotateRight = function() { rotation = (rotation + 90) % 360; updateTransform(); };
+        window.gaugeDownloadImage = function() {
+            var link = document.createElement('a');
+            link.download = 'gauge_image_' + Date.now() + '.png';
+            link.href = img.src;
+            link.click();
+        };
+
+        viewer.addEventListener('click', function(e) {
+            if (e.target === viewer) closeGaugeFullscreenViewer();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && viewer.classList.contains('active')) closeGaugeFullscreenViewer();
+        });
+    })();
+    </script>
+</body>
+</html>

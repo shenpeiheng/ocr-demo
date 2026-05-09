@@ -41,8 +41,11 @@
                     '<span class="admin-logo-text"> AI </span>' +
                 '</div>' +
                 '<nav class="admin-nav" style="display: flex;">' +
-                    '<a href="http://192.168.181.189:6200/mermaid" target="_blank" class="nav-item active">' +
+                    '<a href="http://218.13.91.107:6200/mermaid" target="_blank" class="nav-item active">' +
                         '<i class="fas fa-image"></i><span>AI Draw</span>' +
+                    '</a>' +
+                    '<a href="http://218.13.91.107:6202/" target="_blank" class="nav-item active">' +
+                        '<i class="fas fa-code"></i><span>VsCode在线</span>' +
                     '</a>' +
                     '<a href="https://aistudio.baidu.com/paddleocr/task/new" target="_blank" class="nav-item active">' +
                         '<i class="fas fa-cube"></i><span>PaddleOCR</span>' +
@@ -144,6 +147,10 @@
                         '<a href="keypoint_detection.html" class="menu-item menu-sub-item" data-page="keypoint_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">全身关键点检测</div>' +
+                        '</a>' +
+                        '<a href="gauge_detection.html" class="menu-item menu-sub-item" data-page="gauge_detection">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">精密压力表检测</div>' +
                         '</a>' +
                     '</div>' +
                 '</div>' +
