@@ -29,6 +29,20 @@ class Config:
     # PDF处理配置
     PDF_MAX_PAGES = int(os.getenv('PDF_MAX_PAGES', '50'))  # 最大处理页数
     PDF_DPI = int(os.getenv('PDF_DPI', '200'))  # PDF转换DPI
+    PDF_ENGINE = os.getenv('PDF_ENGINE', 'ocr').strip().lower()  # ocr 或 mineru
+    MINERU_REQUEST_MODE = os.getenv('MINERU_REQUEST_MODE', 'modelscope_vl').strip().lower()
+    _MINERU_DEFAULT_API_URL = (
+        os.getenv('MODELSCOPE_BASE_URL', 'https://api-inference.modelscope.cn/v1')
+        if MINERU_REQUEST_MODE in {'modelscope', 'modelscope_vl', 'openai_vl'}
+        else ''
+    )
+    MINERU_API_URL = os.getenv(
+        'MINERU_API_URL',
+        _MINERU_DEFAULT_API_URL
+    ).strip()
+    MINERU_API_KEY = os.getenv('MINERU_API_KEY', os.getenv('MODELSCOPE_API_KEY', '')).strip()
+    MINERU_MODEL = os.getenv('MINERU_MODEL', 'OpenDataLab/MinerU2.5-2509-1.2B').strip()
+    MINERU_TIMEOUT = int(os.getenv('MINERU_TIMEOUT', '300'))
     
     # CORS配置
     ENABLE_CORS = os.getenv('ENABLE_CORS', 'true').lower() == 'true'

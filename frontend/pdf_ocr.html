@@ -38,6 +38,16 @@
                                     <i class="fas fa-folder-open"></i> 选择PDF文件
                                 </button>
                             </div>
+
+                            <div class="sample-images-section pdf-sample-files" id="pdfSampleFilesSection">
+                                <div class="sample-label"><i class="fas fa-file-pdf"></i> 示例文件：</div>
+                                <div class="sample-grid">
+                                    <div class="sample-item selected" id="defaultPdfSample" data-src="static/pdf/1.pdf" data-name="1.pdf">
+                                        <div class="pdf-sample-icon"><i class="fas fa-file-pdf"></i></div>
+                                        <span>1.pdf</span>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <div class="file-info" id="fileInfo" style="display: none;">
                                 <div class="file-info-content">
@@ -72,6 +82,14 @@
                                 </div>
                                 
                                 <div class="settings-grid">
+                                    <div class="setting-item">
+                                        <label for="pdfEngineSetting">解析方式:</label>
+                                        <select id="pdfEngineSetting" class="setting-select">
+                                            <option value="ocr" selected>OCR逐页识别</option>
+                                            <option value="mineru">MinerU文档解析</option>
+                                        </select>
+                                    </div>
+
                                     <div class="setting-item">
                                         <label for="dpiSetting">图像DPI:</label>
                                         <select id="dpiSetting" class="setting-select">

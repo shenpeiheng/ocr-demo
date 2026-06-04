@@ -7,10 +7,18 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request, send_file, send_from_directory
 
 from app_core import app, ocr_processor, pdf_processor
+from flowchart_processor import FLOWCHART_COLUMNS, process_flowchart_images
 from image_utils import preprocess_image_for_ocr
 from markdown_formatter import markdown_formatter, save_markdown
+from mineru_processor import create_mineru_processor
 from prompt_manager import get_prompt, prompt_manager
-from services.result_utils import draw_ocr_boxes, format_results_as_json, generate_excel, generate_pdf_excel
+from services.result_utils import (
+    draw_ocr_boxes,
+    format_results_as_json,
+    generate_excel,
+    generate_flowchart_excel,
+    generate_pdf_excel,
+)
 from config import Config
 
 
@@ -23,6 +31,10 @@ def allowed_file(filename):
 
 def is_pdf_file(filename):
     return os.path.splitext(filename)[1].lower() == ".pdf"
+
+
+def is_image_file(filename):
+    return os.path.splitext(filename)[1].lower().lstrip(".") in {"png", "jpg", "jpeg", "bmp", "tiff", "gif", "webp"}
 
 
 @ocr_bp.route("/")
@@ -40,6 +52,13 @@ def api_index():
             "description": "工业图纸和PDF文件OCR识别API服务，支持PaddleOCR和OpenAI VL",
             "supported_formats": list(app.config["ALLOWED_EXTENSIONS"]),
             "pdf_support": pdf_processor.initialized,
+            "pdf_engines": {
+                "current": Config.PDF_ENGINE,
+                "available": ["ocr", "mineru"],
+                "mineru_configured": bool(Config.MINERU_API_KEY),
+                "mineru_mode": Config.MINERU_REQUEST_MODE,
+                "mineru_model": Config.MINERU_MODEL,
+            },
             "ocr_engine": {
                 "current": engine_info["current_engine"],
                 "type": engine_info["engine_type"],
@@ -51,6 +70,8 @@ def api_index():
                 "/api/process": "处理已上传的文件（自动识别文件类型）",
                 "/api/process/openai_vl": "使用OpenAI VL处理图片",
                 "/api/process/paddleocr": "使用PaddleOCR处理图片",
+                "/api/flowchart/process": "批量识别流程图图片",
+                "/api/flowchart/download/excel/<batch_id>": "下载流程图识别Excel",
                 "/api/prompts": "获取可用提示词列表",
                 "/api/results/<filename>": "获取识别结果",
                 "/api/download/excel/<filename>": "下载Excel格式结果",
@@ -91,6 +112,77 @@ def upload_file():
         )
 
     return jsonify({"error": "文件类型不支持"}), 400
+
+
+@ocr_bp.route("/api/flowchart/process", methods=["POST"])
+def process_flowchart_files():
+    files = request.files.getlist("files")
+    if not files:
+        single_file = request.files.get("file")
+        files = [single_file] if single_file else []
+
+    files = [file for file in files if file and file.filename]
+    if not files:
+        return jsonify({"success": False, "error": "请选择流程图图片"}), 400
+
+    if len(files) > 10:
+        return jsonify({"success": False, "error": "一次最多支持10张流程图图片"}), 400
+
+    batch_id = uuid.uuid4().hex
+    image_entries = []
+    for index, file in enumerate(files, 1):
+        original_filename = file.filename
+        if not is_image_file(original_filename):
+            return jsonify({"success": False, "error": f"不支持的图片格式: {original_filename}"}), 400
+
+        file_ext = os.path.splitext(original_filename)[1].lower().lstrip(".") or "png"
+        unique_filename = f"flowchart_{batch_id}_{index:02d}.{file_ext}"
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], unique_filename)
+        file.save(filepath)
+        image_entries.append(
+            {
+                "filename": unique_filename,
+                "original_filename": original_filename,
+                "path": filepath,
+            }
+        )
+
+    try:
+        flowchart_result = process_flowchart_images(image_entries, ocr_processor)
+        flowchart_result["batch_id"] = batch_id
+
+        result_filename = f"result_flowchart_{batch_id}.json"
+        result_path = os.path.join(app.config["UPLOAD_FOLDER"], result_filename)
+        with open(result_path, "w", encoding="utf-8") as file_obj:
+            json.dump(flowchart_result, file_obj, ensure_ascii=False, indent=2)
+
+        excel_filename = f"result_flowchart_{batch_id}.xlsx"
+        excel_path = os.path.join(app.config["UPLOAD_FOLDER"], excel_filename)
+        generate_flowchart_excel(flowchart_result, excel_path)
+
+        if not flowchart_result.get("success"):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "流程图识别失败，未解析到有效流程节点",
+                    "batch_id": batch_id,
+                    "results": flowchart_result,
+                    "result_files": {"json": result_filename, "excel": excel_filename},
+                }
+            ), 500
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "流程图识别完成",
+                "batch_id": batch_id,
+                "columns": FLOWCHART_COLUMNS,
+                "results": flowchart_result,
+                "result_files": {"json": result_filename, "excel": excel_filename},
+            }
+        )
+    except Exception as exc:
+        return jsonify({"success": False, "error": f"流程图识别失败: {str(exc)}"}), 500
 
 
 @ocr_bp.route("/api/process", methods=["POST"])
@@ -393,6 +485,28 @@ def download_markdown(filename):
     return send_file(markdown_path, as_attachment=True, download_name=f"ocr_result_{filename}.md")
 
 
+@ocr_bp.route("/api/flowchart/download/excel/<batch_id>")
+def download_flowchart_excel(batch_id):
+    if not _is_safe_batch_id(batch_id):
+        return jsonify({"error": "批次ID不合法"}), 400
+
+    excel_path = os.path.join(app.config["UPLOAD_FOLDER"], f"result_flowchart_{batch_id}.xlsx")
+    if not os.path.exists(excel_path):
+        return jsonify({"error": "流程图Excel文件不存在"}), 404
+    return send_file(excel_path, as_attachment=True, download_name=f"flowchart_result_{batch_id}.xlsx")
+
+
+@ocr_bp.route("/api/flowchart/download/json/<batch_id>")
+def download_flowchart_json(batch_id):
+    if not _is_safe_batch_id(batch_id):
+        return jsonify({"error": "批次ID不合法"}), 400
+
+    json_path = os.path.join(app.config["UPLOAD_FOLDER"], f"result_flowchart_{batch_id}.json")
+    if not os.path.exists(json_path):
+        return jsonify({"error": "流程图JSON文件不存在"}), 404
+    return send_file(json_path, as_attachment=True, download_name=f"flowchart_result_{batch_id}.json")
+
+
 @ocr_bp.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
@@ -460,7 +574,11 @@ def process_image_file(filename, filepath, data):
 
 def process_pdf_file(filename, filepath, data):
     try:
-        if not pdf_processor.initialized:
+        pdf_engine = (data.get("pdf_engine") or Config.PDF_ENGINE or "ocr").strip().lower()
+        if pdf_engine not in {"ocr", "mineru"}:
+            return jsonify({"success": False, "error": f"不支持的PDF解析方式: {pdf_engine}", "file_type": "pdf"}), 400
+
+        if pdf_engine == "ocr" and not pdf_processor.initialized:
             return jsonify(
                 {
                     "success": False,
@@ -476,13 +594,32 @@ def process_pdf_file(filename, filepath, data):
         images_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"images_{pdf_base_name}")
         os.makedirs(images_dir, exist_ok=True)
 
-        pdf_result = pdf_processor.process_pdf_with_ocr(
-            filepath,
-            ocr_processor,
-            dpi=dpi,
-            max_pages=max_pages,
-            output_dir=images_dir,
-        )
+        if pdf_engine == "mineru":
+            pdf_info = pdf_processor._get_pdf_info(filepath)
+            mineru_processor = create_mineru_processor(
+                api_url=Config.MINERU_API_URL,
+                api_key=Config.MINERU_API_KEY,
+                model=Config.MINERU_MODEL,
+                timeout=Config.MINERU_TIMEOUT,
+                request_mode=Config.MINERU_REQUEST_MODE,
+            )
+            pdf_result = mineru_processor.process_pdf(
+                filepath,
+                pdf_info=pdf_info,
+                max_pages=max_pages,
+                output_dir=images_dir,
+                dpi=dpi,
+            )
+            if not pdf_result.get("conversion_info", {}).get("image_paths"):
+                _render_pdf_preview_images(filepath, images_dir, dpi, max_pages, pdf_result)
+        else:
+            pdf_result = pdf_processor.process_pdf_with_ocr(
+                filepath,
+                ocr_processor,
+                dpi=dpi,
+                max_pages=max_pages,
+                output_dir=images_dir,
+            )
         if not pdf_result["success"]:
             return jsonify({"success": False, "error": pdf_result.get("error", "PDF处理失败"), "file_type": "pdf"}), 500
 
@@ -508,6 +645,7 @@ def process_pdf_file(filename, filepath, data):
                 "message": "PDF处理成功",
                 "filename": filename,
                 "file_type": "pdf",
+                "pdf_engine": pdf_engine,
                 "results": pdf_result,
                 "result_files": {"json": result_filename, "excel": excel_filename},
             }
@@ -522,3 +660,25 @@ def _find_existing_result_file(filename, candidates):
         if os.path.exists(test_path):
             return test_path
     return None
+
+
+def _is_safe_batch_id(batch_id):
+    return bool(batch_id) and all(char.isalnum() or char in "-_" for char in batch_id)
+
+
+def _render_pdf_preview_images(filepath, images_dir, dpi, max_pages, pdf_result):
+    if not pdf_result.get("success") or not pdf_processor.initialized:
+        return
+
+    actual_pages = pdf_result.get("processing_info", {}).get("actual_pages_processed") or max_pages
+    actual_pages = max(1, min(int(actual_pages), int(max_pages)))
+    preview_result = pdf_processor.convert_pdf_to_images(
+        filepath,
+        dpi=dpi,
+        first_page=1,
+        last_page=actual_pages,
+        output_dir=images_dir,
+    )
+    if preview_result.get("success"):
+        pdf_result["conversion_info"].update(preview_result.get("conversion_info", {}))
+        pdf_result["conversion_info"]["image_paths"] = preview_result.get("image_paths", [])

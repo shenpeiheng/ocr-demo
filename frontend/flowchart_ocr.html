@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+
+            <main class="main-content-area">
+                <div class="content-grid flowchart-content-grid">
+                    <div class="left-column">
+                        <div class="upload-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-project-diagram"></i> 流程图图片上传</h2>
+                            </div>
+
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-area-content">
+                                    <i class="fas fa-images upload-icon"></i>
+                                    <p class="upload-text">拖放流程图图片或点击选择</p>
+                                    <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF, WEBP，一次最多 10 张</p>
+                                </div>
+                                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.gif,.webp" multiple hidden>
+                                <button class="btn btn-primary upload-btn" id="selectFileBtn">
+                                    <i class="fas fa-folder-open"></i> 选择流程图
+                                </button>
+                            </div>
+
+                            <div class="sample-images-section flowchart-sample-images" id="sampleImagesSection">
+                                <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
+                                <div class="sample-grid">
+                                    <div class="sample-item selected" data-sample-image="static/images/demo/flow/1.png" data-sample-name="1.png">
+                                        <img src="static/images/demo/flow/1.png" alt="流程图示例 1" loading="lazy">
+                                        <span>1.png</span>
+                                    </div>
+                                    <div class="sample-item selected" data-sample-image="static/images/demo/flow/2.png" data-sample-name="2.png">
+                                        <img src="static/images/demo/flow/2.png" alt="流程图示例 2" loading="lazy">
+                                        <span>2.png</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flowchart-file-panel" id="filePanel" style="display: none;">
+                                <div class="flowchart-file-panel-header">
+                                    <span><i class="fas fa-layer-group"></i> 已选择图片</span>
+                                    <button class="btn btn-small flowchart-clear-btn" id="clearFilesBtn">
+                                        <i class="fas fa-trash-alt"></i> 清空
+                                    </button>
+                                </div>
+                                <div class="flowchart-file-list" id="fileList"></div>
+                            </div>
+
+                            <div class="upload-actions">
+                                <button class="btn btn-detect action-btn" id="processBtn" disabled>
+                                    <i class="fas fa-search"></i> 开始检测
+                                </button>
+                            </div>
+
+                            <div class="ocr-loading" id="ocrLoadingIndicator">
+                                <div class="spinner"></div>
+                                <span class="loading-text">正在调用模型进行流程图识别...</span>
+                            </div>
+
+                            <div class="ocr-stats-card" id="ocrStatsCard" style="display: none;">
+                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
+                                <div class="results-summary flowchart-summary-grid">
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-images"></i> 图片数量
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="imageCount">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-list-ol"></i> 流程节点
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="rowCount">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-building"></i> 部门数量
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="departmentCount">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-stopwatch"></i> 处理时间
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="processingTime">0s</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-column">
+                        <div class="results-section card flowchart-results-section">
+                            <div class="section-header">
+                                <h2><i class="fas fa-table"></i> 流程图识别结果</h2>
+                                <div class="export-buttons flowchart-export-buttons">
+                                    <button class="btn btn-export" id="exportExcelBtn" disabled>
+                                        <i class="fas fa-file-excel"></i> 下载Excel
+                                    </button>
+                                    <button class="btn btn-export" id="exportJsonBtn" disabled>
+                                        <i class="fas fa-file-code"></i> 下载JSON
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flowchart-result-meta" id="resultMeta">
+                                <span><i class="fas fa-info-circle"></i> 识别完成后在线预览表格，可直接导出Excel</span>
+                            </div>
+
+                            <div class="flowchart-result-tabs" id="flowchartResultTabs" style="display: none;"></div>
+
+                            <div class="table-container flowchart-table-container">
+                                <table class="results-table flowchart-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-flow">流程</th>
+                                            <th class="col-flow-note">流程说明</th>
+                                            <th class="col-flow-id">流程ID</th>
+                                            <th class="col-description">流程描述</th>
+                                            <th class="col-operation">操作方式</th>
+                                            <th class="col-dept">部门</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="flowchartResultsBody">
+                                        <tr>
+                                            <td colspan="6" class="empty-message">暂无识别结果</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script src="static/js/flowchart_ocr.js"></script>
+</body>
+</html>

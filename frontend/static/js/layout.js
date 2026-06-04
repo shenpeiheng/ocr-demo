@@ -129,6 +129,10 @@
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">PDF 识别</div>' +
                         '</a>' +
+                        '<a href="flowchart_ocr.html" class="menu-item menu-sub-item" data-page="flowchart_ocr">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">流程图识别</div>' +
+                        '</a>' +
                     '</div>' +
                 '</div>' +
                 /* AI视觉检测 */

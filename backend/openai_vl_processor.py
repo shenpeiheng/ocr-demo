@@ -8,6 +8,7 @@ import time
 import base64
 import json
 import logging
+from io import BytesIO
 from typing import Dict, List, Any, Optional
 from PIL import Image
 import requests
@@ -16,6 +17,9 @@ from prompt_manager import get_prompt
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+MODEL_INPUT_MAX_DIMENSION = int(os.getenv('MODELSCOPE_MAX_IMAGE_DIMENSION', '2048'))
+SUPPORTED_INLINE_IMAGE_MIME_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 
 class OpenAIVLProcessor:
     """OpenAI视觉语言模型处理器类"""
@@ -66,12 +70,13 @@ class OpenAIVLProcessor:
             return self._get_error_result("OpenAI VL处理器未初始化")
         
         try:
-            # 读取图片并转换为base64
-            image_base64 = self._image_to_base64(image_path)
-            
-            # 获取图片尺寸信息
-            img = Image.open(image_path)
-            img_width, img_height = img.size
+            # 准备模型输入图，超出模型限制时按比例压缩
+            image_payload = self._prepare_image_for_api(image_path)
+            image_base64 = image_payload['base64']
+            img_width = image_payload['original_width']
+            img_height = image_payload['original_height']
+            api_img_width = image_payload['api_width']
+            api_img_height = image_payload['api_height']
             
             # 使用默认提示词（如果未提供）
             if prompt is None:
@@ -79,12 +84,18 @@ class OpenAIVLProcessor:
             
             # 调用OpenAI VL API
             logger.info("调用OpenAI VL API进行识别...")
-            response = self._call_openai_vl_api(image_base64, prompt)
+            response = self._call_openai_vl_api(image_base64, prompt, image_payload['mime_type'])
             
             # 解析API响应
             if response.get('success', False):
                 # 解析响应内容
-                parsed_results = self._parse_api_response(response['content'], img_width, img_height)
+                parsed_results = self._parse_api_response(response['content'], api_img_width, api_img_height)
+                if image_payload['resized']:
+                    self._scale_text_items_to_original(
+                        parsed_results.get('text_items', []),
+                        img_width / api_img_width,
+                        img_height / api_img_height
+                    )
                 
                 # 计算处理时间
                 processing_time = time.time() - start_time
@@ -101,6 +112,12 @@ class OpenAIVLProcessor:
                         'width': img_width,
                         'height': img_height,
                         'size': os.path.getsize(image_path)
+                    },
+                    'model_input_info': {
+                        'width': api_img_width,
+                        'height': api_img_height,
+                        'resized': image_payload['resized'],
+                        'max_dimension': MODEL_INPUT_MAX_DIMENSION
                     },
                     'processed_at': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'ocr_engine': 'OpenAI VL',
@@ -136,6 +153,100 @@ class OpenAIVLProcessor:
         except Exception as e:
             logger.error(f"图片转换为base64失败: {e}")
             raise
+
+    def _prepare_image_for_api(self, image_path: str) -> Dict[str, Any]:
+        """
+        准备视觉模型输入图片，保证宽高不超过模型限制。
+        """
+        try:
+            with Image.open(image_path) as img:
+                img.load()
+                original_width, original_height = img.size
+                original_format = img.format
+                original_mime_type = Image.MIME.get(original_format, 'image/png')
+                max_dimension = max(original_width, original_height)
+
+                if max_dimension <= MODEL_INPUT_MAX_DIMENSION and original_mime_type in SUPPORTED_INLINE_IMAGE_MIME_TYPES:
+                    with open(image_path, "rb") as image_file:
+                        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+
+                    return {
+                        'base64': encoded_string,
+                        'mime_type': original_mime_type,
+                        'original_width': original_width,
+                        'original_height': original_height,
+                        'api_width': original_width,
+                        'api_height': original_height,
+                        'resized': False
+                    }
+
+                api_img = img.copy()
+                resized = False
+                if max_dimension > MODEL_INPUT_MAX_DIMENSION:
+                    scale = MODEL_INPUT_MAX_DIMENSION / max_dimension
+                    api_width = max(1, int(original_width * scale))
+                    api_height = max(1, int(original_height * scale))
+                    resample_filter = getattr(getattr(Image, 'Resampling', Image), 'LANCZOS')
+                    api_img = api_img.resize((api_width, api_height), resample_filter)
+                    resized = True
+                    logger.info(
+                        f"图片尺寸超过模型限制，已按比例压缩: "
+                        f"{original_width}x{original_height} -> {api_width}x{api_height}"
+                    )
+                else:
+                    api_width, api_height = original_width, original_height
+
+                if api_img.mode in ('RGBA', 'LA'):
+                    background = Image.new('RGB', api_img.size, (255, 255, 255))
+                    alpha = api_img.getchannel('A')
+                    background.paste(api_img.convert('RGB'), mask=alpha)
+                    api_img = background
+                elif api_img.mode == 'P':
+                    api_img = api_img.convert('RGBA')
+                    background = Image.new('RGB', api_img.size, (255, 255, 255))
+                    background.paste(api_img.convert('RGB'), mask=api_img.getchannel('A'))
+                    api_img = background
+                elif api_img.mode not in ('RGB', 'L'):
+                    api_img = api_img.convert('RGB')
+
+                buffer = BytesIO()
+                api_img.save(buffer, format='PNG', optimize=True)
+                encoded_string = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+                return {
+                    'base64': encoded_string,
+                    'mime_type': 'image/png',
+                    'original_width': original_width,
+                    'original_height': original_height,
+                    'api_width': api_width,
+                    'api_height': api_height,
+                    'resized': resized
+                }
+        except Exception as e:
+            logger.error(f"准备模型输入图片失败: {e}")
+            raise
+
+    def _scale_text_items_to_original(self, text_items: List[Dict], scale_x: float, scale_y: float) -> None:
+        """
+        将模型输入图上的坐标映射回原图坐标，保证前端叠框位置一致。
+        """
+        if not text_items:
+            return
+
+        for item in text_items:
+            location = item.get('location')
+            if not isinstance(location, dict):
+                continue
+
+            for key in ('left', 'width', 'right'):
+                value = location.get(key)
+                if isinstance(value, (int, float)):
+                    location[key] = int(round(value * scale_x))
+
+            for key in ('top', 'height', 'bottom'):
+                value = location.get(key)
+                if isinstance(value, (int, float)):
+                    location[key] = int(round(value * scale_y))
     
     def _get_default_mechanical_drawing_prompt(self) -> str:
         """
@@ -146,13 +257,14 @@ class OpenAIVLProcessor:
         """
         return get_prompt('mechanical_drawing_standard')
     
-    def _call_openai_vl_api(self, image_base64: str, prompt: str) -> Dict[str, Any]:
+    def _call_openai_vl_api(self, image_base64: str, prompt: str, mime_type: str = 'image/jpeg') -> Dict[str, Any]:
         """
         调用OpenAI VL API
         
         Args:
             image_base64: base64编码的图片
             prompt: 提示词
+            mime_type: 图片MIME类型
             
         Returns:
             API响应字典
@@ -178,7 +290,7 @@ class OpenAIVLProcessor:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_base64}"
+                                "url": f"data:{mime_type};base64,{image_base64}"
                             }
                         }
                     ]

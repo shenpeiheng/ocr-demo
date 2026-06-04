@@ -22,6 +22,8 @@ function getApiBaseUrl() {
 }
 
 const API_BASE_URL = getApiBaseUrl(); // 动态检测基础路径
+const DEFAULT_PDF_URL = `${API_BASE_URL}/static/pdf/1.pdf`;
+const DEFAULT_PDF_NAME = '1.pdf';
 let currentFile = null;
 let currentResults = null;
 let processingStartTime = null;
@@ -36,6 +38,7 @@ const selectFileBtn = document.getElementById('selectFileBtn');
 const uploadBtn = document.getElementById('uploadBtn');
 const processBtn = document.getElementById('processBtn');
 const uploadArea = document.getElementById('uploadArea');
+const defaultPdfSample = document.getElementById('defaultPdfSample');
 const fileInfo = document.getElementById('fileInfo');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
@@ -79,6 +82,7 @@ const downloadImageBtn = document.getElementById('downloadImageBtn');
 
 // 处理设置元素
 const dpiSetting = document.getElementById('dpiSetting');
+const pdfEngineSetting = document.getElementById('pdfEngineSetting');
 const pagesSetting = document.getElementById('pagesSetting');
 const languageSetting = document.getElementById('languageSetting');
 const extractDirectText = document.getElementById('extractDirectText');
@@ -92,6 +96,9 @@ function init() {
     
     // 初始化标签页
     initTabs();
+
+    // 加载默认PDF示例
+    loadDefaultPdfFile();
     
     console.log('PDF OCR系统初始化完成');
 }
@@ -116,6 +123,10 @@ function bindEvents() {
     if (processBtn) {
         processBtn.addEventListener('click', handleProcess);
     }
+    defaultPdfSample?.addEventListener('click', loadDefaultPdfFile);
+    pdfEngineSetting?.addEventListener('change', () => {
+        updatePdfProcessingText(pdfEngineSetting.value);
+    });
     
     // 导出按钮
     exportExcelBtn.addEventListener('click', () => exportResults('excel'));
@@ -196,7 +207,39 @@ function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
     
+    setDefaultPdfSampleSelected(false);
     previewFile(file);
+}
+
+function setDefaultPdfSampleSelected(isSelected) {
+    defaultPdfSample?.classList.toggle('selected', isSelected);
+}
+
+async function loadDefaultPdfFile() {
+    try {
+        const response = await fetch(DEFAULT_PDF_URL);
+        if (!response.ok) {
+            throw new Error(`默认PDF加载失败: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const file = new File([blob], DEFAULT_PDF_NAME, {
+            type: blob.type || 'application/pdf',
+            lastModified: Date.now()
+        });
+
+        if (typeof DataTransfer !== 'undefined') {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+        }
+
+        previewFile(file);
+        setDefaultPdfSampleSelected(true);
+    } catch (error) {
+        console.error('加载默认PDF失败:', error);
+        showError('默认PDF文件加载失败，请手动选择PDF文件');
+    }
 }
 
 // 处理拖放
@@ -222,6 +265,7 @@ function handleDrop(event) {
     dataTransfer.items.add(file);
     fileInput.files = dataTransfer.files;
     
+    setDefaultPdfSampleSelected(false);
     previewFile(file);
 }
 
@@ -384,17 +428,19 @@ async function handleProcess() {
             }
         }
 
-        updateProgress(60, '正在转换PDF为图像');
+        // 获取处理参数
+        const maxPages = parseInt(pagesSetting.value) || 10;
+        const dpi = parseInt(dpiSetting.value) || 200;
+        const lang = languageSetting.value || 'ch';
+        const pdfEngine = pdfEngineSetting?.value || 'ocr';
+        updatePdfProcessingText(pdfEngine);
+
+        updateProgress(60, pdfEngine === 'mineru' ? '正在调用MinerU模型解析PDF' : '正在转换PDF为图像');
         updateStatus('convert', 'active');
         
         // 显示页面处理进度
         if (pagesProgress) pagesProgress.style.display = 'block';
         updatePagesProgress(0, 0);
-        
-        // 获取处理参数
-        const maxPages = parseInt(pagesSetting.value) || 10;
-        const dpi = parseInt(dpiSetting.value) || 200;
-        const lang = languageSetting.value || 'ch';
         
         // 发送处理请求
         const response = await fetch(`${API_BASE_URL}/api/process`, {
@@ -404,17 +450,18 @@ async function handleProcess() {
             },
             body: JSON.stringify({
                 filename: currentFile.serverFilename,
+                pdf_engine: pdfEngine,
                 max_pages: maxPages,
                 dpi: dpi,
                 lang: lang
             })
         });
         
+        const data = await response.json().catch(() => ({}));
+
         if (!response.ok) {
-            throw new Error(`处理失败: ${response.status}`);
+            throw new Error(data.error || `处理失败: ${response.status}`);
         }
-        
-        const data = await response.json();
         
         if (!data.success) {
             throw new Error(data.error || '处理失败');
@@ -424,7 +471,7 @@ async function handleProcess() {
         currentResults = data.results;
         
         // 更新进度
-        updateProgress(90, '识别完成，正在生成结果');
+        updateProgress(90, pdfEngine === 'mineru' ? '解析完成，正在生成结果' : '识别完成，正在生成结果');
         updateStatus('convert', 'completed');
         updateStatus('process', 'completed');
         updateStatus('results', 'active');
@@ -442,7 +489,7 @@ async function handleProcess() {
         exportJsonBtn.disabled = false;
         exportImagesBtn.disabled = false;
         
-        showSuccess('PDF识别完成！');
+        showSuccess(pdfEngine === 'mineru' ? 'PDF解析完成！' : 'PDF识别完成！');
         
     } catch (error) {
         console.error('处理错误:', error);
@@ -454,8 +501,18 @@ async function handleProcess() {
             processBtn.disabled = false;
             processBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
         }
+        updatePdfProcessingText(pdfEngineSetting?.value || 'ocr');
         if (ocrLoadingIndicator) ocrLoadingIndicator.classList.remove('active');
     }
+}
+
+function updatePdfProcessingText(pdfEngine) {
+    const loadingText = ocrLoadingIndicator?.querySelector('.loading-text');
+    if (!loadingText) return;
+
+    loadingText.textContent = pdfEngine === 'mineru'
+        ? '正在调用 MinerU 模型进行PDF文档解析...'
+        : '正在调用模型进行PDF OCR检测...';
 }
 
 // 显示结果

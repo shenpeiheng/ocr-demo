@@ -10,6 +10,7 @@ import os
 import cv2
 import numpy as np
 from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -252,6 +253,91 @@ def generate_pdf_excel(pdf_result, excel_path):
 
     _adjust_sheet_widths(wb)
     wb.save(excel_path)
+
+
+def generate_flowchart_excel(flowchart_result, excel_path):
+    """生成流程图识别结果 Excel。"""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "流程图识别结果"
+
+    headers = ["流程", "流程说明", "流程ID", "流程描述", "操作方式", "部门"]
+    ws.append(headers)
+
+    header_gray = PatternFill("solid", fgColor="BFBFBF")
+    header_blue = PatternFill("solid", fgColor="1F4E79")
+    light_group_fill = PatternFill("solid", fgColor="DDEBFF")
+    thin_side = Side(style="thin", color="000000")
+    border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+    header_font = Font(bold=True, color="000000")
+    header_white_font = Font(bold=True, color="FFFFFF")
+    body_font = Font(name="Arial", size=10)
+    center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left_alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    for col_idx, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.fill = header_blue if header in {"操作方式", "部门"} else header_gray
+        cell.font = header_white_font if header in {"操作方式", "部门"} else header_font
+        cell.alignment = center_alignment
+        cell.border = border
+
+    rows = flowchart_result.get("rows", [])
+    for row in rows:
+        ws.append([row.get(header, "") for header in headers])
+
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=len(headers)):
+        for cell in row:
+            cell.font = body_font
+            cell.alignment = left_alignment if cell.column == 4 else center_alignment
+            cell.border = border
+        row[0].fill = light_group_fill
+        row[1].fill = light_group_fill
+
+    _merge_flowchart_groups(ws)
+
+    widths = {
+        "A": 14,
+        "B": 22,
+        "C": 18,
+        "D": 62,
+        "E": 22,
+        "F": 14,
+    }
+    for column_letter, width in widths.items():
+        ws.column_dimensions[column_letter].width = width
+
+    ws.freeze_panes = "A2"
+    ws.row_dimensions[1].height = 26
+    for row_idx in range(2, ws.max_row + 1):
+        ws.row_dimensions[row_idx].height = 22
+
+    wb.save(excel_path)
+
+
+def _merge_flowchart_groups(ws):
+    if ws.max_row <= 2:
+        return
+
+    start_row = 2
+    previous_key = (ws.cell(row=2, column=1).value, ws.cell(row=2, column=2).value)
+    for row_idx in range(3, ws.max_row + 2):
+        current_key = (
+            ws.cell(row=row_idx, column=1).value if row_idx <= ws.max_row else None,
+            ws.cell(row=row_idx, column=2).value if row_idx <= ws.max_row else None,
+        )
+        if current_key == previous_key:
+            continue
+
+        end_row = row_idx - 1
+        if end_row > start_row:
+            ws.merge_cells(start_row=start_row, start_column=1, end_row=end_row, end_column=1)
+            ws.merge_cells(start_row=start_row, start_column=2, end_row=end_row, end_column=2)
+            ws.cell(row=start_row, column=1).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            ws.cell(row=start_row, column=2).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+        start_row = row_idx
+        previous_key = current_key
 
 
 def _adjust_sheet_widths(workbook):
