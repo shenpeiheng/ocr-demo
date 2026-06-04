@@ -29,6 +29,7 @@
     }
 
     var baseUrl = getStaticBaseUrl();
+    var SIDEBAR_COLLAPSED_KEY = 'sie_admin_sidebar_collapsed';
 
     // ==================== 内联 HTML 模板 ====================
 
@@ -38,19 +39,19 @@
             '<div class="admin-header-content">' +
                 '<div class="admin-logo">' +
                     '<img src="' + baseUrl + '/static/images/logo.png" alt="赛意AI" class="logo-image">' +
-                    '<span class="admin-logo-text"> AI </span>' +
+                    '<span class="admin-logo-text">赛意AI</span>' +
                 '</div>' +
                 '<nav class="admin-nav" style="display: flex;">' +
-                    '<a href="http://218.13.91.107:6200/mermaid" target="_blank" class="nav-item active">' +
+                    '<a href="http://218.13.91.107:6200/mermaid" target="_blank" class="nav-item">' +
                         '<i class="fas fa-image"></i><span>AI Draw</span>' +
                     '</a>' +
-                    '<a href="http://218.13.91.107:6201/" target="_blank" class="nav-item active">' +
+                    '<a href="https://218.13.91.107:6201/" target="_blank" class="nav-item">' +
                         '<i class="fas fa-code"></i><span>VsCode在线</span>' +
                     '</a>' +
-                    '<a href="https://aistudio.baidu.com/paddleocr/task/new" target="_blank" class="nav-item active">' +
+                    '<a href="https://aistudio.baidu.com/paddleocr/task/new" target="_blank" class="nav-item">' +
                         '<i class="fas fa-cube"></i><span>PaddleOCR</span>' +
                     '</a>' +
-                    '<a href="https://mineru.net/OpenSourceTools/Extractor" target="_blank" class="nav-item active">' +
+                    '<a href="https://mineru.net/OpenSourceTools/Extractor" target="_blank" class="nav-item">' +
                         '<i class="fas fa-cube"></i><span>MinerU</span>' +
                     '</a>' +
                 '</nav>' +
@@ -79,11 +80,17 @@
 
     /** 侧边栏 HTML */
     var sidebarHtml =
-        '<aside class="sidebar">' +
+        '<aside class="sidebar" id="appSidebar">' +
+            '<div class="sidebar-control">' +
+                '<span class="sidebar-control-title"><i class="fas fa-stream"></i><span>功能导航</span></span>' +
+                '<button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="收起侧边栏" title="收起侧边栏">' +
+                    '<i class="fas fa-angle-double-left"></i>' +
+                '</button>' +
+            '</div>' +
             '<nav class="sidebar-menu">' +
                 /* 首页 */
                 '<div class="menu-section">' +
-                    '<a href="JavaScript:viod(0)" class="menu-item" data-page="home">' +
+                    '<a href="javascript:void(0)" class="menu-item" data-page="home">' +
                         '<div class="menu-icon"><i class="fas fa-home"></i></div>' +
                         '<div class="menu-text">首页</div>' +
                     '</a>' +
@@ -226,6 +233,193 @@
         });
     }
 
+    /**
+     * 读取侧边栏折叠状态
+     */
+    function getSidebarCollapsed() {
+        try {
+            return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+        } catch (error) {
+            console.warn('Read sidebar state failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 保存侧边栏折叠状态
+     */
+    function saveSidebarCollapsed(collapsed) {
+        try {
+            window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+        } catch (error) {
+            console.warn('Save sidebar state failed:', error);
+        }
+    }
+
+    /**
+     * 应用侧边栏折叠状态
+     */
+    function setSidebarCollapsed(collapsed) {
+        var sidebar = document.getElementById('appSidebar');
+        var toggle = document.getElementById('sidebarToggle');
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.classList.toggle('is-collapsed', collapsed);
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            toggle.setAttribute('aria-label', collapsed ? '展开侧边栏' : '收起侧边栏');
+            toggle.setAttribute('title', collapsed ? '展开侧边栏' : '收起侧边栏');
+        }
+    }
+
+    /**
+     * 初始化侧边栏整体折叠
+     */
+    function initSidebarCollapse() {
+        var toggle = document.getElementById('sidebarToggle');
+        setSidebarCollapsed(getSidebarCollapsed());
+
+        if (toggle) {
+            toggle.addEventListener('click', function() {
+                var sidebar = document.getElementById('appSidebar');
+                var collapsed = sidebar ? !sidebar.classList.contains('is-collapsed') : false;
+                setSidebarCollapsed(collapsed);
+                saveSidebarCollapsed(collapsed);
+            });
+        }
+    }
+
+    /**
+     * 为折叠后的图标菜单补充浏览器原生提示
+     */
+    function initSidebarTitles() {
+        document.querySelectorAll('.sidebar .menu-item, .sidebar .menu-group-header').forEach(function(item) {
+            var titleNode = item.querySelector('.menu-text, .menu-group-title');
+            if (titleNode && !item.getAttribute('title')) {
+                item.setAttribute('title', titleNode.textContent.trim());
+            }
+        });
+    }
+
+    /**
+     * 初始化 AI 视觉检测结果 Tab 切换
+     */
+    function initAiResultTabs() {
+        document.addEventListener('click', function(event) {
+            if (!event.target || !event.target.closest) {
+                return;
+            }
+
+            var tab = event.target.closest('.ai-result-tab');
+            if (!tab) {
+                return;
+            }
+
+            var card = tab.closest('.ai-result-card');
+            if (!card) {
+                return;
+            }
+
+            var target = tab.getAttribute('data-target');
+            card.querySelectorAll('.ai-result-tab').forEach(function(btn) {
+                btn.classList.toggle('active', btn === tab);
+            });
+            card.querySelectorAll('.ai-result-pane').forEach(function(pane) {
+                pane.classList.toggle('active', pane.getAttribute('data-pane') === target);
+            });
+        });
+    }
+
+    /**
+     * 初始化 AI 视觉检测 JSON 复制
+     */
+    function initAiJsonCopy() {
+        document.addEventListener('click', function(event) {
+            if (!event.target || !event.target.closest) {
+                return;
+            }
+
+            var copyButton = event.target.closest('[data-ai-copy-json]');
+            if (!copyButton) {
+                return;
+            }
+
+            var card = copyButton.closest('.ai-result-card');
+            var jsonOutput = card ? card.querySelector('#jsonOutput') : null;
+            var text = jsonOutput ? jsonOutput.textContent : '';
+
+            if (!text || !text.trim()) {
+                showAiCopyToast('暂无可复制内容');
+                return;
+            }
+
+            copyTextToClipboard(text, function() {
+                showAiCopyToast('JSON 已复制');
+            }, function() {
+                showAiCopyToast('复制失败，请手动选择复制');
+            });
+        });
+    }
+
+    function copyTextToClipboard(text, onSuccess, onError) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(onSuccess).catch(function() {
+                if (fallbackCopyText(text)) {
+                    onSuccess();
+                } else {
+                    onError();
+                }
+            });
+            return;
+        }
+
+        if (fallbackCopyText(text)) {
+            onSuccess();
+        } else {
+            onError();
+        }
+    }
+
+    function fallbackCopyText(text) {
+        var textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            return document.execCommand('copy');
+        } catch (err) {
+            return false;
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+
+    function showAiCopyToast(message) {
+        var toast = document.querySelector('[data-ai-copy-toast]');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'copy-toast';
+            toast.setAttribute('data-ai-copy-toast', 'true');
+            document.body.appendChild(toast);
+        }
+
+        toast.textContent = message;
+        toast.classList.add('show');
+
+        clearTimeout(showAiCopyToast.timer);
+        showAiCopyToast.timer = setTimeout(function() {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
     // ==================== 立即执行 ====================
 
     // 同步插入 HTML，避免异步加载导致的闪烁
@@ -235,6 +429,10 @@
 
     // 高亮当前页面菜单项
     highlightCurrentPage();
+    initSidebarTitles();
+    initSidebarCollapse();
+    initAiResultTabs();
+    initAiJsonCopy();
 
     // ==================== 全局函数 ====================
 
@@ -242,8 +440,20 @@
      * 切换子菜单的展开/折叠状态
      */
     window.toggleSubMenu = function(header) {
-        header.classList.toggle('expanded');
         var subItems = header.nextElementSibling;
+        var sidebar = header.closest('.sidebar');
+
+        if (sidebar && sidebar.classList.contains('is-collapsed')) {
+            setSidebarCollapsed(false);
+            saveSidebarCollapsed(false);
+            if (subItems && subItems.classList.contains('menu-sub-items')) {
+                header.classList.add('expanded');
+                subItems.classList.add('expanded');
+            }
+            return;
+        }
+
+        header.classList.toggle('expanded');
         if (subItems && subItems.classList.contains('menu-sub-items')) {
             subItems.classList.toggle('expanded');
         }

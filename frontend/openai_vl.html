@@ -380,10 +380,12 @@
         <div class="upload-section">
             <h2>1. 上传机械工程图纸</h2>
             <div class="upload-area" id="uploadArea">
-                <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                <p class="upload-text">拖放图片文件或点击选择</p>
-                <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF 格式</p>
-                <button class="btn btn-primary" id="selectFileBtn">
+                <div class="upload-area-content">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <p class="upload-text">拖放图片文件或点击选择</p>
+                    <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF 格式</p>
+                </div>
+                <button class="btn btn-primary upload-btn" id="selectFileBtn">
                     <i class="fas fa-folder-open"></i> 选择文件
                 </button>
                 <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.gif" hidden>

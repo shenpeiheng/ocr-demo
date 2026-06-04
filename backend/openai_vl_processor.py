@@ -11,6 +11,7 @@ import logging
 from typing import Dict, List, Any, Optional
 from PIL import Image
 import requests
+from prompt_manager import get_prompt
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -143,22 +144,7 @@ class OpenAIVLProcessor:
         Returns:
             提示词字符串
         """
-        return """请根据提供的机械工程图纸，执行以下任务：
-
-1.  **全面识别**：仔细分析图纸，识别出图中出现的所有文字、数字、符号和标注信息，确保不遗漏任何细节。
-2.  **按 OCR 顺序排序**：将所有识别到的信息项，严格按照从左到右、从上到下的 OCR 识别顺序进行排序。
-3.  **Markdown 格式输出**：使用 Markdown 语法，以清晰、结构化的方式展示所有信息。
-4.  **详细信息格式**：每个信息项必须包含以下字段：
-    - **序号**：从 1 开始的连续整数。
-    - **内容**：该信息项的具体文本、数字或符号（例如 `// 0.2 A` 或 `65`）。
-    - **类型**：描述该信息属于哪个类型的区域（如：尺寸标注、表面粗糙度、视图标识、标题栏、技术要求等）。
-    - **区域**：**精确描述**该信息所在的具体**位置名称**，例如："主视图左侧"、"C-C剖视图上部"、"标题栏左下角"、"三维模型图右侧"等。此字段应反映其在图纸上的**相对位置**，而非强制使用预设列表。
-    - **坐标**：提供该信息在图纸上的左上角像素坐标及边界框尺寸，格式为 (left, top, width, height)，单位为像素。其中 left 和 top 为边界框左上角坐标，width 和 height 为边界框宽高。所有数值必须为整数，且基于原始输入图像分辨率，保证绝对不能超过图片的分辨率。
-
-**输出要求**：
-- 将所有信息整合成一个完整的 Markdown 表格。
-- 表格应包含上述所有字段。
-- 请确保信息完整、准确，并严格遵循指定的格式和顺序。"""
+        return get_prompt('mechanical_drawing_standard')
     
     def _call_openai_vl_api(self, image_base64: str, prompt: str) -> Dict[str, Any]:
         """

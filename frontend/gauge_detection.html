@@ -554,17 +554,6 @@
                 <div class="gauge-full-column">
                     <div class="gauge-wrapper">
                         <!-- 页面头部 -->
-                        <div class="gauge-header">
-                            <h2>
-                                <i class="fas fa-tachometer-alt"></i>
-                                精密压力表指针读数识别
-                            </h2>
-                            <div class="header-hint">
-                                <i class="fas fa-info-circle"></i>
-                                基于计算机视觉，自动检测表盘、定位轴心、识别指针读数
-                            </div>
-                        </div>
-
                         <!-- 主体 -->
                         <div class="gauge-body">
                             <!-- 左侧面板 -->
@@ -579,6 +568,9 @@
                                         <div class="upload-text">点击选择或拖放图片</div>
                                         <div class="upload-hint">支持 JPG、PNG、JPEG 格式</div>
                                         <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
+                                        <button class="btn btn-primary upload-btn" type="button">
+                                            <i class="fas fa-folder-open"></i> 选择文件
+                                        </button>
                                     </div>
 
                                     <!-- 预览 -->
@@ -600,21 +592,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- 默认图片选择 -->
-                                    <div class="gauge-sample-images">
-                                        <div class="sample-label">或选择示例图片：</div>
-                                        <div class="sample-grid">
-                                            <div class="sample-item selected" data-src="static/images/demo/1.jpg">
-                                                <img src="static/images/demo/1.jpg" alt="示例1">
-                                                <span>1.jpg</span>
-                                            </div>
-                                            <div class="sample-item" data-src="static/images/demo/4.jpg">
-                                                <img src="static/images/demo/4.jpg" alt="示例4">
-                                                <span>4.jpg</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <!-- 检测按钮 -->
                                     <button class="btn-detect" id="detectBtn" disabled>
                                         <i class="fas fa-search"></i>
@@ -625,6 +602,21 @@
                                     <div class="gauge-loading" id="loadingIndicator">
                                         <div class="spinner"></div>
                                         <span class="loading-text">正在分析压力表盘...</span>
+                                    </div>
+
+                                    <!-- 默认图片选择 -->
+                                    <div class="gauge-sample-images">
+                                        <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
+                                        <div class="sample-grid">
+                                            <div class="sample-item selected" data-src="static/images/demo/1.jpg">
+                                                <img src="static/images/demo/1.jpg" alt="示例1">
+                                                <span>1.jpg</span>
+                                            </div>
+                                            <div class="sample-item" data-src="static/images/demo/4.jpg">
+                                                <img src="static/images/demo/4.jpg" alt="示例4">
+                                                <span>4.jpg</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -654,25 +646,43 @@
 
                             <!-- 右侧面板 -->
                             <div class="gauge-right-panel">
-                                <!-- 结果图片 -->
-                                <div class="gauge-card gauge-result-image-container">
-                                    <h3><i class="fas fa-eye"></i> 检测结果</h3>
-                                    <div class="gauge-result-image-wrapper" id="resultImageWrapper">
-                                        <div class="gauge-result-placeholder" id="resultPlaceholder">
-                                            <i class="fas fa-image"></i>
-                                            <p>上传图片并点击"开始检测"查看结果</p>
+                                <div class="gauge-card ai-result-card">
+                                    <div class="ai-result-header">
+                                        <h3><i class="fas fa-eye"></i> 检测结果</h3>
+                                        <div class="ai-result-actions">
+                                            <div class="ai-result-tabs" data-ai-result-tabs>
+                                                <button type="button" class="ai-result-tab active" data-target="image">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>图片结果</span>
+                                                </button>
+                                                <button type="button" class="ai-result-tab" data-target="json">
+                                                    <i class="fas fa-file-code"></i>
+                                                    <span>JSON 信息</span>
+                                                </button>
+                                            </div>
+                                            <button type="button" class="ai-result-copy" data-ai-copy-json title="复制 JSON" aria-label="复制 JSON">
+                                                <i class="fas fa-copy"></i>
+                                                <span>复制</span>
+                                            </button>
                                         </div>
-                                        <img id="resultImage" src="" alt="检测结果" style="display: none;">
                                     </div>
-                                </div>
-
-                                <!-- JSON 数据 -->
-                                <div class="gauge-card">
-                                    <h3><i class="fas fa-file-code"></i> JSON 数据</h3>
-                                    <div class="gauge-json-container">
-                                        <pre id="jsonOutput">{
+                                    <div class="ai-result-body">
+                                        <div class="ai-result-pane active" data-pane="image">
+                                            <div class="gauge-result-image-wrapper" id="resultImageWrapper">
+                                                <div class="gauge-result-placeholder" id="resultPlaceholder">
+                                                    <i class="fas fa-image"></i>
+                                                    <p>上传图片并点击"开始检测"查看结果</p>
+                                                </div>
+                                                <img id="resultImage" src="" alt="检测结果" style="display: none;">
+                                            </div>
+                                        </div>
+                                        <div class="ai-result-pane" data-pane="json">
+                                            <div class="gauge-json-container">
+                                                <pre id="jsonOutput">{
     "message": "等待检测..."
 }</pre>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

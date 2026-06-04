@@ -50,6 +50,8 @@ const statusResults = document.getElementById('statusResults');
 const pagesProgress = document.getElementById('pagesProgress');
 const pagesProgressFill = document.getElementById('pagesProgressFill');
 const pagesProgressText = document.getElementById('pagesProgressText');
+const ocrLoadingIndicator = document.getElementById('ocrLoadingIndicator');
+const ocrStatsCard = document.getElementById('ocrStatsCard');
 const pdfSummary = document.getElementById('pdfSummary');
 const pdfTotalPages = document.getElementById('pdfTotalPages');
 const totalItems = document.getElementById('totalItems');
@@ -105,11 +107,15 @@ function bindEvents() {
     // 文件输入变化
     fileInput.addEventListener('change', handleFileSelect);
     
-    // 上传按钮
-    uploadBtn.addEventListener('click', handleUpload);
+    // 上传按钮（部分页面已合并为“开始检测”单按钮）
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', handleUpload);
+    }
     
     // 处理按钮
-    processBtn.addEventListener('click', handleProcess);
+    if (processBtn) {
+        processBtn.addEventListener('click', handleProcess);
+    }
     
     // 导出按钮
     exportExcelBtn.addEventListener('click', () => exportResults('excel'));
@@ -245,9 +251,9 @@ function previewFile(file) {
     fileInfo.style.display = 'grid';
     pdfSettings.style.display = 'block';
     
-    // 启用上传按钮
-    uploadBtn.disabled = false;
-    processBtn.disabled = true;
+    // 启用检测按钮；无独立上传按钮的页面会在检测前自动上传
+    if (uploadBtn) uploadBtn.disabled = false;
+    if (processBtn) processBtn.disabled = false;
     
     // 更新进度状态
     updateProgress(0, '选择PDF文件完成，准备上传');
@@ -271,10 +277,12 @@ function getPdfPageCount(file) {
 }
 
 // 处理上传
-async function handleUpload() {
+async function handleUpload(options = {}) {
+    const { silent = false, enableProcess = true } = options;
+
     if (!currentFile) {
         showError('请先选择文件');
-        return;
+        return false;
     }
     
     const formData = new FormData();
@@ -282,8 +290,10 @@ async function handleUpload() {
     
     try {
         // 更新UI状态
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+        }
         updateProgress(30, '正在上传PDF文件到服务器');
         
         // 发送上传请求
@@ -328,25 +338,31 @@ async function handleUpload() {
         updateStatus('convert', 'active');
         
         // 启用处理按钮
-        processBtn.disabled = false;
+        if (processBtn && enableProcess) processBtn.disabled = false;
         
-        showSuccess('PDF文件上传成功！');
+        if (!silent) showSuccess('PDF文件上传成功！');
+        return true;
         
     } catch (error) {
         console.error('上传错误:', error);
         showError(`上传失败: ${error.message}`);
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 重新上传';
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 重新上传';
+        }
         updateProgress(0, '上传失败');
+        return false;
     } finally {
-        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 上传PDF';
+        if (uploadBtn) {
+            uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 上传PDF';
+        }
     }
 }
 
 // 处理OCR识别
 async function handleProcess() {
-    if (!currentFile || !currentFile.serverFilename) {
-        showError('请先上传文件');
+    if (!currentFile) {
+        showError('请先选择PDF文件');
         return;
     }
     
@@ -354,13 +370,25 @@ async function handleProcess() {
     
     try {
         // 更新UI状态
-        processBtn.disabled = true;
-        processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+        if (processBtn) {
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
+        }
+        if (ocrLoadingIndicator) ocrLoadingIndicator.classList.add('active');
+        if (ocrStatsCard) ocrStatsCard.style.display = 'none';
+
+        if (!currentFile.serverFilename) {
+            const uploaded = await handleUpload({ silent: true, enableProcess: false });
+            if (!uploaded || !currentFile.serverFilename) {
+                return;
+            }
+        }
+
         updateProgress(60, '正在转换PDF为图像');
         updateStatus('convert', 'active');
         
         // 显示页面处理进度
-        pagesProgress.style.display = 'block';
+        if (pagesProgress) pagesProgress.style.display = 'block';
         updatePagesProgress(0, 0);
         
         // 获取处理参数
@@ -422,7 +450,11 @@ async function handleProcess() {
         updateProgress(0, '识别失败');
         updateStatus('process', 'error');
     } finally {
-        processBtn.innerHTML = '<i class="fas fa-cogs"></i> 开始识别';
+        if (processBtn) {
+            processBtn.disabled = false;
+            processBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
+        }
+        if (ocrLoadingIndicator) ocrLoadingIndicator.classList.remove('active');
     }
 }
 
@@ -437,8 +469,9 @@ function displayResults(data) {
     const processingTimeMs = Date.now() - processingStartTime;
     
     // 显示PDF摘要
-    pdfSummary.style.display = 'grid';
-    pagesSummary.style.display = 'block';
+    if (pdfSummary) pdfSummary.style.display = 'grid';
+    if (ocrStatsCard) ocrStatsCard.style.display = 'block';
+    if (pagesSummary) pagesSummary.style.display = 'block';
     
     // 更新PDF信息
     const pdfInfo = currentResults.pdf_info || {};
@@ -1066,8 +1099,8 @@ function viewPageDetails(pageNum) {
 
 // 工具函数
 function updateProgress(percent, text) {
-    progressFill.style.width = `${percent}%`;
-    progressText.textContent = text;
+    if (progressFill) progressFill.style.width = `${percent}%`;
+    if (progressText) progressText.textContent = text;
 }
 
 function updateStatus(stage, state) {
@@ -1110,8 +1143,8 @@ function updateStatus(stage, state) {
 
 function updatePagesProgress(current, total) {
     const percent = total > 0 ? (current / total) * 100 : 0;
-    pagesProgressFill.style.width = `${percent}%`;
-    pagesProgressText.textContent = `${current}/${total} 页`;
+    if (pagesProgressFill) pagesProgressFill.style.width = `${percent}%`;
+    if (pagesProgressText) pagesProgressText.textContent = `${current}/${total} 页`;
 }
 
 function formatFileSize(bytes) {
@@ -1338,12 +1371,14 @@ function showModal(title, content) {
 
 function resetResults() {
     // 重置摘要
-    pdfSummary.style.display = 'none';
-    pagesSummary.style.display = 'none';
-    pdfTotalPages.textContent = '0';
-    totalItems.textContent = '0';
-    avgConfidence.textContent = '0%';
-    processingTime.textContent = '0s';
+    if (pdfSummary) pdfSummary.style.display = 'none';
+    if (ocrStatsCard) ocrStatsCard.style.display = 'none';
+    if (ocrLoadingIndicator) ocrLoadingIndicator.classList.remove('active');
+    if (pagesSummary) pagesSummary.style.display = 'none';
+    if (pdfTotalPages) pdfTotalPages.textContent = '0';
+    if (totalItems) totalItems.textContent = '0';
+    if (avgConfidence) avgConfidence.textContent = '0%';
+    if (processingTime) processingTime.textContent = '0s';
     
     // 重置表格
     textResultsBody.innerHTML = `

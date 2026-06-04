@@ -21,7 +21,7 @@
             <!-- 主要内容区域 -->
             <main class="main-content-area">
                 <div class="content-grid">
-                    <!-- 左侧列：上传和处理状态 -->
+                    <!-- 左侧列：上传和检测入口 -->
                     <div class="left-column">
                         <!-- 上传区域 -->
                         <div class="upload-section card">
@@ -69,12 +69,59 @@
                             </div>
                             
                             <div class="upload-actions">
-                                <button class="btn btn-success action-btn" id="uploadBtn" disabled>
-                                    <i class="fas fa-upload"></i> 上传
+                                <button class="btn btn-detect action-btn" id="processBtn" disabled>
+                                    <i class="fas fa-search"></i> 开始检测
                                 </button>
-                                <button class="btn btn-process action-btn" id="processBtn" disabled>
-                                    <i class="fas fa-cogs"></i> 开始识别
-                                </button>
+                            </div>
+
+                            <div class="ocr-loading" id="ocrLoadingIndicator">
+                                <div class="spinner"></div>
+                                <span class="loading-text">正在调用模型进行OCR检测...</span>
+                            </div>
+
+                            <div class="ocr-stats-card" id="ocrStatsCard" style="display: none;">
+                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
+                                <div class="results-summary" id="resultsSummary">
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-list-ol"></i> 识别项数
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="totalItems">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-percentage"></i> 平均置信度
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="avgConfidence">0%</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-ruler-combined"></i> 尺寸标注
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="dimensionCount">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-stopwatch"></i> 处理时间
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="processingTime">0s</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sample-images-section" id="sampleImagesSection">
+                                <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
+                                <div class="sample-grid" id="sampleGrid">
+                                    <!-- 由 JS 动态生成 -->
+                                </div>
                             </div>
                         </div>
 
@@ -144,53 +191,6 @@
                             </div>
                         </div>
 
-                        <!-- 处理状态区域 -->
-                        <div class="processing-section card">
-                            <div class="section-header">
-                                <h2><i class="fas fa-spinner"></i> 处理状态</h2>
-                                <div class="progress-text" id="progressText">等待上传图片...</div>
-                            </div>
-                            
-                            <div class="progress-container">
-                                <div class="progress-header">
-                                    <span>识别进度</span>
-                                    <span class="progress-percent" id="progressPercent">0%</span>
-                                </div>
-                                <div class="progress-bar" id="progressBar">
-                                    <div class="progress-fill" id="progressFill"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="status-steps">
-                                <div class="status-step active">
-                                    <div class="step-icon">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                    </div>
-                                    <div class="step-text">
-                                        <div class="step-title">上传图片</div>
-                                        <div class="step-status" id="statusUpload">等待中</div>
-                                    </div>
-                                </div>
-                                <div class="status-step">
-                                    <div class="step-icon">
-                                        <i class="fas fa-cogs"></i>
-                                    </div>
-                                    <div class="step-text">
-                                        <div class="step-title">OCR识别</div>
-                                        <div class="step-status" id="statusProcess">未开始</div>
-                                    </div>
-                                </div>
-                                <div class="status-step">
-                                    <div class="step-icon">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                    <div class="step-text">
-                                        <div class="step-title">完成</div>
-                                        <div class="step-status" id="statusResults">未开始</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- 右侧列：结果展示 -->
@@ -223,40 +223,6 @@
                                         </label>
                                         <span class="filter-label">屏蔽中文内容</span>
                                         <span class="filter-badge" id="chineseFilterCount">0</span>
-                                    </div>
-                                    <div class="results-summary" id="resultsSummary">
-                                        <div class="summary-card" style="background: linear-gradient(135deg, #3498db, #2980b9);color: white; text-align: center;">
-                                            <div class="summary-card-icon">
-                                                <i class="fas fa-list-ol"></i> 识别项数 
-                                            </div>
-                                            <div class="summary-card-content">
-                                                <div class="summary-card-value" id="totalItems">0</div>
-                                            </div>
-                                        </div>
-                                        <div class="summary-card" style="display: none;background: linear-gradient(135deg, #2ecc71, #27ae60);color: white; text-align: center;">
-                                            <div class="summary-card-icon">
-                                                <i class="fas fa-percentage"></i> 平均置信度
-                                            </div>
-                                            <div class="summary-card-content">
-                                                <div class="summary-card-value" id="avgConfidence">0%</div>
-                                            </div>
-                                        </div>
-                                        <div class="summary-card" style="display: none;background: linear-gradient(135deg, #9b59b6, #8e44ad);color: white; text-align: center;">
-                                            <div class="summary-card-icon">
-                                                <i class="fas fa-ruler-combined"></i> 尺寸标注
-                                            </div>
-                                            <div class="summary-card-content">
-                                                <div class="summary-card-value" id="dimensionCount">0</div>
-                                            </div>
-                                        </div>
-                                        <div class="summary-card"  style="background: linear-gradient(135deg, #e74c3c, #c0392b);color: white; text-align: center;">
-                                            <div class="summary-card-icon">
-                                                <i class="fas fa-stopwatch"></i> 处理时间
-                                            </div>
-                                            <div class="summary-card-content">
-                                                <div class="summary-card-value" id="processingTime">0s</div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -346,19 +312,66 @@
     <script src="static/js/layout.js"></script>
     <script src="static/js/main.js"></script>
     <script>
+        const indexSampleImages = [
+            'static/images/demo/4.png',
+            'static/images/demo/26.jpg',
+            'static/images/demo/27.png',
+            'static/images/demo/29.png'
+        ];
+
+        function getImageMimeType(fileName) {
+            const lowerName = fileName.toLowerCase();
+            if (lowerName.endsWith('.png')) return 'image/png';
+            if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) return 'image/jpeg';
+            if (lowerName.endsWith('.bmp')) return 'image/bmp';
+            if (lowerName.endsWith('.gif')) return 'image/gif';
+            return 'image/png';
+        }
+
+        async function loadIndexSampleImage(imagePath) {
+            try {
+                const response = await fetch(imagePath);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const blob = await response.blob();
+                const fileName = imagePath.split('/').pop();
+                const file = new File([blob], fileName, { type: getImageMimeType(fileName) });
+                if (typeof previewFile === 'function') {
+                    previewFile(file);
+                }
+            } catch (err) {
+                console.warn('加载示例图片失败:', imagePath, err);
+            }
+        }
+
+        function renderIndexSampleImages() {
+            const grid = document.getElementById('sampleGrid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            indexSampleImages.forEach(function(path, index) {
+                const fileName = path.split('/').pop();
+                const item = document.createElement('div');
+                item.className = 'sample-item' + (index === 0 ? ' selected' : '');
+                item.innerHTML = '<img src="' + path + '" alt="' + fileName + '" loading="lazy">' +
+                    '<span>' + fileName + '</span>';
+                item.addEventListener('click', function() {
+                    grid.querySelectorAll('.sample-item').forEach(function(sampleItem) {
+                        sampleItem.classList.remove('selected');
+                    });
+                    item.classList.add('selected');
+                    loadIndexSampleImage(path);
+                });
+                grid.appendChild(item);
+            });
+        }
+
         // 页面加载后自动加载默认示例图片
         document.addEventListener('DOMContentLoaded', function() {
+            renderIndexSampleImages();
             setTimeout(async function() {
-                try {
-                    const response = await fetch('static/images/demo/4.png');
-                    const blob = await response.blob();
-                    const file = new File([blob], '4.png', { type: 'image/png' });
-                    if (typeof previewFile === 'function') {
-                        previewFile(file);
-                    }
-                } catch (err) {
-                    console.warn('加载默认图片失败:', err);
-                }
+                loadIndexSampleImage(indexSampleImages[0]);
             }, 500);
         });
     </script>

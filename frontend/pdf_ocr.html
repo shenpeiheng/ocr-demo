@@ -19,7 +19,7 @@
             <!-- 主要内容区域 -->
             <main class="main-content-area">
                 <div class="content-grid">
-                    <!-- 左侧列：上传和处理设置 -->
+                    <!-- 左侧列：上传和检测入口 -->
                     <div class="left-column">
                         <!-- 上传区域 -->
                         <div class="upload-section card">
@@ -32,12 +32,6 @@
                                     <i class="fas fa-file-pdf upload-icon"></i>
                                     <p class="upload-text">拖放PDF文件或点击选择</p>
                                     <p class="upload-hint">支持 PDF 格式，最大 50MB</p>
-                                    <div class="supported-formats">
-                                        <span class="format-badge">PDF</span>
-                                        <span class="format-badge">扫描文档</span>
-                                        <span class="format-badge">电子发票</span>
-                                        <span class="format-badge">技术图纸</span>
-                                    </div>
                                 </div>
                                 <input type="file" id="fileInput" accept=".pdf,.PDF" hidden>
                                 <button class="btn btn-primary upload-btn" id="selectFileBtn">
@@ -120,79 +114,51 @@
                             </div>
                             
                             <div class="upload-actions">
-                                <button class="btn btn-success action-btn" id="uploadBtn" disabled>
-                                    <i class="fas fa-upload"></i> 上传PDF
-                                </button>
-                                <button class="btn btn-process action-btn" id="processBtn" disabled>
-                                    <i class="fas fa-cogs"></i> 开始识别
+                                <button class="btn btn-detect action-btn" id="processBtn" disabled>
+                                    <i class="fas fa-search"></i> 开始检测
                                 </button>
                             </div>
-                        </div>
 
-                        <!-- 处理状态区域 -->
-                        <div class="processing-section card">
-                            <div class="section-header">
-                                <h2><i class="fas fa-spinner"></i> 处理状态</h2>
-                                <div class="progress-text" id="progressText">等待上传PDF文件...</div>
+                            <div class="ocr-loading" id="ocrLoadingIndicator">
+                                <div class="spinner"></div>
+                                <span class="loading-text">正在调用模型进行PDF OCR检测...</span>
                             </div>
-                            
-                            <div class="progress-container">
-                                <div class="progress-header">
-                                    <span>识别进度</span>
-                                    <span class="progress-percent" id="progressPercent">0%</span>
-                                </div>
-                                <div class="progress-bar" id="progressBar">
-                                    <div class="progress-fill" id="progressFill"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="status-steps">
-                                <div class="status-step active">
-                                    <div class="step-icon">
-                                        <i class="fas fa-cloud-upload-alt"></i>
+
+                            <div class="ocr-stats-card" id="ocrStatsCard" style="display: none;">
+                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
+                                <div class="results-summary" id="pdfSummary">
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-file-pdf"></i> PDF信息
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="pdfTotalPages">0</div>
+                                        </div>
                                     </div>
-                                    <div class="step-text">
-                                        <div class="step-title">上传PDF</div>
-                                        <div class="step-status" id="statusUpload">等待中</div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-list-ol"></i> 识别项数
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="totalItems">0</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="status-step">
-                                    <div class="step-icon">
-                                        <i class="fas fa-file-image"></i>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-percentage"></i> 平均置信度
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="avgConfidence">0%</div>
+                                        </div>
                                     </div>
-                                    <div class="step-text">
-                                        <div class="step-title">PDF转换</div>
-                                        <div class="step-status" id="statusConvert">未开始</div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-stopwatch"></i> 处理时间
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="processingTime">0s</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="status-step">
-                                    <div class="step-icon">
-                                        <i class="fas fa-cogs"></i>
-                                    </div>
-                                    <div class="step-text">
-                                        <div class="step-title">OCR识别</div>
-                                        <div class="step-status" id="statusProcess">未开始</div>
-                                    </div>
-                                </div>
-                                <div class="status-step">
-                                    <div class="step-icon">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                    <div class="step-text">
-                                        <div class="step-title">完成</div>
-                                        <div class="step-status" id="statusResults">未开始</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 页面处理进度 -->
-                            <div class="pages-progress" id="pagesProgress" style="display: none;">
-                                <div class="pages-progress-header">
-                                    <span>页面处理进度</span>
-                                    <span id="pagesProgressText">0/0 页</span>
-                                </div>
-                                <div class="pages-progress-bar">
-                                    <div class="pages-progress-fill" id="pagesProgressFill"></div>
                                 </div>
                             </div>
                         </div>
@@ -213,42 +179,6 @@
                                     <button class="btn btn-export" id="exportImagesBtn" disabled>
                                         <i class="fas fa-images"></i> 下载图像
                                     </button>
-                                </div>
-                            </div>
-                            
-                            <!-- PDF信息摘要 -->
-                            <div class="results-summary" id="pdfSummary">
-                                <div class="summary-card" style="background: linear-gradient(135deg, #3498db, #2980b9);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-file-pdf"></i> PDF信息
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="pdfTotalPages">0</div>
-                                    </div>
-                                </div>
-                                <div class="summary-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-list-ol"></i> 识别项数
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="totalItems">0</div>
-                                    </div>
-                                </div>
-                                <div class="summary-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-percentage"></i> 平均置信度
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="avgConfidence">0%</div>
-                                    </div>
-                                </div>
-                                <div class="summary-card" style="background: linear-gradient(135deg, #e74c3c, #c0392b);color: white; text-align: center;">
-                                    <div class="summary-card-icon">
-                                        <i class="fas fa-stopwatch"></i> 处理时间
-                                    </div>
-                                    <div class="summary-card-content">
-                                        <div class="summary-card-value" id="processingTime">0s</div>
-                                    </div>
                                 </div>
                             </div>
                             

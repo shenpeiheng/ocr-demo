@@ -540,18 +540,6 @@
                 <div class="content-grid">
                     <div class="face-full-column">
                         <div class="face-wrapper">
-                            <!-- 头部 -->
-                            <div class="face-header">
-                                <h2>
-                                    <i class="fas fa-smile"></i>
-                                    人脸检测
-                                </h2>
-                                <div class="header-hint">
-                                    <i class="fas fa-info-circle"></i>
-                                    基于 ModelScope RetinaFace 模型 (iic/cv_resnet50_face-detection_retinaface)
-                                </div>
-                            </div>
-
                             <!-- 主体 -->
                             <div class="face-body">
                                 <!-- 左侧面板：上传和设置 -->
@@ -566,6 +554,9 @@
                                             <div class="upload-text">点击选择或拖放图片</div>
                                             <div class="upload-hint">支持 JPG、PNG、JPEG 格式</div>
                                             <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
+                                            <button class="btn btn-primary upload-btn" type="button">
+                                                <i class="fas fa-folder-open"></i> 选择文件
+                                            </button>
                                         </div>
 
                                         <!-- 预览 -->
@@ -587,9 +578,21 @@
                                             </div>
                                         </div>
 
+                                        <!-- 检测按钮 -->
+                                        <button class="btn-detect" id="detectBtn" disabled>
+                                            <i class="fas fa-search"></i>
+                                            开始检测
+                                        </button>
+
+                                        <!-- 加载动画 -->
+                                        <div class="face-loading" id="loadingIndicator">
+                                            <div class="spinner"></div>
+                                            <span class="loading-text">正在调用模型进行人脸检测...</span>
+                                        </div>
+
                                         <!-- 默认图片选择 -->
                                         <div class="face-sample-images">
-                                            <div class="sample-label">或选择示例图片：</div>
+                                            <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
                                             <div class="sample-grid">
                                                 <div class="sample-item selected" data-src="static/images/demo/7.png">
                                                     <img src="static/images/demo/7.png" alt="示例7">
@@ -604,18 +607,6 @@
                                                     <span>10.jpg</span>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <!-- 检测按钮 -->
-                                        <button class="btn-detect" id="detectBtn" disabled>
-                                            <i class="fas fa-search"></i>
-                                            开始检测
-                                        </button>
-
-                                        <!-- 加载动画 -->
-                                        <div class="face-loading" id="loadingIndicator">
-                                            <div class="spinner"></div>
-                                            <span class="loading-text">正在调用模型进行人脸检测...</span>
                                         </div>
                                     </div>
 
@@ -641,25 +632,43 @@
 
                                 <!-- 右侧面板：结果展示 -->
                                 <div class="face-right-panel">
-                                    <!-- 结果图片 -->
-                                    <div class="face-card face-result-image-container">
-                                        <h3><i class="fas fa-eye"></i> 检测结果</h3>
-                                        <div class="face-result-image-wrapper" id="resultImageWrapper">
-                                            <div class="face-result-placeholder" id="resultPlaceholder">
-                                                <i class="fas fa-image"></i>
-                                                <p>上传图片并点击"开始检测"查看结果</p>
+                                    <div class="face-card ai-result-card">
+                                        <div class="ai-result-header">
+                                            <h3><i class="fas fa-eye"></i> 检测结果</h3>
+                                            <div class="ai-result-actions">
+                                                <div class="ai-result-tabs" data-ai-result-tabs>
+                                                    <button type="button" class="ai-result-tab active" data-target="image">
+                                                        <i class="fas fa-image"></i>
+                                                        <span>图片结果</span>
+                                                    </button>
+                                                    <button type="button" class="ai-result-tab" data-target="json">
+                                                        <i class="fas fa-file-code"></i>
+                                                        <span>JSON 信息</span>
+                                                    </button>
+                                                </div>
+                                                <button type="button" class="ai-result-copy" data-ai-copy-json title="复制 JSON" aria-label="复制 JSON">
+                                                    <i class="fas fa-copy"></i>
+                                                    <span>复制</span>
+                                                </button>
                                             </div>
-                                            <img id="resultImage" src="" alt="检测结果" style="display: none;">
                                         </div>
-                                    </div>
-
-                                    <!-- JSON 数据 -->
-                                    <div class="face-card">
-                                        <h3><i class="fas fa-file-code"></i> JSON 数据</h3>
-                                        <div class="face-json-container">
-                                            <pre id="jsonOutput">{
+                                        <div class="ai-result-body">
+                                            <div class="ai-result-pane active" data-pane="image">
+                                                <div class="face-result-image-wrapper" id="resultImageWrapper">
+                                                    <div class="face-result-placeholder" id="resultPlaceholder">
+                                                        <i class="fas fa-image"></i>
+                                                        <p>上传图片并点击"开始检测"查看结果</p>
+                                                    </div>
+                                                    <img id="resultImage" src="" alt="检测结果" style="display: none;">
+                                                </div>
+                                            </div>
+                                            <div class="ai-result-pane" data-pane="json">
+                                                <div class="face-json-container">
+                                                    <pre id="jsonOutput">{
     "message": "等待检测..."
 }</pre>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

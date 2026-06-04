@@ -59,6 +59,8 @@ const exportImageBtn = document.getElementById('exportImageBtn');
 const apiUrl = document.getElementById('apiUrl');
 const filterChineseToggle = document.getElementById('filterChineseToggle');
 const chineseFilterCount = document.getElementById('chineseFilterCount');
+const ocrLoadingIndicator = document.getElementById('ocrLoadingIndicator');
+const ocrStatsCard = document.getElementById('ocrStatsCard');
 
 // 初始化函数
 function init() {
@@ -87,8 +89,10 @@ function bindEvents() {
     // 文件输入变化
     fileInput.addEventListener('change', handleFileSelect);
     
-    // 上传按钮
-    uploadBtn.addEventListener('click', handleUpload);
+    // 上传按钮（部分页面已合并为“开始检测”单按钮）
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', handleUpload);
+    }
     
     // 处理按钮
     if (processBtn) {
@@ -232,9 +236,9 @@ function previewFile(file) {
     // 显示文件信息区域
     fileInfo.style.display = 'grid';
     
-    // 启用上传按钮
-    uploadBtn.disabled = false;
-    if (processBtn) processBtn.disabled = true;
+    // 启用检测按钮；无独立上传按钮的页面会在检测前自动上传
+    if (uploadBtn) uploadBtn.disabled = false;
+    if (processBtn) processBtn.disabled = false;
     
     // 更新进度状态
     updateProgress(0, '选择文件完成，准备上传');
@@ -247,10 +251,12 @@ function previewFile(file) {
 }
 
 // 处理上传
-async function handleUpload() {
+async function handleUpload(options = {}) {
+    const { silent = false, enableProcess = true } = options;
+
     if (!currentFile) {
         showError('请先选择文件');
-        return;
+        return false;
     }
     
     const formData = new FormData();
@@ -258,8 +264,10 @@ async function handleUpload() {
     
     try {
         // 更新UI状态
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+        }
         updateProgress(30, '正在上传文件到服务器');
         
         // 发送上传请求
@@ -288,26 +296,32 @@ async function handleUpload() {
         updateStatus('process', 'active');
         
         // 启用处理按钮
-        if (processBtn) processBtn.disabled = false;
+        if (processBtn && enableProcess) processBtn.disabled = false;
         
-        showSuccess('文件上传成功！');
+        if (!silent) showSuccess('文件上传成功！');
+        return true;
         
     } catch (error) {
         console.error('上传错误:', error);
         showError(`上传失败: ${error.message}`);
         // 上传状态已经在状态步骤中显示，不需要单独的uploadStatus元素
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 重新上传';
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 重新上传';
+        }
         updateProgress(0, '上传失败');
+        return false;
     } finally {
-        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 上传图片';
+        if (uploadBtn) {
+            uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 上传图片';
+        }
     }
 }
 
 // 处理OCR识别
 async function handleProcess() {
-    if (!currentFile || !currentFile.serverFilename) {
-        showError('请先上传文件');
+    if (!currentFile) {
+        showError('请先选择文件');
         return;
     }
     
@@ -317,8 +331,18 @@ async function handleProcess() {
         // 更新UI状态
         if (processBtn) {
             processBtn.disabled = true;
-            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 识别中...';
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
         }
+        if (ocrLoadingIndicator) ocrLoadingIndicator.classList.add('active');
+        if (ocrStatsCard) ocrStatsCard.style.display = 'none';
+
+        if (!currentFile.serverFilename) {
+            const uploaded = await handleUpload({ silent: true, enableProcess: false });
+            if (!uploaded || !currentFile.serverFilename) {
+                return;
+            }
+        }
+
         updateProgress(70, '正在进行OCR识别处理');
         
         // 发送处理请求
@@ -371,8 +395,10 @@ async function handleProcess() {
         updateStatus('process', 'error');
     } finally {
         if (processBtn) {
-            processBtn.innerHTML = '<i class="fas fa-cogs"></i> 开始识别';
+            processBtn.disabled = false;
+            processBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
         }
+        if (ocrLoadingIndicator) ocrLoadingIndicator.classList.remove('active');
     }
 }
 
@@ -472,6 +498,7 @@ function displayResults(data) {
     
     // 更新处理时间（安全判断）
     if (processingTime) processingTime.textContent = `${(processingTimeMs / 1000).toFixed(2)}s`;
+    if (ocrStatsCard) ocrStatsCard.style.display = 'block';
     
     // 更新文本内容表格（安全判断）
     if (typeof updateTextResultsTable === 'function') {
@@ -862,9 +889,9 @@ function viewItemDetails(item) {
 
 // 工具函数
 function updateProgress(percent, text) {
-    progressFill.style.width = `${percent}%`;
-    progressText.textContent = text;
-    progressPercent.textContent = `${percent}%`;
+    if (progressFill) progressFill.style.width = `${percent}%`;
+    if (progressText) progressText.textContent = text;
+    if (progressPercent) progressPercent.textContent = `${percent}%`;
 }
 
 function updateStatus(stage, state) {
@@ -1209,6 +1236,8 @@ function resetResults() {
     if (avgConfidence) avgConfidence.textContent = '0%';
     if (dimensionCount) dimensionCount.textContent = '0';
     if (processingTime) processingTime.textContent = '0s';
+    if (ocrStatsCard) ocrStatsCard.style.display = 'none';
+    if (ocrLoadingIndicator) ocrLoadingIndicator.classList.remove('active');
     
     // 重置表格（安全判断）
     if (textResultsBody) {
