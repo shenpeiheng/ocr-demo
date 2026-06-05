@@ -13,7 +13,7 @@ class Config:
     
     # Flask配置
     SECRET_KEY = os.getenv('SECRET_KEY', 'ocr-industrial-demo-secret-key')
-    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', '16777216'))  # 16MB默认值
+    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', '67108864'))  # 64MB默认值，支持Word批量流程图
     DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
     PORT = int(os.getenv('PORT', '5000'))
     

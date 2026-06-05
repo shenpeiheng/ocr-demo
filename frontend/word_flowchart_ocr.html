@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+
+            <main class="main-content-area">
+                <div class="content-grid flowchart-content-grid word-flowchart-content-grid">
+                    <div class="left-column">
+                        <div class="upload-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-file-word"></i> Word流程图批量识别</h2>
+                            </div>
+
+                            <div class="upload-area" id="wordUploadArea">
+                                <div class="upload-area-content">
+                                    <i class="fas fa-file-word upload-icon"></i>
+                                    <p class="upload-text">拖放Word文档或点击选择</p>
+                                    <p class="upload-hint">支持 DOCX，文档内流程图图片会按顺序提取识别</p>
+                                </div>
+                                <input type="file" id="wordFileInput" accept=".docx" hidden>
+                                <button class="btn btn-primary upload-btn" id="selectWordBtn">
+                                    <i class="fas fa-folder-open"></i> 选择Word文档
+                                </button>
+                            </div>
+
+                            <div class="sample-images-section word-sample-section" id="sampleWordSection">
+                                <div class="sample-label"><i class="fas fa-file-word"></i> 示例文件：</div>
+                                <button type="button" class="word-sample-card selected" id="sampleWordBtn">
+                                    <i class="fas fa-file-word"></i>
+                                    <span>ERP_Blueprint_FlowCharts_Only.docx</span>
+                                    <em>flow/ERP_Blueprint_FlowCharts_Only.docx</em>
+                                </button>
+                            </div>
+
+                            <div class="flowchart-file-panel word-doc-panel" id="wordDocPanel">
+                                <div class="flowchart-file-panel-header">
+                                    <span><i class="fas fa-file-alt"></i> 当前文档</span>
+                                    <button class="btn btn-small flowchart-clear-btn" id="clearWordBtn">
+                                        <i class="fas fa-undo"></i> 使用示例
+                                    </button>
+                                </div>
+                                <div class="word-doc-card" id="wordDocCard"></div>
+                            </div>
+
+                            <div class="upload-actions word-step-actions">
+                                <button class="btn btn-detect action-btn" id="processWordBtn">
+                                    <i class="fas fa-images"></i> 提取图片
+                                </button>
+                                <button class="btn btn-detect action-btn" id="startSelectedBtn" disabled>
+                                    <i class="fas fa-play"></i> 开始检测
+                                </button>
+                            </div>
+
+                            <div class="ocr-loading" id="wordLoadingIndicator">
+                                <div class="spinner"></div>
+                                <span class="loading-text">正在提取Word中的流程图图片...</span>
+                            </div>
+
+                            <div class="ocr-stats-card" id="wordStatsCard" style="display: none;">
+                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
+                                <div class="results-summary flowchart-summary-grid word-flowchart-summary-grid">
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-images"></i> 图片总数
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="totalImages">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-spinner"></i> 已处理
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="processedImages">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-check-circle"></i> 成功图片
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="successImages">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-times-circle"></i> 失败图片
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="failedImages">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-list-ol"></i> 流程节点
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="wordRowCount">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-stopwatch"></i> 处理时间
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="wordProcessingTime">0s</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-column">
+                        <div class="results-section card flowchart-results-section word-flowchart-results-section">
+                            <div class="section-header">
+                                <h2><i class="fas fa-table"></i> Word流程图处理结果</h2>
+                                <div class="export-buttons flowchart-export-buttons">
+                                    <button class="btn btn-export btn-retry-failed" id="retryFailedBtn" disabled>
+                                        <i class="fas fa-redo-alt"></i> 重试失败
+                                    </button>
+                                    <button class="btn btn-export" id="exportWordExcelBtn" disabled>
+                                        <i class="fas fa-file-excel"></i> 下载Excel
+                                    </button>
+                                    <button class="btn btn-export" id="exportWordJsonBtn" disabled>
+                                        <i class="fas fa-file-code"></i> 下载JSON
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flowchart-result-meta" id="wordResultMeta">
+                                <span><i class="fas fa-info-circle"></i> 提取图片后可勾选需要识别的流程图</span>
+                            </div>
+
+                            <div class="flowchart-result-tabs word-flowchart-tabs" id="wordFlowchartTabs">
+                                <button type="button" class="flowchart-result-tab active" data-word-tab="status">
+                                    <span>图片处理清单</span>
+                                    <em id="statusTabCount">0</em>
+                                </button>
+                                <button type="button" class="flowchart-result-tab" data-word-tab="result">
+                                    <span>识别结果预览</span>
+                                    <em id="resultTabCount">0</em>
+                                </button>
+                            </div>
+
+                            <div class="word-result-pane active" data-word-pane="status">
+                                <div class="table-container word-status-table-container">
+                                    <table class="results-table word-status-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="col-select">
+                                                    <input type="checkbox" class="word-file-checkbox word-select-all-checkbox" id="selectAllWordImages" disabled>
+                                                </th>
+                                                <th class="col-index">图片序号</th>
+                                                <th class="col-source">来源图片</th>
+                                                <th class="col-status">处理状态</th>
+                                                <th class="col-count">流程节点数</th>
+                                                <th class="col-time">处理时间</th>
+                                                <th class="col-error">失败原因</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="wordStatusBody">
+                                            <tr>
+                                                <td colspan="7" class="empty-message">暂无处理任务</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="word-result-pane" data-word-pane="result">
+                                <div class="table-container flowchart-table-container word-result-table-container">
+                                    <table class="results-table flowchart-table word-result-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="col-image-index">图片序号</th>
+                                                <th class="col-source-image">来源图片</th>
+                                                <th class="col-flow">流程</th>
+                                                <th class="col-flow-note">流程说明</th>
+                                                <th class="col-flow-id">流程ID</th>
+                                                <th class="col-description">流程描述</th>
+                                                <th class="col-operation">操作方式</th>
+                                                <th class="col-dept">部门</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="wordResultsBody">
+                                            <tr>
+                                                <td colspan="8" class="empty-message">暂无识别结果</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script src="static/js/word_flowchart_ocr.js"></script>
+</body>
+</html>

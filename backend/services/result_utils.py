@@ -315,6 +315,130 @@ def generate_flowchart_excel(flowchart_result, excel_path):
     wb.save(excel_path)
 
 
+def generate_word_flowchart_excel(word_result, excel_path):
+    """生成 Word 流程图批量识别 Excel。"""
+    wb = Workbook()
+    thin_side = Side(style="thin", color="000000")
+    border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+    header_gray = PatternFill("solid", fgColor="BFBFBF")
+    header_blue = PatternFill("solid", fgColor="1F4E79")
+    header_font = Font(bold=True, color="000000")
+    header_white_font = Font(bold=True, color="FFFFFF")
+    body_font = Font(name="Arial", size=10)
+    center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left_alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    ws = wb.active
+    ws.title = "流程图识别结果"
+    result_headers = ["来源文档", "图片序号", "来源图片", "流程", "流程说明", "流程ID", "流程描述", "操作方式", "部门"]
+    ws.append(result_headers)
+    _style_header_row(ws, result_headers, header_gray, header_blue, header_font, header_white_font, center_alignment, border)
+
+    for row in word_result.get("rows", []):
+        ws.append([row.get(header, "") for header in result_headers])
+
+    for row_cells in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=len(result_headers)):
+        for cell in row_cells:
+            cell.font = body_font
+            cell.alignment = left_alignment if cell.column == 7 else center_alignment
+            cell.border = border
+
+    ws.freeze_panes = "A2"
+    result_widths = {
+        "A": 28,
+        "B": 10,
+        "C": 18,
+        "D": 14,
+        "E": 22,
+        "F": 18,
+        "G": 62,
+        "H": 22,
+        "I": 14,
+    }
+    for column_letter, width in result_widths.items():
+        ws.column_dimensions[column_letter].width = width
+
+    ws_status = wb.create_sheet(title="图片处理清单")
+    status_headers = ["图片序号", "来源图片", "处理状态", "流程节点数", "处理时间(秒)", "失败原因"]
+    ws_status.append(status_headers)
+    _style_header_row(
+        ws_status,
+        status_headers,
+        header_gray,
+        header_blue,
+        header_font,
+        header_white_font,
+        center_alignment,
+        border,
+        blue_headers={"处理状态", "失败原因"},
+    )
+
+    for file_result in word_result.get("files", []):
+        status = file_result.get("status", "")
+        success = bool(file_result.get("success"))
+        skipped = status == "skipped" or file_result.get("selected") is False
+        status_label = "未选择" if skipped else ("成功" if success else "失败")
+        ws_status.append(
+            [
+                file_result.get("image_index", ""),
+                file_result.get("original_filename", file_result.get("filename", "")),
+                status_label,
+                file_result.get("total_rows", 0),
+                file_result.get("processing_time", ""),
+                "" if success or skipped else file_result.get("error", "识别失败"),
+            ]
+        )
+
+    success_fill = PatternFill("solid", fgColor="E7F4ED")
+    failed_fill = PatternFill("solid", fgColor="FCE8E8")
+    skipped_fill = PatternFill("solid", fgColor="F2F4F7")
+    for row_cells in ws_status.iter_rows(min_row=2, max_row=ws_status.max_row, max_col=len(status_headers)):
+        status_value = row_cells[2].value
+        for cell in row_cells:
+            cell.font = body_font
+            cell.alignment = left_alignment if cell.column == 6 else center_alignment
+            cell.border = border
+            if status_value == "成功":
+                cell.fill = success_fill
+            elif status_value == "未选择":
+                cell.fill = skipped_fill
+            else:
+                cell.fill = failed_fill
+
+    ws_status.freeze_panes = "A2"
+    status_widths = {"A": 10, "B": 18, "C": 12, "D": 12, "E": 14, "F": 60}
+    for column_letter, width in status_widths.items():
+        ws_status.column_dimensions[column_letter].width = width
+
+    for worksheet in wb.worksheets:
+        worksheet.row_dimensions[1].height = 26
+        for row_idx in range(2, worksheet.max_row + 1):
+            worksheet.row_dimensions[row_idx].height = 22
+
+    wb.save(excel_path)
+
+
+def _style_header_row(
+    worksheet,
+    headers,
+    header_gray,
+    header_blue,
+    header_font,
+    header_white_font,
+    alignment,
+    border,
+    blue_headers=None,
+):
+    blue_header_set = blue_headers or {"操作方式", "部门"}
+    for col_idx, header in enumerate(headers, 1):
+        cell = worksheet.cell(row=1, column=col_idx)
+        use_blue = header in blue_header_set
+        cell.fill = header_blue if use_blue else header_gray
+        cell.font = header_white_font if use_blue else header_font
+        cell.alignment = alignment
+        cell.border = border
+
+
 def _merge_flowchart_groups(ws):
     if ws.max_row <= 2:
         return

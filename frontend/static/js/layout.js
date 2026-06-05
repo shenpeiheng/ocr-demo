@@ -133,6 +133,10 @@
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">流程图识别</div>' +
                         '</a>' +
+                        '<a href="word_flowchart_ocr.html" class="menu-item menu-sub-item" data-page="word_flowchart_ocr">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">Word流程图识别</div>' +
+                        '</a>' +
                     '</div>' +
                 '</div>' +
                 /* AI视觉检测 */

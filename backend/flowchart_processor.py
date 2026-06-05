@@ -60,7 +60,11 @@ FIELD_ALIASES = {
 }
 
 
-def process_flowchart_images(image_entries: List[Dict[str, Any]], ocr_processor) -> Dict[str, Any]:
+def process_flowchart_images(
+    image_entries: List[Dict[str, Any]],
+    ocr_processor,
+    progress_callback=None,
+) -> Dict[str, Any]:
     """批量识别流程图图片。"""
     start_time = time.time()
     all_rows = []
@@ -72,45 +76,89 @@ def process_flowchart_images(image_entries: List[Dict[str, Any]], ocr_processor)
         logger.info("开始识别流程图 %s/%s: %s", index, len(image_entries), image_path)
 
         image_start = time.time()
-        result = ocr_processor.process_image_with_engine(image_path, "openai_vl", FLOWCHART_PROMPT)
+        try:
+            result = ocr_processor.process_image_with_engine(image_path, "openai_vl", FLOWCHART_PROMPT)
+        except Exception as exc:
+            image_time = round(time.time() - image_start, 2)
+            logger.exception("流程图识别异常: %s", image_path)
+            file_result = {
+                "success": False,
+                "filename": entry["filename"],
+                "original_filename": original_filename,
+                "image_url": f"/uploads/{entry['filename']}",
+                "rows": [],
+                "total_rows": 0,
+                "processing_time": image_time,
+                "error": str(exc),
+            }
+            _apply_entry_metadata(file_result, entry)
+            file_results.append(file_result)
+            _emit_progress(progress_callback, file_result)
+            continue
+
         image_time = round(time.time() - image_start, 2)
 
         if not result.get("success"):
-            file_results.append(
-                {
-                    "success": False,
-                    "filename": entry["filename"],
-                    "original_filename": original_filename,
-                    "image_url": f"/uploads/{entry['filename']}",
-                    "rows": [],
-                    "total_rows": 0,
-                    "processing_time": image_time,
-                    "error": result.get("error", "流程图识别失败"),
-                }
-            )
+            file_result = {
+                "success": False,
+                "filename": entry["filename"],
+                "original_filename": original_filename,
+                "image_url": f"/uploads/{entry['filename']}",
+                "rows": [],
+                "total_rows": 0,
+                "processing_time": image_time,
+                "error": result.get("error", "流程图识别失败"),
+            }
+            _apply_entry_metadata(file_result, entry)
+            file_results.append(file_result)
+            _emit_progress(progress_callback, file_result)
             continue
 
         raw_response = result.get("raw_response", "")
         rows = normalize_flowchart_rows(parse_flowchart_response(raw_response))
-        for row in rows:
-            row["来源图片"] = original_filename
-            row["图片文件"] = entry["filename"]
-
-        all_rows.extend(rows)
-        file_results.append(
-            {
-                "success": True,
+        if not rows:
+            file_result = {
+                "success": False,
                 "filename": entry["filename"],
                 "original_filename": original_filename,
                 "image_url": f"/uploads/{entry['filename']}",
-                "rows": rows,
-                "total_rows": len(rows),
+                "rows": [],
+                "total_rows": 0,
                 "processing_time": image_time,
                 "image_info": result.get("image_info", {}),
                 "model_input_info": result.get("model_input_info", {}),
                 "raw_response_preview": raw_response[:500],
+                "error": "未解析到流程节点",
             }
-        )
+            _apply_entry_metadata(file_result, entry)
+            file_results.append(file_result)
+            _emit_progress(progress_callback, file_result)
+            continue
+
+        for row in rows:
+            row["来源图片"] = original_filename
+            row["图片文件"] = entry["filename"]
+            if entry.get("source_document"):
+                row["来源文档"] = entry["source_document"]
+            if entry.get("image_index"):
+                row["图片序号"] = entry["image_index"]
+
+        all_rows.extend(rows)
+        file_result = {
+            "success": True,
+            "filename": entry["filename"],
+            "original_filename": original_filename,
+            "image_url": f"/uploads/{entry['filename']}",
+            "rows": rows,
+            "total_rows": len(rows),
+            "processing_time": image_time,
+            "image_info": result.get("image_info", {}),
+            "model_input_info": result.get("model_input_info", {}),
+            "raw_response_preview": raw_response[:500],
+        }
+        _apply_entry_metadata(file_result, entry)
+        file_results.append(file_result)
+        _emit_progress(progress_callback, file_result)
 
     successful_files = [item for item in file_results if item.get("success")]
     processing_time = round(time.time() - start_time, 2)
@@ -135,6 +183,22 @@ def process_flowchart_images(image_entries: List[Dict[str, Any]], ocr_processor)
             "columns": FLOWCHART_COLUMNS,
         },
     }
+
+
+def _apply_entry_metadata(file_result: Dict[str, Any], entry: Dict[str, Any]) -> None:
+    if entry.get("source_document"):
+        file_result["source_document"] = entry["source_document"]
+    if entry.get("image_index"):
+        file_result["image_index"] = entry["image_index"]
+
+
+def _emit_progress(progress_callback, file_result: Dict[str, Any]) -> None:
+    if not progress_callback:
+        return
+    try:
+        progress_callback(dict(file_result))
+    except Exception as exc:
+        logger.warning("流程图识别进度回调失败: %s", exc)
 
 
 def parse_flowchart_response(content: str) -> List[Dict[str, Any]]:

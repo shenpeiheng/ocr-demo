@@ -1,6 +1,9 @@
 import base64
+import copy
 import json
 import os
+import threading
+import time
 import uuid
 from datetime import datetime
 
@@ -18,11 +21,28 @@ from services.result_utils import (
     generate_excel,
     generate_flowchart_excel,
     generate_pdf_excel,
+    generate_word_flowchart_excel,
 )
+from word_flowchart_processor import extract_docx_images, is_docx_file
 from config import Config
 
 
 ocr_bp = Blueprint("ocr", __name__)
+WORD_FLOWCHART_TASKS = {}
+WORD_FLOWCHART_TASK_LOCK = threading.Lock()
+DEFAULT_WORD_FLOWCHART_DOC = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "frontend",
+        "static",
+        "images",
+        "demo",
+        "flow",
+        "ERP_Blueprint_FlowCharts_Only.docx",
+    )
+)
 
 
 def allowed_file(filename):
@@ -72,6 +92,12 @@ def api_index():
                 "/api/process/paddleocr": "使用PaddleOCR处理图片",
                 "/api/flowchart/process": "批量识别流程图图片",
                 "/api/flowchart/download/excel/<batch_id>": "下载流程图识别Excel",
+                "/api/flowchart/word/process": "从Word文档批量提取流程图图片",
+                "/api/flowchart/word/start/<task_id>": "识别已勾选的Word流程图图片",
+                "/api/flowchart/word/status/<task_id>": "获取Word流程图批量识别任务状态",
+                "/api/flowchart/word/retry/<task_id>": "重试Word流程图识别失败图片",
+                "/api/flowchart/word/download/excel/<batch_id>": "下载Word流程图识别Excel",
+                "/api/flowchart/word/download/json/<batch_id>": "下载Word流程图识别JSON",
                 "/api/prompts": "获取可用提示词列表",
                 "/api/results/<filename>": "获取识别结果",
                 "/api/download/excel/<filename>": "下载Excel格式结果",
@@ -183,6 +209,161 @@ def process_flowchart_files():
         )
     except Exception as exc:
         return jsonify({"success": False, "error": f"流程图识别失败: {str(exc)}"}), 500
+
+
+@ocr_bp.route("/api/flowchart/word/process", methods=["POST"])
+def start_word_flowchart_process():
+    batch_id = uuid.uuid4().hex
+    task_id = uuid.uuid4().hex
+    use_sample = request.form.get("use_sample", "").lower() == "true"
+
+    if use_sample:
+        if not os.path.exists(DEFAULT_WORD_FLOWCHART_DOC):
+            return jsonify({"success": False, "error": "默认Word示例文件不存在"}), 404
+        document_path = DEFAULT_WORD_FLOWCHART_DOC
+        original_filename = os.path.basename(DEFAULT_WORD_FLOWCHART_DOC)
+    else:
+        file = request.files.get("file")
+        if not file or not file.filename:
+            return jsonify({"success": False, "error": "请选择Word文档"}), 400
+        if not is_docx_file(file.filename):
+            return jsonify({"success": False, "error": "仅支持DOCX格式Word文档"}), 400
+
+        original_filename = file.filename
+        document_path = os.path.join(app.config["UPLOAD_FOLDER"], f"word_flowchart_{batch_id}.docx")
+        file.save(document_path)
+
+    task = {
+        "success": True,
+        "task_id": task_id,
+        "batch_id": batch_id,
+        "status": "queued",
+        "message": "任务已创建，等待提取图片",
+        "document": {
+            "original_filename": original_filename,
+            "filename": os.path.basename(document_path),
+        },
+        "total_images": 0,
+        "selected_images": 0,
+        "skipped_images": 0,
+        "processed_images": 0,
+        "successful_images": 0,
+        "failed_images": 0,
+        "total_rows": 0,
+        "files": [],
+        "result_files": {},
+        "created_at": datetime.now().isoformat(),
+        "updated_at": datetime.now().isoformat(),
+    }
+    _set_word_flowchart_task(task_id, task)
+
+    thread = threading.Thread(
+        target=_run_word_flowchart_prepare_task,
+        args=(task_id, batch_id, document_path, original_filename),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Word流程图图片提取任务已启动",
+            "task_id": task_id,
+            "batch_id": batch_id,
+        }
+    )
+
+
+@ocr_bp.route("/api/flowchart/word/start/<task_id>", methods=["POST"])
+def start_selected_word_flowchart_images(task_id):
+    task = _get_word_flowchart_task(task_id)
+    if not task:
+        return jsonify({"success": False, "error": "任务不存在"}), 404
+
+    if task.get("status") in {"queued", "running", "retrying"}:
+        return jsonify({"success": False, "error": "当前任务还在处理中，请稍后再开始检测"}), 400
+
+    if task.get("status") != "ready":
+        return jsonify({"success": False, "error": "当前任务已开始处理，请重新提取图片后再选择检测范围"}), 400
+
+    data = request.get_json(silent=True) or {}
+    selected_entries, missing_images = _build_selected_word_entries(
+        task,
+        image_indices=data.get("image_indices"),
+        filenames=data.get("filenames"),
+    )
+
+    if missing_images:
+        return jsonify({"success": False, "error": f"选中的图片文件不存在: {', '.join(missing_images[:3])}"}), 400
+
+    if not selected_entries:
+        return jsonify({"success": False, "error": "请至少勾选一张图片后再开始检测"}), 400
+
+    if not _prepare_word_flowchart_selected_start(task_id, selected_entries):
+        return jsonify({"success": False, "error": "当前任务状态已变化，请刷新状态后重试"}), 400
+
+    thread = threading.Thread(
+        target=_run_word_flowchart_selected_task,
+        args=(task_id, selected_entries),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": f"已开始识别 {len(selected_entries)} 张已勾选图片",
+            "task_id": task_id,
+            "batch_id": task.get("batch_id"),
+            "selected_images": len(selected_entries),
+        }
+    )
+
+
+@ocr_bp.route("/api/flowchart/word/status/<task_id>")
+def get_word_flowchart_status(task_id):
+    task = _get_word_flowchart_task(task_id)
+    if not task:
+        return jsonify({"success": False, "error": "任务不存在"}), 404
+    return jsonify(task)
+
+
+@ocr_bp.route("/api/flowchart/word/retry/<task_id>", methods=["POST"])
+def retry_word_flowchart_failed_images(task_id):
+    task = _get_word_flowchart_task(task_id)
+    if not task:
+        return jsonify({"success": False, "error": "任务不存在"}), 404
+
+    if task.get("status") in {"queued", "running", "retrying"}:
+        return jsonify({"success": False, "error": "当前任务还在处理中，请完成后再重试"}), 400
+
+    failed_files = _get_failed_word_files(task)
+    if not failed_files:
+        return jsonify({"success": False, "error": "当前任务没有失败图片需要重试"}), 400
+
+    retry_entries, missing_results = _build_word_retry_entries(task, failed_files)
+    if not retry_entries:
+        _apply_missing_word_retry_results(task_id, missing_results)
+        return jsonify({"success": False, "error": "失败图片文件不存在，无法重试"}), 400
+
+    _prepare_word_flowchart_retry(task_id, retry_entries, missing_results)
+    thread = threading.Thread(
+        target=_run_word_flowchart_retry_task,
+        args=(task_id, retry_entries),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify(
+        {
+            "success": True,
+            "message": f"已开始重试 {len(retry_entries)} 张失败图片",
+            "task_id": task_id,
+            "batch_id": task.get("batch_id"),
+            "retry_images": len(retry_entries),
+            "missing_images": len(missing_results),
+        }
+    )
 
 
 @ocr_bp.route("/api/process", methods=["POST"])
@@ -507,9 +688,725 @@ def download_flowchart_json(batch_id):
     return send_file(json_path, as_attachment=True, download_name=f"flowchart_result_{batch_id}.json")
 
 
+@ocr_bp.route("/api/flowchart/word/download/excel/<batch_id>")
+def download_word_flowchart_excel(batch_id):
+    if not _is_safe_batch_id(batch_id):
+        return jsonify({"error": "批次ID不合法"}), 400
+
+    excel_path = os.path.join(app.config["UPLOAD_FOLDER"], f"result_word_flowchart_{batch_id}.xlsx")
+    if not os.path.exists(excel_path):
+        return jsonify({"error": "Word流程图Excel文件不存在"}), 404
+    return send_file(excel_path, as_attachment=True, download_name=f"word_flowchart_result_{batch_id}.xlsx")
+
+
+@ocr_bp.route("/api/flowchart/word/download/json/<batch_id>")
+def download_word_flowchart_json(batch_id):
+    if not _is_safe_batch_id(batch_id):
+        return jsonify({"error": "批次ID不合法"}), 400
+
+    json_path = os.path.join(app.config["UPLOAD_FOLDER"], f"result_word_flowchart_{batch_id}.json")
+    if not os.path.exists(json_path):
+        return jsonify({"error": "Word流程图JSON文件不存在"}), 404
+    return send_file(json_path, as_attachment=True, download_name=f"word_flowchart_result_{batch_id}.json")
+
+
 @ocr_bp.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+
+def _run_word_flowchart_prepare_task(task_id, batch_id, document_path, original_filename):
+    try:
+        _update_word_flowchart_task(task_id, status="running", message="正在提取Word中的流程图图片")
+        image_entries = extract_docx_images(
+            document_path,
+            app.config["UPLOAD_FOLDER"],
+            batch_id,
+            original_filename,
+        )
+
+        if not image_entries:
+            raise ValueError("Word文档中未提取到可识别的图片")
+
+        _update_word_flowchart_task(
+            task_id,
+            status="ready",
+            total_images=len(image_entries),
+            selected_images=len(image_entries),
+            skipped_images=0,
+            files=[_build_pending_word_file(entry, selected=True) for entry in image_entries],
+            message=f"已提取 {len(image_entries)} 张图片，请勾选需要识别的图片后点击开始检测",
+        )
+    except Exception as exc:
+        _update_word_flowchart_task(
+            task_id,
+            status="failed",
+            success=False,
+            message=f"Word流程图图片提取失败: {str(exc)}",
+            error=str(exc),
+        )
+
+
+def _run_word_flowchart_selected_task(task_id, selected_entries):
+    started_at = time.time()
+    task_before_start = _get_word_flowchart_task(task_id)
+    if not task_before_start:
+        return
+
+    batch_id = task_before_start.get("batch_id")
+    document = task_before_start.get("document", {})
+
+    try:
+        def on_file_processed(file_result):
+            _update_word_file_progress(task_id, file_result)
+
+        flowchart_result = process_flowchart_images(
+            selected_entries,
+            ocr_processor,
+            progress_callback=on_file_processed,
+        )
+        flowchart_result["batch_id"] = batch_id
+
+        task_after_start = _get_word_flowchart_task(task_id)
+        files = task_after_start.get("files", []) if task_after_start else flowchart_result.get("files", [])
+        processing_time = round(time.time() - started_at, 2)
+        word_result = _build_word_flowchart_result(
+            batch_id=batch_id,
+            document=document,
+            rows=flowchart_result.get("rows", []),
+            files=files,
+            processing_time=processing_time,
+            processing_info={
+                **flowchart_result.get("processing_info", {}),
+                "source_type": "word_docx",
+                "document_filename": document.get("original_filename", ""),
+                "selected_images": len(selected_entries),
+            },
+        )
+        successful_images = word_result["stats"]["successful_images"]
+        failed_images = word_result["stats"]["failed_images"]
+        skipped_images = word_result["stats"]["skipped_images"]
+        result_files = _save_word_flowchart_result(word_result, batch_id)
+
+        _update_word_flowchart_task(
+            task_id,
+            status="completed",
+            message=f"处理完成：成功 {successful_images} 张，失败 {failed_images} 张，未选择 {skipped_images} 张",
+            processed_images=successful_images + failed_images,
+            selected_images=word_result["stats"]["selected_images"],
+            skipped_images=word_result["stats"]["skipped_images"],
+            successful_images=successful_images,
+            failed_images=failed_images,
+            total_rows=word_result["total_rows"],
+            files=word_result["files"],
+            result_files=result_files,
+            results={
+                "rows": word_result["rows"],
+                "total_rows": word_result["total_rows"],
+                "stats": word_result["stats"],
+            },
+        )
+    except Exception as exc:
+        _mark_word_selected_failed(task_id, selected_entries, exc)
+
+
+def _run_word_flowchart_retry_task(task_id, retry_entries):
+    started_at = time.time()
+    task_before_retry = _get_word_flowchart_task(task_id)
+    if not task_before_retry:
+        return
+
+    batch_id = task_before_retry.get("batch_id")
+    document = task_before_retry.get("document", {})
+    retry_filenames = {entry.get("filename") for entry in retry_entries if entry.get("filename")}
+    existing_rows = task_before_retry.get("results", {}).get("rows", [])
+
+    try:
+        def on_file_processed(file_result):
+            _update_word_file_progress(task_id, file_result)
+
+        retry_result = process_flowchart_images(
+            retry_entries,
+            ocr_processor,
+            progress_callback=on_file_processed,
+        )
+
+        task_after_retry = _get_word_flowchart_task(task_id)
+        files = task_after_retry.get("files", []) if task_after_retry else []
+        retry_rows = retry_result.get("rows", [])
+        merged_rows = _merge_word_flowchart_rows(existing_rows, retry_rows, retry_entries)
+        previous_time = _safe_float(task_before_retry.get("results", {}).get("stats", {}).get("processing_time"))
+        total_processing_time = round(previous_time + (time.time() - started_at), 2)
+
+        word_result = _build_word_flowchart_result(
+            batch_id=batch_id,
+            document=document,
+            rows=merged_rows,
+            files=files,
+            processing_time=total_processing_time,
+            processing_info={
+                **retry_result.get("processing_info", {}),
+                "source_type": "word_docx",
+                "document_filename": document.get("original_filename", ""),
+                "retry_images": len(retry_entries),
+            },
+        )
+        result_files = _save_word_flowchart_result(word_result, batch_id)
+
+        retry_success_count = len(
+            [
+                file_result
+                for file_result in word_result["files"]
+                if file_result.get("filename") in retry_filenames and file_result.get("success")
+            ]
+        )
+        failed_images = word_result["stats"]["failed_images"]
+        _update_word_flowchart_task(
+            task_id,
+            status="completed",
+            message=f"重试完成：本次成功 {retry_success_count} 张，仍失败 {failed_images} 张",
+            success=word_result["success"],
+            error="",
+            processed_images=word_result["stats"]["successful_images"] + failed_images,
+            selected_images=word_result["stats"]["selected_images"],
+            skipped_images=word_result["stats"]["skipped_images"],
+            successful_images=word_result["stats"]["successful_images"],
+            failed_images=failed_images,
+            total_rows=word_result["total_rows"],
+            files=word_result["files"],
+            result_files=result_files,
+            results={
+                "rows": word_result["rows"],
+                "total_rows": word_result["total_rows"],
+                "stats": word_result["stats"],
+            },
+        )
+    except Exception as exc:
+        _mark_word_retry_failed(task_id, retry_entries, exc)
+
+
+def _get_failed_word_files(task):
+    return [
+        file_result
+        for file_result in task.get("files", [])
+        if file_result.get("success") is False or file_result.get("status") == "failed"
+    ]
+
+
+def _build_selected_word_entries(task, image_indices=None, filenames=None):
+    upload_folder = app.config["UPLOAD_FOLDER"]
+    document_name = task.get("document", {}).get("original_filename", "")
+    if not isinstance(image_indices, (list, tuple, set)):
+        image_indices = []
+    if not isinstance(filenames, (list, tuple, set)):
+        filenames = []
+    selected_indices = {
+        _safe_int(image_index)
+        for image_index in (image_indices or [])
+        if _safe_int(image_index) is not None
+    }
+    selected_filenames = {
+        os.path.basename(str(filename))
+        for filename in (filenames or [])
+        if filename
+    }
+    selected_entries = []
+    missing_images = []
+
+    for file_result in task.get("files", []):
+        filename = os.path.basename(str(file_result.get("filename") or ""))
+        image_index = _safe_int(file_result.get("image_index"))
+        if not filename:
+            continue
+
+        is_selected = filename in selected_filenames or image_index in selected_indices
+        if not is_selected:
+            continue
+
+        image_path = os.path.join(upload_folder, filename)
+        if not os.path.exists(image_path):
+            missing_images.append(filename)
+            continue
+
+        selected_entries.append(
+            {
+                "filename": filename,
+                "original_filename": file_result.get("original_filename") or filename,
+                "path": image_path,
+                "image_index": file_result.get("image_index"),
+                "source_document": file_result.get("source_document") or document_name,
+            }
+        )
+
+    return selected_entries, missing_images
+
+
+def _prepare_word_flowchart_selected_start(task_id, selected_entries):
+    selected_filenames = {entry["filename"] for entry in selected_entries}
+
+    with WORD_FLOWCHART_TASK_LOCK:
+        task = WORD_FLOWCHART_TASKS.get(task_id)
+        if not task or task.get("status") != "ready":
+            return False
+
+        for file_result in task.get("files", []):
+            filename = file_result.get("filename")
+            if filename in selected_filenames:
+                file_result.update(
+                    {
+                        "status": "running",
+                        "success": None,
+                        "selected": True,
+                        "total_rows": 0,
+                        "processing_time": "",
+                        "error": "正在识别",
+                    }
+                )
+            else:
+                file_result.update(
+                    {
+                        "status": "skipped",
+                        "success": None,
+                        "selected": False,
+                        "total_rows": 0,
+                        "processing_time": "",
+                        "error": "",
+                    }
+                )
+
+        _sync_word_task_file_counts(task)
+        task["status"] = "running"
+        task["success"] = True
+        task["error"] = ""
+        task["message"] = f"正在识别 {len(selected_entries)} 张已勾选图片"
+        task["result_files"] = {}
+        task["results"] = {
+            "rows": [],
+            "total_rows": 0,
+            "stats": {},
+        }
+        task["updated_at"] = datetime.now().isoformat()
+        return True
+
+
+def _build_word_retry_entries(task, failed_files):
+    upload_folder = app.config["UPLOAD_FOLDER"]
+    document_name = task.get("document", {}).get("original_filename", "")
+    retry_entries = []
+    missing_results = []
+
+    for file_result in failed_files:
+        filename = os.path.basename(str(file_result.get("filename") or ""))
+        if not filename:
+            missing_results.append(
+                {
+                    **file_result,
+                    "success": False,
+                    "status": "failed",
+                    "error": "图片文件名缺失，无法重试",
+                }
+            )
+            continue
+
+        image_path = os.path.join(upload_folder, filename)
+        if not os.path.exists(image_path):
+            missing_results.append(
+                {
+                    **file_result,
+                    "filename": filename,
+                    "success": False,
+                    "status": "failed",
+                    "total_rows": 0,
+                    "error": "图片文件不存在，无法重试",
+                }
+            )
+            continue
+
+        retry_entries.append(
+            {
+                "filename": filename,
+                "original_filename": file_result.get("original_filename") or filename,
+                "path": image_path,
+                "image_index": file_result.get("image_index"),
+                "source_document": file_result.get("source_document") or document_name,
+            }
+        )
+
+    return retry_entries, missing_results
+
+
+def _prepare_word_flowchart_retry(task_id, retry_entries, missing_results):
+    retry_filenames = {entry["filename"] for entry in retry_entries}
+    missing_by_filename = {item.get("filename"): item for item in missing_results if item.get("filename")}
+
+    with WORD_FLOWCHART_TASK_LOCK:
+        task = WORD_FLOWCHART_TASKS.get(task_id)
+        if not task:
+            return
+
+        for file_result in task.get("files", []):
+            filename = file_result.get("filename")
+            if filename in retry_filenames:
+                file_result.update(
+                    {
+                        "status": "running",
+                        "success": None,
+                        "total_rows": 0,
+                        "processing_time": "",
+                        "error": "正在重试",
+                    }
+                )
+            elif filename in missing_by_filename:
+                file_result.update(missing_by_filename[filename])
+
+        _sync_word_task_file_counts(task)
+        task["status"] = "retrying"
+        task["success"] = True
+        task["error"] = ""
+        task["message"] = f"正在重试 {len(retry_entries)} 张失败图片"
+        task["updated_at"] = datetime.now().isoformat()
+
+
+def _apply_missing_word_retry_results(task_id, missing_results):
+    if not missing_results:
+        return
+
+    with WORD_FLOWCHART_TASK_LOCK:
+        task = WORD_FLOWCHART_TASKS.get(task_id)
+        if not task:
+            return
+
+        missing_by_filename = {item.get("filename"): item for item in missing_results if item.get("filename")}
+        for file_result in task.get("files", []):
+            missing_result = missing_by_filename.get(file_result.get("filename"))
+            if missing_result:
+                file_result.update(missing_result)
+
+        _sync_word_task_file_counts(task)
+        task["message"] = "失败图片文件不存在，无法重试"
+        task["updated_at"] = datetime.now().isoformat()
+
+
+def _mark_word_selected_failed(task_id, selected_entries, exc):
+    error_message = f"批量识别失败: {str(exc)}"
+    for entry in selected_entries:
+        _update_word_file_progress(
+            task_id,
+            {
+                "success": False,
+                "filename": entry.get("filename"),
+                "original_filename": entry.get("original_filename"),
+                "image_url": f"/uploads/{entry.get('filename')}",
+                "image_index": entry.get("image_index"),
+                "source_document": entry.get("source_document"),
+                "rows": [],
+                "total_rows": 0,
+                "processing_time": "",
+                "error": error_message,
+            },
+        )
+
+    task = _get_word_flowchart_task(task_id)
+    if not task:
+        return
+
+    batch_id = task.get("batch_id")
+    word_result = _build_word_flowchart_result(
+        batch_id=batch_id,
+        document=task.get("document", {}),
+        rows=[],
+        files=task.get("files", []),
+        processing_time=0,
+        processing_info={
+            "source_type": "word_docx",
+            "document_filename": task.get("document", {}).get("original_filename", ""),
+            "selected_images": len(selected_entries),
+        },
+    )
+    result_files = _save_word_flowchart_result(word_result, batch_id) if batch_id else {}
+
+    _update_word_flowchart_task(
+        task_id,
+        status="completed",
+        message=error_message,
+        success=word_result["success"],
+        error=str(exc),
+        processed_images=word_result["stats"]["successful_images"] + word_result["stats"]["failed_images"],
+        selected_images=word_result["stats"]["selected_images"],
+        skipped_images=word_result["stats"]["skipped_images"],
+        successful_images=word_result["stats"]["successful_images"],
+        failed_images=word_result["stats"]["failed_images"],
+        total_rows=word_result["total_rows"],
+        files=word_result["files"],
+        result_files=result_files,
+        results={
+            "rows": word_result["rows"],
+            "total_rows": word_result["total_rows"],
+            "stats": word_result["stats"],
+        },
+    )
+
+
+def _mark_word_retry_failed(task_id, retry_entries, exc):
+    error_message = f"重试失败: {str(exc)}"
+    for entry in retry_entries:
+        _update_word_file_progress(
+            task_id,
+            {
+                "success": False,
+                "filename": entry.get("filename"),
+                "original_filename": entry.get("original_filename"),
+                "image_url": f"/uploads/{entry.get('filename')}",
+                "image_index": entry.get("image_index"),
+                "source_document": entry.get("source_document"),
+                "rows": [],
+                "total_rows": 0,
+                "processing_time": "",
+                "error": error_message,
+            },
+        )
+
+    task = _get_word_flowchart_task(task_id)
+    if not task:
+        return
+
+    batch_id = task.get("batch_id")
+    rows = task.get("results", {}).get("rows", [])
+    word_result = _build_word_flowchart_result(
+        batch_id=batch_id,
+        document=task.get("document", {}),
+        rows=rows,
+        files=task.get("files", []),
+        processing_time=_safe_float(task.get("results", {}).get("stats", {}).get("processing_time")),
+        processing_info={
+            "source_type": "word_docx",
+            "document_filename": task.get("document", {}).get("original_filename", ""),
+        },
+    )
+    result_files = _save_word_flowchart_result(word_result, batch_id) if batch_id else task.get("result_files", {})
+
+    _update_word_flowchart_task(
+        task_id,
+        status="completed",
+        message=f"{error_message}，原有成功结果已保留",
+        success=word_result["success"],
+        error=str(exc),
+        processed_images=word_result["stats"]["successful_images"] + word_result["stats"]["failed_images"],
+        selected_images=word_result["stats"]["selected_images"],
+        skipped_images=word_result["stats"]["skipped_images"],
+        successful_images=word_result["stats"]["successful_images"],
+        failed_images=word_result["stats"]["failed_images"],
+        total_rows=word_result["total_rows"],
+        files=word_result["files"],
+        result_files=result_files,
+        results={
+            "rows": word_result["rows"],
+            "total_rows": word_result["total_rows"],
+            "stats": word_result["stats"],
+        },
+    )
+
+
+def _build_word_flowchart_result(batch_id, document, rows, files, processing_time, processing_info=None):
+    document = document or {}
+    normalized_files = _sort_word_files(files or [])
+    normalized_rows = _sort_word_rows(rows or [])
+    successful_images = len([file_result for file_result in normalized_files if file_result.get("success")])
+    failed_images = len([file_result for file_result in normalized_files if file_result.get("success") is False])
+    skipped_images = len(
+        [
+            file_result
+            for file_result in normalized_files
+            if file_result.get("status") == "skipped" or file_result.get("selected") is False
+        ]
+    )
+    selected_images = max(len(normalized_files) - skipped_images, 0)
+    info = dict(processing_info or {})
+    info.setdefault("source_type", "word_docx")
+    info.setdefault("document_filename", document.get("original_filename", ""))
+
+    return {
+        "success": bool(successful_images),
+        "batch_id": batch_id,
+        "source_type": "word_docx",
+        "document": document,
+        "rows": normalized_rows,
+        "total_rows": len(normalized_rows),
+        "files": normalized_files,
+        "stats": {
+            "image_count": len(normalized_files),
+            "selected_images": selected_images,
+            "skipped_images": skipped_images,
+            "processed_images": successful_images + failed_images,
+            "successful_images": successful_images,
+            "failed_images": failed_images,
+            "total_rows": len(normalized_rows),
+            "processing_time": round(_safe_float(processing_time), 2),
+        },
+        "processing_info": info,
+    }
+
+
+def _save_word_flowchart_result(word_result, batch_id):
+    json_filename = f"result_word_flowchart_{batch_id}.json"
+    json_path = os.path.join(app.config["UPLOAD_FOLDER"], json_filename)
+    with open(json_path, "w", encoding="utf-8") as file_obj:
+        json.dump(word_result, file_obj, ensure_ascii=False, indent=2)
+
+    excel_filename = f"result_word_flowchart_{batch_id}.xlsx"
+    excel_path = os.path.join(app.config["UPLOAD_FOLDER"], excel_filename)
+    generate_word_flowchart_excel(word_result, excel_path)
+
+    return {"json": json_filename, "excel": excel_filename}
+
+
+def _merge_word_flowchart_rows(existing_rows, retry_rows, retry_entries):
+    retry_filenames = {entry.get("filename") for entry in retry_entries if entry.get("filename")}
+    retry_indices = {
+        _safe_int(entry.get("image_index"))
+        for entry in retry_entries
+        if _safe_int(entry.get("image_index")) is not None
+    }
+    kept_rows = []
+
+    for row in existing_rows or []:
+        row_filename = row.get("图片文件")
+        row_index = _safe_int(row.get("图片序号"))
+        if row_filename in retry_filenames:
+            continue
+        if row_index in retry_indices:
+            continue
+        kept_rows.append(row)
+
+    return _sort_word_rows(kept_rows + (retry_rows or []))
+
+
+def _build_pending_word_file(entry, selected=True):
+    return {
+        "image_index": entry.get("image_index"),
+        "filename": entry.get("filename"),
+        "original_filename": entry.get("original_filename"),
+        "image_url": f"/uploads/{entry.get('filename')}",
+        "source_document": entry.get("source_document"),
+        "status": "pending" if selected else "skipped",
+        "selected": bool(selected),
+        "success": None,
+        "total_rows": 0,
+        "processing_time": "",
+        "error": "",
+    }
+
+
+def _update_word_file_progress(task_id, file_result):
+    with WORD_FLOWCHART_TASK_LOCK:
+        task = WORD_FLOWCHART_TASKS.get(task_id)
+        if not task:
+            return
+
+        files = task.get("files", [])
+        target_file = None
+        for item in files:
+            if item.get("filename") == file_result.get("filename"):
+                target_file = item
+                break
+
+        if target_file is None:
+            target_file = _build_pending_word_file(file_result)
+            files.append(target_file)
+            task["files"] = files
+
+        success = bool(file_result.get("success"))
+        target_file.update(
+            {
+                "status": "success" if success else "failed",
+                "success": success,
+                "selected": True,
+                "total_rows": file_result.get("total_rows", 0),
+                "processing_time": file_result.get("processing_time", ""),
+                "error": "" if success else file_result.get("error", "识别失败"),
+            }
+        )
+
+        _sync_word_task_file_counts(task)
+        selected_total = task.get("selected_images") or task.get("total_images", 0)
+        task["message"] = f"正在识别：{task['processed_images']}/{selected_total}"
+        task["updated_at"] = datetime.now().isoformat()
+
+
+def _sync_word_task_file_counts(task):
+    files = task.get("files", [])
+    processed_files = [item for item in files if item.get("status") in {"success", "failed"}]
+    skipped_files = [item for item in files if item.get("status") == "skipped" or item.get("selected") is False]
+    selected_files = [
+        item
+        for item in files
+        if not (item.get("status") == "skipped" or item.get("selected") is False)
+    ]
+    task["selected_images"] = len(selected_files)
+    task["skipped_images"] = len(skipped_files)
+    task["processed_images"] = len(processed_files)
+    task["successful_images"] = len([item for item in processed_files if item.get("success")])
+    task["failed_images"] = len([item for item in processed_files if item.get("success") is False])
+    task["total_rows"] = sum(_safe_int(item.get("total_rows")) or 0 for item in processed_files)
+
+
+def _sort_word_files(files):
+    return sorted(
+        [dict(file_result) for file_result in files],
+        key=lambda file_result: (
+            _safe_int(file_result.get("image_index")) or 10**9,
+            str(file_result.get("original_filename") or file_result.get("filename") or ""),
+        ),
+    )
+
+
+def _sort_word_rows(rows):
+    indexed_rows = [(index, dict(row)) for index, row in enumerate(rows)]
+    indexed_rows.sort(
+        key=lambda item: (
+            _safe_int(item[1].get("图片序号")) or 10**9,
+            item[0],
+        )
+    )
+    return [row for _, row in indexed_rows]
+
+
+def _safe_int(value):
+    try:
+        if value in (None, ""):
+            return None
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_float(value):
+    try:
+        if value in (None, ""):
+            return 0.0
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _set_word_flowchart_task(task_id, task):
+    with WORD_FLOWCHART_TASK_LOCK:
+        WORD_FLOWCHART_TASKS[task_id] = task
+
+
+def _update_word_flowchart_task(task_id, **updates):
+    with WORD_FLOWCHART_TASK_LOCK:
+        task = WORD_FLOWCHART_TASKS.get(task_id)
+        if not task:
+            return
+        task.update(updates)
+        task["updated_at"] = datetime.now().isoformat()
+
+
+def _get_word_flowchart_task(task_id):
+    with WORD_FLOWCHART_TASK_LOCK:
+        task = WORD_FLOWCHART_TASKS.get(task_id)
+        return copy.deepcopy(task) if task else None
 
 
 def process_image_file(filename, filepath, data):

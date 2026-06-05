@@ -6439,3 +6439,322 @@ textarea:focus,
         max-height: 460px;
     }
 }
+
+/* Word流程图批量识别 */
+.main-content-area .word-sample-section .sample-label {
+    margin-bottom: 8px;
+}
+
+.main-content-area .word-sample-card {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px 10px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: #ffffff;
+    color: var(--admin-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+.main-content-area .word-sample-card i {
+    grid-row: span 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    background: var(--admin-primary-soft);
+    color: var(--admin-primary);
+    font-size: 18px;
+}
+
+.main-content-area .word-sample-card span {
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.main-content-area .word-sample-card em {
+    overflow: hidden;
+    color: var(--admin-muted);
+    font-style: normal;
+    font-size: 12px;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.main-content-area .word-sample-card:hover,
+.main-content-area .word-sample-card.selected {
+    border-color: var(--admin-primary);
+    background: var(--admin-primary-soft);
+}
+
+.main-content-area .word-doc-card {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #ffffff;
+}
+
+.main-content-area .word-doc-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--admin-border);
+    border-radius: 6px;
+    background: var(--admin-surface-soft);
+    color: var(--admin-primary);
+    font-size: 20px;
+}
+
+.main-content-area .word-doc-info {
+    min-width: 0;
+}
+
+.main-content-area .word-doc-name {
+    overflow: hidden;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.main-content-area .word-doc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 5px;
+    color: var(--admin-muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.main-content-area .word-doc-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.main-content-area .word-flowchart-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.main-content-area .word-step-actions .btn-detect {
+    width: auto;
+    flex: 1 1 0;
+}
+
+.main-content-area .word-result-pane {
+    display: none;
+}
+
+.main-content-area .word-result-pane.active {
+    display: block;
+}
+
+.main-content-area .word-status-table-container,
+.main-content-area .word-result-table-container {
+    min-height: 500px;
+    max-height: 560px;
+    overflow: auto;
+    background: #ffffff;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+}
+
+.main-content-area .word-status-table {
+    display: table;
+    width: 100%;
+    min-width: 960px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: none;
+}
+
+.main-content-area .word-status-table thead {
+    display: table-header-group;
+}
+
+.main-content-area .word-status-table tbody {
+    display: table-row-group;
+    max-height: none;
+    overflow: visible;
+}
+
+.main-content-area .word-status-table tbody tr {
+    display: table-row;
+    width: auto;
+    table-layout: auto;
+}
+
+.main-content-area .word-status-table th,
+.main-content-area .word-status-table td {
+    padding: 10px 12px;
+    border: 1px solid #98a2b3;
+    font-size: 12px;
+    line-height: 1.5;
+    vertical-align: middle;
+    word-break: break-word;
+}
+
+.main-content-area .word-status-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--admin-surface-soft);
+    color: var(--admin-text);
+    font-weight: 700;
+    text-align: center;
+}
+
+.main-content-area .word-status-table td {
+    background: #ffffff;
+    color: var(--admin-text-secondary);
+    text-align: center;
+}
+
+.main-content-area .word-status-table .status-source-cell,
+.main-content-area .word-status-table .status-error-cell {
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.main-content-area .word-status-table .col-select {
+    width: 6%;
+}
+
+.main-content-area .word-status-table .col-index {
+    width: 9%;
+}
+
+.main-content-area .word-status-table .col-source {
+    width: 21%;
+}
+
+.main-content-area .word-status-table .col-status {
+    width: 12%;
+}
+
+.main-content-area .word-status-table .col-count {
+    width: 12%;
+}
+
+.main-content-area .word-status-table .col-time {
+    width: 12%;
+}
+
+.main-content-area .word-status-table .col-error {
+    width: 28%;
+}
+
+.main-content-area .word-status-table .status-select-cell {
+    text-align: center;
+}
+
+.main-content-area .word-file-checkbox {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--admin-primary);
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.main-content-area .word-file-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.main-content-area .word-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.main-content-area .word-status-badge.pending {
+    background: #f2f4f7;
+    color: #667085;
+}
+
+.main-content-area .word-status-badge.running {
+    background: #fff4d6;
+    color: #946200;
+}
+
+.main-content-area .word-status-badge.success {
+    background: #e7f4ed;
+    color: #12805c;
+}
+
+.main-content-area .word-status-badge.failed {
+    background: #fce8e8;
+    color: #b42346;
+}
+
+.main-content-area .word-status-badge.skipped {
+    background: #f2f4f7;
+    color: #667085;
+}
+
+.main-content-area .word-result-table {
+    min-width: 1160px;
+}
+
+.main-content-area .word-result-table th:nth-child(-n + 6) {
+    background: #d9d9d9;
+    color: var(--admin-text);
+}
+
+.main-content-area .word-result-table th:nth-child(n + 7) {
+    background: #1f4e79;
+    color: #ffffff;
+}
+
+.main-content-area .word-result-table .col-image-index {
+    width: 8%;
+}
+
+.main-content-area .word-result-table .col-source-image {
+    width: 13%;
+}
+
+.main-content-area .word-source-image-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .main-content-area .word-status-table-container,
+    .main-content-area .word-result-table-container {
+        min-height: 360px;
+        max-height: 460px;
+    }
+
+    .main-content-area .word-flowchart-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
