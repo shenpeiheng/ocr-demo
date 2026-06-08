@@ -262,8 +262,9 @@ body {
 }
 
 .menu-sub-item .menu-text {
-    font-size: 0.85rem;
+    font-size: 11px;
     font-weight: 400;
+    color: #606266;
 }
 
 .menu-sub-item.active .menu-text {
@@ -3816,7 +3817,6 @@ body {
 }
 
 .sidebar .menu-item.active,
-.sidebar .menu-group-header.expanded,
 .sidebar .menu-group-header.has-active {
     color: var(--admin-primary);
     background: var(--admin-primary-soft);
@@ -3845,7 +3845,8 @@ body {
 .sidebar .menu-text,
 .sidebar .menu-group-title {
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.3px;
 }
 
 .sidebar .menu-sub-items {
@@ -6760,10 +6761,10 @@ textarea:focus,
 }
 
 /* ========================================
-   ¿ÉÊÓ»¯Í¼Æ¬ÇøÓòÑùÊ½ - Í³Ò» index.html ºÍ image_ocr.html
+   ï¿½ï¿½ï¿½Ó»ï¿½Í¼Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ - Í³Ò» index.html ï¿½ï¿½ image_ocr.html
    ======================================== */
 
-/* ¿ÉÊÓ»¯½á¹ûÈÝÆ÷ */
+/* ï¿½ï¿½ï¿½Ó»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 .visualization-result-container {
     width: 100%;
     min-height: 400px;
@@ -6777,7 +6778,7 @@ textarea:focus,
     overflow: hidden;
 }
 
-/* ¿ÉÊÓ»¯Í¼Æ¬°ü×°Æ÷ */
+/* ï¿½ï¿½ï¿½Ó»ï¿½Í¼Æ¬ï¿½ï¿½×°ï¿½ï¿½ */
 .visualization-image-wrapper {
     position: relative;
     max-width: 100%;
@@ -6788,7 +6789,7 @@ textarea:focus,
     cursor: pointer;
 }
 
-/* ¿ÉÊÓ»¯Í¼Æ¬ */
+/* ï¿½ï¿½ï¿½Ó»ï¿½Í¼Æ¬ */
 .visualization-image {
     max-width: 100%;
     max-height: 550px;
@@ -6805,7 +6806,7 @@ textarea:focus,
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* ¿ÉÊÓ»¯Í¼Æ¬ÌáÊ¾ */
+/* ï¿½ï¿½ï¿½Ó»ï¿½Í¼Æ¬ï¿½ï¿½Ê¾ */
 .visualization-image-hint {
     margin-top: 12px;
     display: flex;
@@ -6826,7 +6827,7 @@ textarea:focus,
     font-size: 14px;
 }
 
-/* ¿ÉÊÓ»¯Õ¼Î»·û */
+/* ï¿½ï¿½ï¿½Ó»ï¿½Õ¼Î»ï¿½ï¿½ */
 .visualization-placeholder {
     display: flex;
     flex-direction: column;
@@ -6848,7 +6849,7 @@ textarea:focus,
     color: #7f8c8d;
 }
 
-/* ÏìÓ¦Ê½µ÷Õû */
+/* ï¿½ï¿½Ó¦Ê½ï¿½ï¿½ï¿½ï¿½ */
 @media (max-width: 768px) {
     .visualization-result-container {
         min-height: 300px;

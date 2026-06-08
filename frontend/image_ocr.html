@@ -79,40 +79,19 @@
                                 <span class="loading-text">正在调用模型进行多场景OCR检测...</span>
                             </div>
 
-                            <div class="ocr-stats-card" id="ocrStatsCard" style="display: none;">
-                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
-                                <div class="results-summary">
-                                    <div class="summary-card">
-                                        <div class="summary-card-icon">
-                                            <i class="fas fa-file-code"></i> JSON长度
-                                        </div>
-                                        <div class="summary-card-content">
-                                            <div class="summary-card-value" id="customJsonLength">0</div>
-                                        </div>
-                                    </div>
-                                    <div class="summary-card">
-                                        <div class="summary-card-icon">
-                                            <i class="fas fa-font"></i> 原文长度
-                                        </div>
-                                        <div class="summary-card-content">
-                                            <div class="summary-card-value" id="customRawLength">0</div>
-                                        </div>
-                                    </div>
-                                    <div class="summary-card">
-                                        <div class="summary-card-icon">
-                                            <i class="fas fa-stopwatch"></i> 处理时间
-                                        </div>
-                                        <div class="summary-card-content">
-                                            <div class="summary-card-value" id="customProcessingTime">0s</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             <!-- 示例图片选择 -->
                             <div class="sample-images-section" id="sampleImagesSection">
                                 <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
                                 <div class="sample-grid" id="sampleGrid">
                                     <!-- 由 JS 动态生成 -->
+                                </div>
+                            </div>
+
+                            <!-- 动态检测统计 -->
+                            <div class="ocr-stats-card" id="ocrStatsCard" style="display: none;">
+                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
+                                <div class="results-summary" id="dynamicStatsContainer">
+                                    <!-- 动态生成的统计卡片将插入这里 -->
                                 </div>
                             </div>
                         </div>
@@ -196,7 +175,7 @@
                                 <button class="preset-btn active" data-image="static/images/demo/4.png|static/images/demo/26.jpg|static/images/demo/27.png|static/images/demo/29.png" data-prompt-key="mechanical">
                                     <i class="fas fa-image"></i> 工业图纸
                                 </button>
-                                <button class="preset-btn" data-image="static/images/demo/6.png|static/images/demo/28.jpeg" data-prompt-key="document">
+                                <button class="preset-btn" data-image="static/images/demo/6.png|static/images/demo/6-2.png|static/images/demo/28.jpeg" data-prompt-key="document">
                                     <i class="fas fa-id-card"></i> 证件识别
                                 </button>
                                 <button class="preset-btn" data-image="static/images/demo/5.png|static/images/demo/35.png|static/images/demo/36.png" data-prompt-key="ticket">
@@ -309,6 +288,100 @@
     <script src="static/js/layout.js"></script>
     <script src="static/js/main.js"></script>
     <script>
+        // 每个场景的动态统计配置
+        const SCENE_STATS_CONFIG = {
+            mechanical: [
+                { icon: 'fas fa-ruler-combined', label: '尺寸标注', key: 'dimensions', color: '#3498db' },
+                { icon: 'fas fa-shapes', label: '形位公差', key: 'tolerances', color: '#e74c3c' },
+                { icon: 'fas fa-list-ol', label: '识别项数', key: 'total_items', color: '#2ecc71' },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            document: [
+                { icon: 'fas fa-id-card', label: '证件类型', key: 'document_type', color: '#3498db', isText: true },
+                { icon: 'fas fa-user', label: '姓名识别', key: 'has_name', color: '#2ecc71', isBool: true },
+                { icon: 'fas fa-fingerprint', label: '证件号码', key: 'has_id_number', color: '#e74c3c', isBool: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            ticket: [
+                { icon: 'fas fa-ticket-alt', label: '票据类型', key: 'ticket_type', color: '#3498db', isText: true },
+                { icon: 'fas fa-route', label: '出发站', key: 'departure', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-flag-checkered', label: '到达站', key: 'arrival', color: '#e74c3c', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            invoice: [
+                { icon: 'fas fa-file-invoice', label: '发票类型', key: 'invoice_type', color: '#3498db', isText: true },
+                { icon: 'fas fa-dollar-sign', label: '合计金额', key: 'total_amount', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-percentage', label: '合计税额', key: 'total_tax', color: '#e74c3c', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            gas_meter: [
+                { icon: 'fas fa-tachometer-alt', label: '当前读数', key: 'main_reading', color: '#3498db', isText: true },
+                { icon: 'fas fa-ruler', label: '单位', key: 'unit', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-industry', label: '品牌', key: 'brand', color: '#9b59b6', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            dial_gauge: [
+                { icon: 'fas fa-compass', label: '仪表类型', key: 'device_type', color: '#3498db', isText: true },
+                { icon: 'fas fa-arrow-circle-right', label: '指针读数', key: 'pointer_reading', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-ruler-horizontal', label: '量程', key: 'range', color: '#e74c3c', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            digital_meter: [
+                { icon: 'fas fa-digital-tachograph', label: '设备类型', key: 'device_type', color: '#3498db', isText: true },
+                { icon: 'fas fa-calculator', label: '主读数', key: 'main_reading', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-ruler', label: '单位', key: 'unit', color: '#9b59b6', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            safety_helmet: [
+                { icon: 'fas fa-users', label: '总人数', key: 'total_person_count', color: '#3498db' },
+                { icon: 'fas fa-exclamation-triangle', label: '未佩戴', key: 'safety_violation_count', color: '#e74c3c' },
+                { icon: 'fas fa-check-circle', label: '合规状态', key: 'compliance_status', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            wire_rope: [
+                { icon: 'fas fa-bug', label: '缺陷数量', key: 'defect_count', color: '#e74c3c' },
+                { icon: 'fas fa-exclamation-circle', label: '严重缺陷', key: 'critical_defects', color: '#c0392b' },
+                { icon: 'fas fa-shield-alt', label: '安全状态', key: 'overall_status', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            thread_seal: [
+                { icon: 'fas fa-tape', label: '缠绕质量', key: 'tape_quality', color: '#3498db', isText: true },
+                { icon: 'fas fa-grip-lines', label: '外露丝扣', key: 'exposed_threads', color: '#e74c3c', isText: true },
+                { icon: 'fas fa-check-circle', label: '综合判定', key: 'overall_result', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            ppe: [
+                { icon: 'fas fa-users', label: '人员数量', key: 'person_count', color: '#3498db' },
+                { icon: 'fas fa-hard-hat', label: '检测装备', key: 'detected_ppe_count', color: '#2ecc71' },
+                { icon: 'fas fa-exclamation-triangle', label: '缺失装备', key: 'missing_ppe_count', color: '#e74c3c' },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            hot_work_ppe: [
+                { icon: 'fas fa-fire-extinguisher', label: '防火服', key: 'fireproof_clothing', color: '#e74c3c', isText: true },
+                { icon: 'fas fa-glasses', label: '防护面罩', key: 'face_shield', color: '#3498db', isText: true },
+                { icon: 'fas fa-check-circle', label: '综合判定', key: 'overall_result', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            cable: [
+                { icon: 'fas fa-bolt', label: '绝缘状态', key: 'insulation_status', color: '#3498db', isText: true },
+                { icon: 'fas fa-bug', label: '缺陷数量', key: 'defect_count', color: '#e74c3c' },
+                { icon: 'fas fa-shield-alt', label: '综合判定', key: 'overall_result', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ],
+            object_count: [
+                { icon: 'fas fa-boxes', label: '总物品数', key: 'total_count', color: '#3498db' },
+                { icon: 'fas fa-layer-group', label: '物品类别', key: 'category_count', color: '#2ecc71' },
+                { icon: 'fas fa-question-circle', label: '不确定项', key: 'uncertain_count', color: '#f39c12' },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#95a5a6' }
+            ],
+            rust_removal: [
+                { icon: 'fas fa-tools', label: '除锈等级', key: 'rust_removal_grade', color: '#3498db', isText: true },
+                { icon: 'fas fa-percentage', label: '清理面积', key: 'cleaned_area_ratio', color: '#2ecc71', isText: true },
+                { icon: 'fas fa-check-circle', label: '综合判定', key: 'overall_result', color: '#e74c3c', isText: true },
+                { icon: 'fas fa-stopwatch', label: '处理时间', key: 'processing_time', color: '#f39c12' }
+            ]
+        };
+
         const COORDINATE_OUTPUT_RULES = [
             '输出规则（必须严格遵守）：',
             '1. 如需列出识别项，先输出 Markdown 表格，表头固定为：| 序号 | 内容 | 类型 | 区域 | 坐标 |。',
@@ -647,6 +720,153 @@
             }
         }
 
+        // 更新动态统计卡片
+        function updateDynamicStats(data, processingTimeMs) {
+            const container = document.getElementById('dynamicStatsContainer');
+            if (!container) return;
+
+            // 获取当前激活的场景
+            const activeBtn = document.querySelector('.preset-btn.active');
+            const sceneKey = activeBtn ? activeBtn.getAttribute('data-prompt-key') : 'mechanical';
+
+            // 获取该场景的统计配置
+            const statsConfig = SCENE_STATS_CONFIG[sceneKey] || SCENE_STATS_CONFIG.mechanical;
+
+            // 从API返回的数据中提取信息
+            const results = data.results || {};
+            const rawText = data.raw_text || '';
+            const textItems = results.text_items || [];
+            const imageInfo = results.image_info || {};
+
+            // 解析JSON结果以提取结构化数据
+            let parsedData = {};
+            try {
+                // 尝试从raw_text中提取JSON对象（大模型可能在文本中返回JSON）
+                const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    parsedData = JSON.parse(jsonMatch[0]);
+                }
+            } catch (e) {
+                console.warn('无法解析JSON数据:', e);
+            }
+
+            // 清空容器
+            container.innerHTML = '';
+
+            // 根据配置生成统计卡片
+            statsConfig.forEach(function(stat) {
+                let value = '';
+
+                if (stat.key === 'processing_time') {
+                    // 处理时间
+                    value = (processingTimeMs / 1000).toFixed(2) + 's';
+                } else if (stat.key === 'total_items') {
+                    // 识别项数 - 从text_items数组长度获取
+                    value = textItems.length || 0;
+                } else if (stat.key === 'dimensions') {
+                    // 尺寸标注数量 - 从text_items中筛选type为"尺寸标注"的
+                    value = textItems.filter(item =>
+                        (item.type || '').includes('尺寸') ||
+                        (item.text || '').match(/\d+(\.\d+)?/)
+                    ).length;
+                } else if (stat.key === 'tolerances') {
+                    // 形位公差数量 - 从text_items中筛选
+                    value = textItems.filter(item =>
+                        (item.type || '').includes('公差') ||
+                        (item.type || '').includes('形位')
+                    ).length;
+                } else if (stat.key === 'defect_count') {
+                    // 缺陷数量 - 从text_items或raw_text中统计
+                    const defectItems = textItems.filter(item =>
+                        (item.type || '').match(/缺陷|断丝|磨损|变形|锈蚀|破损|裂纹/i)
+                    );
+                    value = defectItems.length || (rawText.match(/缺陷|断丝|磨损|变形|锈蚀|破损|裂纹/gi) || []).length;
+                } else if (stat.key === 'critical_defects') {
+                    // 严重缺陷
+                    const criticalItems = textItems.filter(item =>
+                        (item.type || '').match(/严重|危险|critical/i)
+                    );
+                    value = criticalItems.length || (rawText.match(/严重|危险|critical/gi) || []).length;
+                } else if (stat.key === 'total_person_count') {
+                    // 总人数 - 从parsedData中获取
+                    value = parsedData.total_person_count || parsedData.person_count ||
+                            (rawText.match(/总人数[：:]\s*(\d+)/i) || [])[1] || 0;
+                } else if (stat.key === 'safety_violation_count') {
+                    // 未佩戴人数
+                    value = parsedData.safety_violation_count ||
+                            (rawText.match(/未佩戴[：:]\s*(\d+)/i) || [])[1] || 0;
+                } else if (stat.key === 'detected_ppe_count') {
+                    // 检测到的PPE装备数量
+                    const ppeItems = textItems.filter(item =>
+                        (item.type || '').match(/安全帽|安全带|防护服|手套|护目镜|防滑鞋/i)
+                    );
+                    value = ppeItems.length;
+                } else if (stat.key === 'missing_ppe_count') {
+                    // 缺失装备数量
+                    value = parsedData.missing_ppe ? (Array.isArray(parsedData.missing_ppe) ? parsedData.missing_ppe.length : 0) : 0;
+                } else if (stat.key === 'category_count') {
+                    // 物品类别数量
+                    value = parsedData.category_counts ? Object.keys(parsedData.category_counts).length : 0;
+                } else if (stat.key === 'uncertain_count') {
+                    // 不确定项数量
+                    value = parsedData.uncertain_items ? (Array.isArray(parsedData.uncertain_items) ? parsedData.uncertain_items.length : 0) : 0;
+                } else if (stat.key === 'total_count') {
+                    // 总物品数
+                    value = parsedData.total_count || textItems.length || 0;
+                } else if (stat.isBool) {
+                    // 布尔类型 - 检查是否存在
+                    let fieldValue = parsedData[stat.key];
+                    // 对于特殊的布尔字段，从text_items中判断
+                    if (stat.key === 'has_name') {
+                        fieldValue = parsedData.name !== undefined && parsedData.name !== null && parsedData.name !== '';
+                    } else if (stat.key === 'has_id_number') {
+                        fieldValue = parsedData.id_number !== undefined && parsedData.id_number !== null && parsedData.id_number !== '';
+                    }
+                    value = fieldValue ? '是' : '否';
+                } else if (stat.isText) {
+                    // 文本类型 - 直接从解析的数据中获取
+                    let fieldValue = parsedData[stat.key];
+
+                    // 特殊处理某些字段
+                    if (!fieldValue && stat.key === 'departure') {
+                        fieldValue = parsedData.departure_station;
+                    } else if (!fieldValue && stat.key === 'arrival') {
+                        fieldValue = parsedData.arrival_station;
+                    } else if (!fieldValue && stat.key === 'tape_quality') {
+                        fieldValue = parsedData.tape_wrapping_quality;
+                    } else if (!fieldValue && stat.key === 'exposed_threads') {
+                        fieldValue = parsedData.exposed_thread_count;
+                    } else if (!fieldValue && stat.key === 'face_shield') {
+                        fieldValue = parsedData.face_shield_or_goggles;
+                    }
+
+                    if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+                        value = String(fieldValue).substring(0, 20); // 限制长度
+                        if (String(fieldValue).length > 20) value += '...';
+                    } else {
+                        value = '-';
+                    }
+                } else {
+                    // 数值类型 - 从parsedData中获取
+                    const fieldValue = parsedData[stat.key];
+                    value = (fieldValue !== undefined && fieldValue !== null) ? fieldValue : 0;
+                }
+
+                // 创建统计卡片
+                const card = document.createElement('div');
+                card.className = 'summary-card';
+                card.innerHTML = `
+                    <div class="summary-card-icon" style="color: ${stat.color};">
+                        <i class="${stat.icon}"></i> ${stat.label}
+                    </div>
+                    <div class="summary-card-content">
+                        <div class="summary-card-value">${value}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
         // 调用后端自定义提示词接口，处理并显示结果
         async function processWithPrompt(prompt) {
             const outputContent = document.getElementById('outputContent');
@@ -656,9 +876,6 @@
             const processBtn = document.getElementById('imageOcrProcessBtn');
             const loadingIndicator = document.getElementById('ocrLoadingIndicator');
             const statsCard = document.getElementById('ocrStatsCard');
-            const customJsonLength = document.getElementById('customJsonLength');
-            const customRawLength = document.getElementById('customRawLength');
-            const customProcessingTime = document.getElementById('customProcessingTime');
             const startTime = Date.now();
             
             if (!prompt) {
@@ -746,9 +963,9 @@
                 // 保存 raw_text 和 json_result 供切换使用
                 window._lastRawText = data.raw_text || '';
                 window._lastJsonResult = data.json_result || '';
-                if (customJsonLength) customJsonLength.textContent = String(window._lastJsonResult.length);
-                if (customRawLength) customRawLength.textContent = String(window._lastRawText.length);
-                if (customProcessingTime) customProcessingTime.textContent = ((Date.now() - startTime) / 1000).toFixed(2) + 's';
+
+                // 更新动态统计
+                updateDynamicStats(data, Date.now() - startTime);
                 if (statsCard) statsCard.style.display = 'block';
                 
                 // 判断是否有结果图片和JSON数据

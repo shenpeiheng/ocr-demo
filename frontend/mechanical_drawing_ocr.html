@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <!-- 公共头部（由 layout.js 动态加载） -->
+        <div id="header-placeholder"></div>
+
+        <!-- 主体布局 -->
+        <div class="main-layout">
+            <!-- 公共侧边栏（由 layout.js 动态加载） -->
+            <div id="sidebar-placeholder"></div>
+
+            <!-- 主要内容区域 -->
+            <main class="main-content-area">
+                <div class="content-grid">
+                    <!-- 左侧列：上传和检测入口 -->
+                    <div class="left-column">
+                        <!-- 上传区域 -->
+                        <div class="upload-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-cloud-upload-alt"></i> 图片上传</h2>
+                                <!--
+                                <div class="section-badge">
+                                    <i class="fas fa-info-circle"></i> 支持多种格式
+                                </div>
+                                -->
+                            </div>
+                            
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-area-content">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <p class="upload-text">拖放图片文件或点击选择</p>
+                                    <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF 格式</p>
+                                </div>
+                                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.gif" hidden>
+                                <button class="btn btn-primary upload-btn" id="selectFileBtn">
+                                    <i class="fas fa-folder-open"></i> 选择文件
+                                </button>
+                            </div>
+                            
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="file-info-content">
+                                    <div class="file-preview">
+                                        <img id="imagePreview" src="" alt="图片预览">
+                                    </div>
+                                    <div class="file-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">文件名:</span>
+                                            <span class="detail-value" id="fileName">-</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">文件大小:</span>
+                                            <span class="detail-value" id="fileSize">-</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">图片尺寸:</span>
+                                            <span class="detail-value" id="imageDimensions">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="upload-actions">
+                                <button class="btn btn-detect action-btn" id="processBtn" disabled>
+                                    <i class="fas fa-search"></i> 开始检测
+                                </button>
+                            </div>
+
+                            <div class="ocr-loading" id="ocrLoadingIndicator">
+                                <div class="spinner"></div>
+                                <span class="loading-text">正在调用模型进行OCR检测...</span>
+                            </div>
+
+                            <div class="ocr-stats-card" id="ocrStatsCard" style="display: none;">
+                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
+                                <div class="results-summary" id="resultsSummary">
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-list-ol"></i> 识别项数
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="totalItems">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-percentage"></i> 平均置信度
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="avgConfidence">0%</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-ruler-combined"></i> 尺寸标注
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="dimensionCount">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card">
+                                        <div class="summary-card-icon">
+                                            <i class="fas fa-stopwatch"></i> 处理时间
+                                        </div>
+                                        <div class="summary-card-content">
+                                            <div class="summary-card-value" id="processingTime">0s</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sample-images-section" id="sampleImagesSection">
+                                <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
+                                <div class="sample-grid" id="sampleGrid">
+                                    <!-- 由 JS 动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- OCR引擎选择区域 -->
+                        <div class="engine-section card" id="engineSection" style="display: none;">
+                            <div class="section-header">
+                                <h2><i class="fas fa-microchip"></i> OCR引擎选择</h2>
+                            </div>
+                            
+                            <div class="engine-options">
+                                <div class="engine-option active" data-engine="auto">
+                                    <div class="engine-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="engine-info">
+                                        <div class="engine-name">自动选择</div>
+                                        <div class="engine-desc">根据环境配置自动选择最佳引擎</div>
+                                    </div>
+                                    <div class="engine-badge">推荐</div>
+                                </div>
+                                <div class="engine-option" data-engine="openai_vl">
+                                    <div class="engine-icon">
+                                        <i class="fas fa-brain"></i>
+                                    </div>
+                                    <div class="engine-info">
+                                        <div class="engine-name">OpenAI VL</div>
+                                        <div class="engine-desc">使用视觉语言模型，适合机械图纸</div>
+                                    </div>
+                                    <div class="engine-badge new">AI</div>
+                                </div>
+                                <div class="engine-option" data-engine="paddleocr">
+                                    <div class="engine-icon">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <div class="engine-info">
+                                        <div class="engine-name">PaddleOCR</div>
+                                        <div class="engine-desc">传统OCR引擎，速度快精度高</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 提示词选项（仅OpenAI VL显示） -->
+                            <div class="prompt-options" id="promptOptions" style="display: none;">
+                                <div class="option-group">
+                                    <label class="option-label">提示词模板:</label>
+                                    <select class="option-select" id="promptSelect">
+                                        <option value="mechanical_drawing_standard">机械图纸标准识别</option>
+                                        <option value="mechanical_drawing_detailed">机械图纸详细识别</option>
+                                        <option value="dimension_extraction">尺寸标注提取</option>
+                                        <option value="title_block_extraction">标题栏信息提取</option>
+                                        <option value="technical_requirements">技术要求提取</option>
+                                    </select>
+                                </div>
+                                <div class="option-group">
+                                    <label class="option-label">
+                                        <input type="checkbox" id="useCustomPrompt" class="option-checkbox">
+                                        使用自定义提示词
+                                    </label>
+                                    <textarea id="customPrompt" class="custom-prompt-textarea" placeholder="在此输入自定义提示词..." disabled></textarea>
+                                </div>
+                                <div class="option-group">
+                                    <label class="option-label">
+                                        <input type="checkbox" id="includeRawResponse" class="option-checkbox">
+                                        包含原始API响应
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 右侧列：结果展示 -->
+                    <div class="right-column">
+                        <div class="results-section card">
+                            <div class="section-header">
+                                <h2><i class="fas fa-chart-bar"></i> 识别结果</h2>
+                                <div class="export-buttons">
+                                    <button class="btn btn-export" id="exportExcelBtn" disabled>
+                                        <i class="fas fa-file-excel"></i> 下载Excel
+                                    </button>
+                                    <button class="btn btn-export" id="exportJsonBtn" disabled>
+                                        <i class="fas fa-file-code"></i> 下载JSON
+                                    </button>
+                                    <!--<button class="btn btn-export" id="exportImageBtn" disabled>
+                                        <i class="fas fa-file-image"></i> 下载图像
+                                    </button>-->
+                                </div>
+                            </div>
+                            
+                            <div class="filter-controls">
+                                <div class="filter-title">
+                                    <i class="fas fa-filter"></i> 结果过滤
+                                </div>
+                                <div class="filter-options">
+                                    <div class="filter-option">
+                                        <label class="switch">
+                                            <input type="checkbox" id="filterChineseToggle" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="filter-label">屏蔽中文内容</span>
+                                        <span class="filter-badge" id="chineseFilterCount">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="results-tabs">
+                                <div class="tab-buttons">
+                                    <button class="tab-btn" data-tab="textResults" style="display: none;">
+                                        <i class="fas fa-font"></i> 文本内容
+                                    </button>
+                                    <button class="tab-btn active" data-tab="coordinateResults">
+                                        <i class="fas fa-map-marker-alt"></i> 文本信息
+                                    </button>
+                                    <button class="tab-btn" data-tab="visualization">
+                                        <i class="fas fa-eye"></i> 可视化
+                                    </button>
+                                </div>
+
+                                <div class="tab-content">
+                                    <!-- 文本内容标签页 -->
+                                    <div class="tab-pane" id="textResults">
+                                        <div class="table-container">
+                                            <table class="results-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>序号</th>
+                                                        <th>文本内容</th>
+                                                        <th>置信度</th>
+                                                        <th>类型</th>
+                                                        <th>操作</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="textResultsBody">
+                                                    <tr>
+                                                        <td colspan="5" class="empty-message">暂无识别结果</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 坐标信息标签页 -->
+                                    <div class="tab-pane active" id="coordinateResults">
+                                        <div class="table-container">
+                                            <table class="results-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>序号</th>
+                                                        <th>坐标X</th>
+                                                        <th>坐标Y</th>
+                                                        <th>宽度</th>
+                                                        <th>高度</th>
+                                                        <th>内容</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="coordinateResultsBody">
+                                                    <tr>
+                                                        <td colspan="6" class="empty-message">暂无坐标信息</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- 可视化标签页 -->
+                                    <div class="tab-pane" id="visualization">
+                                        <div class="visualization-result-container" id="visualizationResultContainer" style="display: none;">
+                                            <div class="visualization-image-wrapper">
+                                                <img id="visualizationResultImage" src="" alt="标注结果" class="visualization-image" onclick="openFullscreenViewer(this.src)">
+                                                <div class="visualization-image-hint">
+                                                    <i class="fas fa-search-plus"></i>
+                                                    <span>点击图片可放大查看</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="visualization-placeholder" id="visualizationPlaceholder">
+                                            <i class="fas fa-image"></i>
+                                            <p>识别完成后，这里将显示标注结果图</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 公共底部（由 layout.js 动态加载） -->
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <!-- JavaScript文件 -->
+    <script src="static/js/layout.js"></script>
+    <script src="static/js/main.js"></script>
+    <script>
+        const indexSampleImages = [
+            'static/images/demo/4.png',
+            'static/images/demo/26.jpg',
+            'static/images/demo/27.png',
+            'static/images/demo/29.png'
+        ];
+
+        function getImageMimeType(fileName) {
+            const lowerName = fileName.toLowerCase();
+            if (lowerName.endsWith('.png')) return 'image/png';
+            if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) return 'image/jpeg';
+            if (lowerName.endsWith('.bmp')) return 'image/bmp';
+            if (lowerName.endsWith('.gif')) return 'image/gif';
+            return 'image/png';
+        }
+
+        async function loadIndexSampleImage(imagePath) {
+            try {
+                const response = await fetch(imagePath);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const blob = await response.blob();
+                const fileName = imagePath.split('/').pop();
+                const file = new File([blob], fileName, { type: getImageMimeType(fileName) });
+                if (typeof previewFile === 'function') {
+                    previewFile(file);
+                }
+            } catch (err) {
+                console.warn('加载示例图片失败:', imagePath, err);
+            }
+        }
+
+        function renderIndexSampleImages() {
+            const grid = document.getElementById('sampleGrid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            indexSampleImages.forEach(function(path, index) {
+                const fileName = path.split('/').pop();
+                const item = document.createElement('div');
+                item.className = 'sample-item' + (index === 0 ? ' selected' : '');
+                item.innerHTML = '<img src="' + path + '" alt="' + fileName + '" loading="lazy">' +
+                    '<span>' + fileName + '</span>';
+                item.addEventListener('click', function() {
+                    grid.querySelectorAll('.sample-item').forEach(function(sampleItem) {
+                        sampleItem.classList.remove('selected');
+                    });
+                    item.classList.add('selected');
+                    loadIndexSampleImage(path);
+                });
+                grid.appendChild(item);
+            });
+        }
+
+        // 页面加载后自动加载默认示例图片
+        document.addEventListener('DOMContentLoaded', function() {
+            renderIndexSampleImages();
+            setTimeout(async function() {
+                loadIndexSampleImage(indexSampleImages[0]);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -3,305 +3,816 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赛意AI</title>
+    <title>赛意AI - 智能视觉识别平台</title>
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="static/css/all.min.css">
     <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .home-page .content-grid {
+            display: block;
+            padding: 0;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* AI科技感背景 */
+        .home-page::before {
+            content: '';
+            position: fixed;
+            top: 60px;
+            left: 240px;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(173, 6, 62, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(227, 111, 30, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(173, 6, 62, 0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+            animation: bgPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* 动态网格线 */
+        .tech-grid {
+            position: fixed;
+            top: 60px;
+            left: 240px;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(173, 6, 62, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(173, 6, 62, 0.08) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            opacity: 0.8;
+            animation: gridMove 25s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(60px, 60px);
+            }
+        }
+
+        /* 浮动粒子效果 */
+        .particle {
+            position: fixed;
+            background: radial-gradient(circle, rgba(173, 6, 62, 1), rgba(173, 6, 62, 0.3));
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            animation: float linear infinite;
+            z-index: 0;
+            box-shadow: 0 0 20px rgba(173, 6, 62, 0.8), 0 0 40px rgba(173, 6, 62, 0.4);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.8;
+            }
+            95% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-20vh) scale(1.5) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* AI扫描线效果 */
+        .scan-line {
+            position: fixed;
+            left: 240px;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(173, 6, 62, 0.8) 30%,
+                rgba(173, 6, 62, 1) 50%,
+                rgba(173, 6, 62, 0.8) 70%,
+                transparent);
+            box-shadow: 0 0 20px rgba(173, 6, 62, 0.8);
+            pointer-events: none;
+            z-index: 0;
+            animation: scan 4s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes scan {
+            0%, 100% {
+                top: 60px;
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            50% {
+                top: 50%;
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        /* AI数据流效果 */
+        .data-stream {
+            position: fixed;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom,
+                transparent,
+                rgba(173, 6, 62, 0.8),
+                rgba(173, 6, 62, 1),
+                transparent);
+            pointer-events: none;
+            z-index: 0;
+            animation: stream linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes stream {
+            0% {
+                top: -100px;
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                top: 100vh;
+                opacity: 0;
+            }
+        }
+
+        /* 确保内容在背景之上 */
+        .home-hero,
+        .feature-module,
+        .stats-module {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 页面加载动画 - 直接落下效果 */
+        @keyframes dropDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-500px) scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* 内部元素斜飞入效果 */
+        @keyframes flyInDiagonal {
+            from {
+                opacity: 0;
+                transform: translate(-80px, -80px) rotate(-15deg) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes fadeInRotate {
+            from {
+                opacity: 0;
+                transform: perspective(600px) rotateY(-15deg) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: perspective(600px) rotateY(0) translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-100px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes slideInBottom {
+            from {
+                opacity: 0;
+                transform: translateY(80px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5) rotate(-5deg);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(173, 6, 62, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(173, 6, 62, 0.6);
+            }
+        }
+
+        /* Hero 区域 */
+        .home-hero {
+            background: white;
+            border-radius: 8px;
+            padding: 35px 40px;
+            margin-bottom: 20px;
+            border-left: 4px solid rgb(173, 6, 62);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .home-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(173, 6, 62, 0.05), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+            50%, 100% {
+                left: 100%;
+            }
+        }
+
+        .home-hero h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #303133;
+            margin: 0 0 8px 0;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .home-hero h1 .brand-name {
+            color: rgb(173, 6, 62);
+            position: relative;
+            display: inline-block;
+        }
+
+        .home-hero h1 .brand-name::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: rgb(173, 6, 62);
+            animation: underline 2s ease-out forwards;
+        }
+
+        @keyframes underline {
+            to {
+                width: 100%;
+            }
+        }
+
+        .home-hero p {
+            font-size: 0.9rem;
+            color: #606266;
+            margin: 0;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* AI智能图标动画 */
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, rgb(173, 6, 62), rgb(140, 5, 50));
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .ai-badge i {
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 功能网格 */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .feature-module {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        /* 外层直接落下 - 依次落下 */
+        .feature-module:nth-child(1) {
+            animation: dropDown 0.6s ease-out 0.1s forwards;
+        }
+
+        .feature-module:nth-child(2) {
+            animation: dropDown 0.6s ease-out 0.2s forwards;
+        }
+
+        .feature-module:nth-child(3) {
+            animation: dropDown 0.6s ease-out 0.3s forwards;
+        }
+
+        .feature-module:nth-child(4) {
+            animation: dropDown 0.6s ease-out 0.4s forwards;
+        }
+
+        .feature-module:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border-color: rgb(173, 6, 62);
+            transform: translateY(-5px);
+        }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+            opacity: 0;
+            animation: flyInDiagonal 0.6s ease-out 0.6s forwards;
+        }
+
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .feature-module:hover .module-icon {
+            transform: scale(1.1) rotate(5deg);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .module-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .module-count {
+            font-size: 0.75rem;
+            color: #909399;
+            margin-left: auto;
+            padding: 2px 8px;
+            background: #f4f4f5;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-module:hover .module-count {
+            background: rgba(173, 6, 62, 0.1);
+            color: rgb(173, 6, 62);
+        }
+
+        /* 功能列表 */
+        .module-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .module-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: #f9fafb;
+            text-decoration: none;
+            color: #454b50;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.875rem;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            animation: flyInDiagonal 0.5s ease-out forwards;
+        }
+
+        /* 为每个列表项添加递增延迟 */
+        .module-item:nth-child(1) { animation-delay: 0.8s; }
+        .module-item:nth-child(2) { animation-delay: 0.9s; }
+        .module-item:nth-child(3) { animation-delay: 1s; }
+        .module-item:nth-child(4) { animation-delay: 1.1s; }
+        .module-item:nth-child(5) { animation-delay: 1.2s; }
+
+        .module-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: rgb(173, 6, 62);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .module-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .module-item:hover {
+            background: #fef2f2;
+            color: rgb(173, 6, 62);
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(173, 6, 62, 0.1);
+        }
+
+        .module-item i {
+            font-size: 0.875rem;
+            width: 16px;
+            text-align: center;
+            color: rgb(173, 6, 62);
+            transition: all 0.3s ease;
+        }
+
+        .module-item:hover i {
+            transform: scale(1.2);
+        }
+
+        /* 统计模块 */
+        .stats-module {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            opacity: 0;
+            animation: dropDown 0.6s ease-out 0.4s forwards;
+            transition: all 0.3s ease;
+        }
+
+        .stats-module:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border-color: rgb(173, 6, 62);
+            transform: translateY(-5px);
+        }
+
+        .stats-module:hover .module-icon {
+            transform: scale(1.1) rotate(5deg);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .stats-module .module-header {
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: flyInDiagonal 0.6s ease-out 1.0s forwards;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            animation: flyInDiagonal 0.5s ease-out forwards;
+        }
+
+        /* 统计项依次飞入 */
+        .stat-item:nth-child(1) { animation-delay: 1.4s; }
+        .stat-item:nth-child(2) { animation-delay: 1.5s; }
+        .stat-item:nth-child(3) { animation-delay: 1.6s; }
+        .stat-item:nth-child(4) { animation-delay: 1.7s; }
+
+        .stat-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(173, 6, 62, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: #fff;
+            border-color: rgb(173, 6, 62);
+            box-shadow: 0 4px 12px rgba(173, 6, 62, 0.15);
+            transform: scale(1.05);
+        }
+
+        .stat-item:hover::after {
+            opacity: 1;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: rgb(173, 6, 62);
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-item:hover .stat-value {
+            animation: countUp 0.6s ease-out;
+        }
+
+        @keyframes countUp {
+            0% {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #606266;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .feature-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            .home-hero h1 {
+                font-size: 1.3rem;
+            }
+            .home-hero p {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- 公共头部（由 layout.js 动态加载） -->
+        <!-- 公共头部 -->
         <div id="header-placeholder"></div>
 
         <!-- 主体布局 -->
         <div class="main-layout">
-            <!-- 公共侧边栏（由 layout.js 动态加载） -->
+            <!-- 公共侧边栏 -->
             <div id="sidebar-placeholder"></div>
 
             <!-- 主要内容区域 -->
-            <main class="main-content-area">
+            <main class="main-content-area home-page">
+                <!-- AI科技感背景网格 -->
+                <div class="tech-grid"></div>
+                <!-- AI扫描线 -->
+                <div class="scan-line"></div>
+
                 <div class="content-grid">
-                    <!-- 左侧列：上传和检测入口 -->
-                    <div class="left-column">
-                        <!-- 上传区域 -->
-                        <div class="upload-section card">
-                            <div class="section-header">
-                                <h2><i class="fas fa-cloud-upload-alt"></i> 图片上传</h2>
-                                <!--
-                                <div class="section-badge">
-                                    <i class="fas fa-info-circle"></i> 支持多种格式
-                                </div>
-                                -->
-                            </div>
-                            
-                            <div class="upload-area" id="uploadArea">
-                                <div class="upload-area-content">
-                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                                    <p class="upload-text">拖放图片文件或点击选择</p>
-                                    <p class="upload-hint">支持 PNG, JPG, JPEG, BMP, TIFF, GIF 格式</p>
-                                </div>
-                                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.gif" hidden>
-                                <button class="btn btn-primary upload-btn" id="selectFileBtn">
-                                    <i class="fas fa-folder-open"></i> 选择文件
-                                </button>
-                            </div>
-                            
-                            <div class="file-info" id="fileInfo" style="display: none;">
-                                <div class="file-info-content">
-                                    <div class="file-preview">
-                                        <img id="imagePreview" src="" alt="图片预览">
-                                    </div>
-                                    <div class="file-details">
-                                        <div class="detail-item">
-                                            <span class="detail-label">文件名:</span>
-                                            <span class="detail-value" id="fileName">-</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <span class="detail-label">文件大小:</span>
-                                            <span class="detail-value" id="fileSize">-</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <span class="detail-label">图片尺寸:</span>
-                                            <span class="detail-value" id="imageDimensions">-</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="upload-actions">
-                                <button class="btn btn-detect action-btn" id="processBtn" disabled>
-                                    <i class="fas fa-search"></i> 开始检测
-                                </button>
-                            </div>
-
-                            <div class="ocr-loading" id="ocrLoadingIndicator">
-                                <div class="spinner"></div>
-                                <span class="loading-text">正在调用模型进行OCR检测...</span>
-                            </div>
-
-                            <div class="ocr-stats-card" id="ocrStatsCard" style="display: none;">
-                                <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
-                                <div class="results-summary" id="resultsSummary">
-                                    <div class="summary-card">
-                                        <div class="summary-card-icon">
-                                            <i class="fas fa-list-ol"></i> 识别项数
-                                        </div>
-                                        <div class="summary-card-content">
-                                            <div class="summary-card-value" id="totalItems">0</div>
-                                        </div>
-                                    </div>
-                                    <div class="summary-card">
-                                        <div class="summary-card-icon">
-                                            <i class="fas fa-percentage"></i> 平均置信度
-                                        </div>
-                                        <div class="summary-card-content">
-                                            <div class="summary-card-value" id="avgConfidence">0%</div>
-                                        </div>
-                                    </div>
-                                    <div class="summary-card">
-                                        <div class="summary-card-icon">
-                                            <i class="fas fa-ruler-combined"></i> 尺寸标注
-                                        </div>
-                                        <div class="summary-card-content">
-                                            <div class="summary-card-value" id="dimensionCount">0</div>
-                                        </div>
-                                    </div>
-                                    <div class="summary-card">
-                                        <div class="summary-card-icon">
-                                            <i class="fas fa-stopwatch"></i> 处理时间
-                                        </div>
-                                        <div class="summary-card-content">
-                                            <div class="summary-card-value" id="processingTime">0s</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="sample-images-section" id="sampleImagesSection">
-                                <div class="sample-label"><i class="fas fa-images"></i> 示例图片：</div>
-                                <div class="sample-grid" id="sampleGrid">
-                                    <!-- 由 JS 动态生成 -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- OCR引擎选择区域 -->
-                        <div class="engine-section card" id="engineSection" style="display: none;">
-                            <div class="section-header">
-                                <h2><i class="fas fa-microchip"></i> OCR引擎选择</h2>
-                            </div>
-                            
-                            <div class="engine-options">
-                                <div class="engine-option active" data-engine="auto">
-                                    <div class="engine-icon">
-                                        <i class="fas fa-robot"></i>
-                                    </div>
-                                    <div class="engine-info">
-                                        <div class="engine-name">自动选择</div>
-                                        <div class="engine-desc">根据环境配置自动选择最佳引擎</div>
-                                    </div>
-                                    <div class="engine-badge">推荐</div>
-                                </div>
-                                <div class="engine-option" data-engine="openai_vl">
-                                    <div class="engine-icon">
-                                        <i class="fas fa-brain"></i>
-                                    </div>
-                                    <div class="engine-info">
-                                        <div class="engine-name">OpenAI VL</div>
-                                        <div class="engine-desc">使用视觉语言模型，适合机械图纸</div>
-                                    </div>
-                                    <div class="engine-badge new">AI</div>
-                                </div>
-                                <div class="engine-option" data-engine="paddleocr">
-                                    <div class="engine-icon">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                    <div class="engine-info">
-                                        <div class="engine-name">PaddleOCR</div>
-                                        <div class="engine-desc">传统OCR引擎，速度快精度高</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 提示词选项（仅OpenAI VL显示） -->
-                            <div class="prompt-options" id="promptOptions" style="display: none;">
-                                <div class="option-group">
-                                    <label class="option-label">提示词模板:</label>
-                                    <select class="option-select" id="promptSelect">
-                                        <option value="mechanical_drawing_standard">机械图纸标准识别</option>
-                                        <option value="mechanical_drawing_detailed">机械图纸详细识别</option>
-                                        <option value="dimension_extraction">尺寸标注提取</option>
-                                        <option value="title_block_extraction">标题栏信息提取</option>
-                                        <option value="technical_requirements">技术要求提取</option>
-                                    </select>
-                                </div>
-                                <div class="option-group">
-                                    <label class="option-label">
-                                        <input type="checkbox" id="useCustomPrompt" class="option-checkbox">
-                                        使用自定义提示词
-                                    </label>
-                                    <textarea id="customPrompt" class="custom-prompt-textarea" placeholder="在此输入自定义提示词..." disabled></textarea>
-                                </div>
-                                <div class="option-group">
-                                    <label class="option-label">
-                                        <input type="checkbox" id="includeRawResponse" class="option-checkbox">
-                                        包含原始API响应
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
+                    <!-- Hero 区域 -->
+                    <div class="home-hero">
+                        <h1><span class="brand-name">赛意AI</span> 智能视觉识别平台<span class="ai-badge"><i class="fas fa-brain"></i>AI驱动</span></h1>
+                        <p>为企业提供专业的AI视觉识别服务，包括文字识别、图像检测、智能分析等核心能力</p>
                     </div>
 
-                    <!-- 右侧列：结果展示 -->
-                    <div class="right-column">
-                        <div class="results-section card">
-                            <div class="section-header">
-                                <h2><i class="fas fa-chart-bar"></i> 识别结果</h2>
-                                <div class="export-buttons">
-                                    <button class="btn btn-export" id="exportExcelBtn" disabled>
-                                        <i class="fas fa-file-excel"></i> 下载Excel
-                                    </button>
-                                    <button class="btn btn-export" id="exportJsonBtn" disabled>
-                                        <i class="fas fa-file-code"></i> 下载JSON
-                                    </button>
-                                    <!--<button class="btn btn-export" id="exportImageBtn" disabled>
-                                        <i class="fas fa-file-image"></i> 下载图像
-                                    </button>-->
+                    <!-- 功能网格 -->
+                    <div class="feature-grid">
+                        <!-- OCR识别 -->
+                        <div class="feature-module">
+                            <div class="module-header">
+                                <div class="module-icon" style="background: linear-gradient(135deg, #e67e22, #d35400);">
+                                    <i class="fas fa-file-alt"></i>
                                 </div>
+                                <div class="module-title">OCR 识别</div>
+                                <div class="module-count">5项</div>
                             </div>
-                            
-                            <div class="filter-controls">
-                                <div class="filter-title">
-                                    <i class="fas fa-filter"></i> 结果过滤
-                                </div>
-                                <div class="filter-options">
-                                    <div class="filter-option">
-                                        <label class="switch">
-                                            <input type="checkbox" id="filterChineseToggle" checked>
-                                            <span class="slider"></span>
-                                        </label>
-                                        <span class="filter-label">屏蔽中文内容</span>
-                                        <span class="filter-badge" id="chineseFilterCount">0</span>
-                                    </div>
-                                </div>
+                            <div class="module-list">
+                                <a href="mechanical_drawing_ocr.html" class="module-item">
+                                    <i class="fas fa-drafting-compass"></i>
+                                    <span>工业图纸识别</span>
+                                </a>
+                                <a href="image_ocr.html" class="module-item">
+                                    <i class="fas fa-images"></i>
+                                    <span>图片识别多场景</span>
+                                </a>
+                                <a href="pdf_ocr.html" class="module-item">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>PDF 识别</span>
+                                </a>
+                                <a href="flowchart_ocr.html" class="module-item">
+                                    <i class="fas fa-project-diagram"></i>
+                                    <span>流程图识别</span>
+                                </a>
+                                <a href="word_flowchart_ocr.html" class="module-item">
+                                    <i class="fas fa-file-word"></i>
+                                    <span>Word流程图识别</span>
+                                </a>
                             </div>
+                        </div>
 
-                            <div class="results-tabs">
-                                <div class="tab-buttons">
-                                    <button class="tab-btn" data-tab="textResults" style="display: none;">
-                                        <i class="fas fa-font"></i> 文本内容
-                                    </button>
-                                    <button class="tab-btn active" data-tab="coordinateResults">
-                                        <i class="fas fa-map-marker-alt"></i> 文本信息
-                                    </button>
-                                    <button class="tab-btn" data-tab="visualization">
-                                        <i class="fas fa-eye"></i> 可视化
-                                    </button>
+                        <!-- AI视觉检测 -->
+                        <div class="feature-module">
+                            <div class="module-header">
+                                <div class="module-icon" style="background: linear-gradient(135deg, rgb(173, 6, 62), rgb(140, 5, 50));">
+                                    <i class="fas fa-eye"></i>
                                 </div>
+                                <div class="module-title">AI 视觉检测</div>
+                                <div class="module-count">5项</div>
+                            </div>
+                            <div class="module-list">
+                                <a href="safety_helmet_detection.html" class="module-item">
+                                    <i class="fas fa-hard-hat"></i>
+                                    <span>实时安全帽检测</span>
+                                </a>
+                                <a href="license_plate_detection.html" class="module-item">
+                                    <i class="fas fa-car"></i>
+                                    <span>车牌识别</span>
+                                </a>
+                                <a href="face_detection.html" class="module-item">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span>人脸检测</span>
+                                </a>
+                                <a href="keypoint_detection.html" class="module-item">
+                                    <i class="fas fa-running"></i>
+                                    <span>全身关键点检测</span>
+                                </a>
+                                <a href="gauge_detection.html" class="module-item">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    <span>精密压力表检测</span>
+                                </a>
+                            </div>
+                        </div>
 
-                                <div class="tab-content">
-                                    <!-- 文本内容标签页 -->
-                                    <div class="tab-pane" id="textResults">
-                                        <div class="table-container">
-                                            <table class="results-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>序号</th>
-                                                        <th>文本内容</th>
-                                                        <th>置信度</th>
-                                                        <th>类型</th>
-                                                        <th>操作</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="textResultsBody">
-                                                    <tr>
-                                                        <td colspan="5" class="empty-message">暂无识别结果</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                        <!-- RPA自动化 -->
+                        <div class="feature-module">
+                            <div class="module-header">
+                                <div class="module-icon" style="background: linear-gradient(135deg, #8e44ad, #6c3483);">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="module-title">RPA 自动化</div>
+                                <div class="module-count">1项</div>
+                            </div>
+                            <div class="module-list">
+                                <a href="rpa.html" class="module-item">
+                                    <i class="fas fa-cogs"></i>
+                                    <span>RPA流程自动化</span>
+                                </a>
+                            </div>
+                        </div>
 
-                                    <!-- 坐标信息标签页 -->
-                                    <div class="tab-pane active" id="coordinateResults">
-                                        <div class="table-container">
-                                            <table class="results-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>序号</th>
-                                                        <th>坐标X</th>
-                                                        <th>坐标Y</th>
-                                                        <th>宽度</th>
-                                                        <th>高度</th>
-                                                        <th>内容</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="coordinateResultsBody">
-                                                    <tr>
-                                                        <td colspan="6" class="empty-message">暂无坐标信息</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <!-- 可视化标签页 -->
-                                    <div class="tab-pane" id="visualization">
-                                        <div class="visualization-result-container" id="visualizationResultContainer" style="display: none;">
-                                            <div class="visualization-image-wrapper">
-                                                <img id="visualizationResultImage" src="" alt="标注结果" class="visualization-image" onclick="openFullscreenViewer(this.src)">
-                                                <div class="visualization-image-hint">
-                                                    <i class="fas fa-search-plus"></i>
-                                                    <span>点击图片可放大查看</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="visualization-placeholder" id="visualizationPlaceholder">
-                                            <i class="fas fa-image"></i>
-                                            <p>识别完成后，这里将显示标注结果图</p>
-                                        </div>
-                                    </div>
+                        <!-- 数据统计 -->
+                        <div class="stats-module">
+                            <div class="module-header">
+                                <div class="module-icon" style="background: linear-gradient(135deg, #27ae60, #229954);">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="module-title">平台数据</div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-value">15+</div>
+                                    <div class="stat-label">应用场景</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">95%+</div>
+                                    <div class="stat-label">识别准确率</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">10+</div>
+                                    <div class="stat-label">AI模型</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">24/7</div>
+                                    <div class="stat-label">在线服务</div>
                                 </div>
                             </div>
                         </div>
@@ -310,75 +821,71 @@
             </main>
         </div>
 
-        <!-- 公共底部（由 layout.js 动态加载） -->
+        <!-- 公共底部 -->
         <div id="footer-placeholder"></div>
     </div>
 
     <!-- JavaScript文件 -->
     <script src="static/js/layout.js"></script>
-    <script src="static/js/main.js"></script>
     <script>
-        const indexSampleImages = [
-            'static/images/demo/4.png',
-            'static/images/demo/26.jpg',
-            'static/images/demo/27.png',
-            'static/images/demo/29.png'
-        ];
+        // AI科技感粒子效果 - 增强版
+        function createParticles() {
+            const particleCount = 30; // 增加到30个
+            const mainContent = document.querySelector('.main-content-area.home-page');
 
-        function getImageMimeType(fileName) {
-            const lowerName = fileName.toLowerCase();
-            if (lowerName.endsWith('.png')) return 'image/png';
-            if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) return 'image/jpeg';
-            if (lowerName.endsWith('.bmp')) return 'image/bmp';
-            if (lowerName.endsWith('.gif')) return 'image/gif';
-            return 'image/png';
-        }
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
 
-        async function loadIndexSampleImage(imagePath) {
-            try {
-                const response = await fetch(imagePath);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const blob = await response.blob();
-                const fileName = imagePath.split('/').pop();
-                const file = new File([blob], fileName, { type: getImageMimeType(fileName) });
-                if (typeof previewFile === 'function') {
-                    previewFile(file);
-                }
-            } catch (err) {
-                console.warn('加载示例图片失败:', imagePath, err);
+                // 随机大小 (4-12px) - 更大
+                const size = Math.random() * 8 + 4;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+
+                // 随机水平位置
+                particle.style.left = Math.random() * 100 + '%';
+
+                // 随机起始位置 (从-20vh到100vh) - 让粒子分布更均匀
+                particle.style.bottom = (Math.random() * 120 - 20) + 'vh';
+
+                // 随机动画持续时间 (8-15秒) - 更快
+                const duration = Math.random() * 7 + 8;
+                particle.style.animationDuration = duration + 's';
+
+                // 随机延迟 (0-2秒) - 更短，快速出现
+                particle.style.animationDelay = Math.random() * 2 + 's';
+
+                mainContent.appendChild(particle);
             }
         }
 
-        function renderIndexSampleImages() {
-            const grid = document.getElementById('sampleGrid');
-            if (!grid) return;
+        // AI数据流效果
+        function createDataStreams() {
+            const streamCount = 8;
+            const mainContent = document.querySelector('.main-content-area.home-page');
 
-            grid.innerHTML = '';
-            indexSampleImages.forEach(function(path, index) {
-                const fileName = path.split('/').pop();
-                const item = document.createElement('div');
-                item.className = 'sample-item' + (index === 0 ? ' selected' : '');
-                item.innerHTML = '<img src="' + path + '" alt="' + fileName + '" loading="lazy">' +
-                    '<span>' + fileName + '</span>';
-                item.addEventListener('click', function() {
-                    grid.querySelectorAll('.sample-item').forEach(function(sampleItem) {
-                        sampleItem.classList.remove('selected');
-                    });
-                    item.classList.add('selected');
-                    loadIndexSampleImage(path);
-                });
-                grid.appendChild(item);
-            });
+            for (let i = 0; i < streamCount; i++) {
+                const stream = document.createElement('div');
+                stream.className = 'data-stream';
+
+                // 随机水平位置
+                stream.style.left = Math.random() * 100 + '%';
+
+                // 随机动画持续时间 (3-6秒)
+                const duration = Math.random() * 3 + 3;
+                stream.style.animationDuration = duration + 's';
+
+                // 随机延迟
+                stream.style.animationDelay = Math.random() * 3 + 's';
+
+                mainContent.appendChild(stream);
+            }
         }
 
-        // 页面加载后自动加载默认示例图片
-        document.addEventListener('DOMContentLoaded', function() {
-            renderIndexSampleImages();
-            setTimeout(async function() {
-                loadIndexSampleImage(indexSampleImages[0]);
-            }, 500);
+        // 页面加载后立即创建效果
+        window.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            createDataStreams();
         });
     </script>
 </body>

@@ -90,19 +90,19 @@
             '<nav class="sidebar-menu">' +
                 /* 首页 */
                 '<div class="menu-section">' +
-                    '<a href="javascript:void(0)" class="menu-item" data-page="home">' +
+                    '<a href="index.html" class="menu-item" data-page="index">' +
                         '<div class="menu-icon"><i class="fas fa-home"></i></div>' +
                         '<div class="menu-text">首页</div>' +
                     '</a>' +
                 '</div>' +
                 /* RPA智能自动化 */
                 '<div class="menu-section">' +
-                    '<div class="menu-group-header" onclick="toggleSubMenu(this)">' +
+                    '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
                         '<div class="menu-group-icon"><i class="fas fa-robot"></i></div>' +
                         '<span class="menu-group-title">RPA智能自动化</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
-                    '<div class="menu-sub-items">' +
+                    '<div class="menu-sub-items expanded">' +
                         '<a href="rpa.html" class="menu-item  menu-sub-item" data-page="rpa">' +
                                 '<div class="menu-sub-dot"></div>' +
                                 '<div class="menu-text">星辰RPA</div>' +
@@ -111,13 +111,13 @@
                 '</div>' +
                 /* OCR识别 */
                 '<div class="menu-section">' +
-                    '<div class="menu-group-header" onclick="toggleSubMenu(this)">' +
+                    '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
                         '<div class="menu-group-icon"><i class="fas fa-file-alt"></i></div>' +
                         '<span class="menu-group-title">OCR 识别</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
-                    '<div class="menu-sub-items">' +
-                        '<a href="index.html" class="menu-item menu-sub-item" data-page="index">' +
+                    '<div class="menu-sub-items expanded">' +
+                        '<a href="mechanical_drawing_ocr.html" class="menu-item menu-sub-item" data-page="mechanical_drawing_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">工业图纸识别</div>' +
                         '</a>' +
@@ -141,12 +141,12 @@
                 '</div>' +
                 /* AI视觉检测 */
                 '<div class="menu-section">' +
-                    '<div class="menu-group-header" onclick="toggleSubMenu(this)">' +
+                    '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
                         '<div class="menu-group-icon"><i class="fas fa-eye"></i></div>' +
                         '<span class="menu-group-title">AI 视觉检测</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
-                    '<div class="menu-sub-items">' +
+                    '<div class="menu-sub-items expanded">' +
                         '<a href="safety_helmet_detection.html" class="menu-item menu-sub-item" data-page="safety_helmet_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">实时安全帽检测</div>' +
@@ -171,12 +171,12 @@
                 '</div>' +
                 /* 其他 */
                 '<div class="menu-section">' +
-                    '<div class="menu-group-header" onclick="toggleSubMenu(this)">' +
+                    '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
                         '<div class="menu-group-icon"><i class="fas fa-ellipsis-h"></i></div>' +
                         '<span class="menu-group-title">其他</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
-                    '<div class="menu-sub-items">' +
+                    '<div class="menu-sub-items expanded">' +
                         '<a href="paddle_ocr.html" class="menu-item menu-sub-item" data-page="paddle_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">在线官方案例</div>' +
