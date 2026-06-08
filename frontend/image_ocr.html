@@ -619,9 +619,9 @@
         // 加载默认示例图片
         async function loadDefaultImage() {
             try {
-                const response = await fetch('static/images/demo/33.png');
+                const response = await fetch('static/images/demo/4.png');
                 const blob = await response.blob();
-                const file = new File([blob], '33.png', { type: 'image/png' });
+                const file = new File([blob], '4.png', { type: 'image/png' });
                 // 使用 main.js 中的 previewFile 函数
                 if (typeof previewFile === 'function') {
                     previewFile(file);
