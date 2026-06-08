@@ -37,10 +37,10 @@
     var headerHtml =
         '<header class="admin-header">' +
             '<div class="admin-header-content">' +
-                '<div class="admin-logo">' +
+                '<a href="' + baseUrl + '/index.html" class="admin-logo" style="cursor: pointer; text-decoration: none;">' +
                     '<img src="' + baseUrl + '/static/images/logo.png" alt="赛意AI" class="logo-image">' +
                     '<span class="admin-logo-text">赛意AI</span>' +
-                '</div>' +
+                '</a>' +
                 '<nav class="admin-nav" style="display: flex;">' +
                     '<a href="http://218.13.91.107:6200/mermaid" target="_blank" class="nav-item">' +
                         '<i class="fas fa-image"></i><span>AI Draw</span>' +

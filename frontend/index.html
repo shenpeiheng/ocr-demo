@@ -9,10 +9,12 @@
     <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
     <style>
         .home-page .content-grid {
-            display: block;
-            padding: 0;
-            max-width: 1400px;
-            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 100%;
+            min-height: calc(100vh - 60px);
+            margin: 0;
             position: relative;
             z-index: 1;
         }
@@ -32,6 +34,12 @@
             pointer-events: none;
             z-index: 0;
             animation: bgPulse 8s ease-in-out infinite;
+            transition: left 0.3s ease;
+        }
+
+        /* 侧边栏收起时背景调整 */
+        .sidebar.is-collapsed ~ .main-content-area.home-page::before {
+            left: 60px;
         }
 
         @keyframes bgPulse {
@@ -58,6 +66,12 @@
             opacity: 0.8;
             animation: gridMove 25s linear infinite;
             z-index: 0;
+            transition: left 0.3s ease;
+        }
+
+        /* 侧边栏收起时网格调整 */
+        body.sidebar-collapsed .tech-grid {
+            left: 60px;
         }
 
         @keyframes gridMove {
@@ -115,6 +129,7 @@
             z-index: 0;
             animation: scan 4s ease-in-out infinite;
             opacity: 0;
+            transition: left 0.3s ease;
         }
 
         @keyframes scan {
@@ -404,6 +419,8 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
+            flex: 1;
+            align-content: start;
         }
 
         .feature-module {
@@ -799,7 +816,7 @@
                             </div>
                             <div class="stats-grid">
                                 <div class="stat-item">
-                                    <div class="stat-value">15+</div>
+                                    <div class="stat-value">20+</div>
                                     <div class="stat-label">应用场景</div>
                                 </div>
                                 <div class="stat-item">
