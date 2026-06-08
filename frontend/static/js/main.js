@@ -365,10 +365,13 @@ async function handleProcess() {
         if (!data.success) {
             throw new Error(data.error || '处理失败');
         }
-        
-        // 保存结果
+
+        // 保存结果（包含 result_image）
         currentResults = data.results;
-        
+        if (data.result_image) {
+            currentResults.result_image = data.result_image;
+        }
+
         // 更新进度
         updateProgress(90, '识别完成，正在生成结果');
         updateStatus('process', 'completed');
@@ -614,228 +617,44 @@ function updateCoordinateTable(textItems) {
 
 // 更新可视化
 function updateVisualization() {
-    if (!currentResults || !currentResults.text_items || !imagePreview.src) {
+    if (!currentResults || !currentResults.text_items) {
         return;
     }
-    // 安全判断：如果可视化元素不存在则跳过（兼容 image_ocr.html 等页面）
-    if (!visualizationPlaceholder || !visualizationCanvas) {
+
+    const visualizationResultContainer = document.getElementById('visualizationResultContainer');
+    const visualizationPlaceholder = document.getElementById('visualizationPlaceholder');
+    const visualizationResultImage = document.getElementById('visualizationResultImage');
+
+    if (!visualizationResultContainer || !visualizationPlaceholder) {
         return;
     }
-    
+
     // 检查过滤开关状态
     const filterEnabled = filterChineseToggle ? filterChineseToggle.checked : true;
-    
-    // 根据开关状态过滤数据
     let displayTextItems;
     if (filterEnabled) {
-        // 过滤掉包含中文的识别项
         displayTextItems = filterChineseItems(currentResults.text_items);
     } else {
-        // 不过滤，显示所有项目
         displayTextItems = currentResults.text_items;
     }
-    
+
     if (displayTextItems.length === 0) {
-        // 如果没有显示的项目，显示占位符
         visualizationPlaceholder.style.display = 'flex';
-        visualizationCanvas.style.display = 'none';
+        visualizationResultContainer.style.display = 'none';
         return;
     }
-    
-    // 隐藏占位符，显示画布
-    visualizationPlaceholder.style.display = 'none';
-    visualizationCanvas.style.display = 'block';
-    
-    const ctx = visualizationCanvas.getContext('2d');
-    const img = new Image();
-    
-    img.onload = function() {
-        // 设置画布尺寸 - 根据预处理图片的实际尺寸和容器大小自适应
-        // 设置画布尺寸 - 自适应容器并保证最小显示尺寸
-        let width = img.width;
-        let height = img.height;
 
-        if (width <= 0 || height <= 0) {
-            console.warn('图像尺寸无效，跳过画布设置');
-            return;
-        }
-
-        const visualizationContainer = visualizationCanvas.parentElement;
-        const containerWidth = Math.max(1, visualizationContainer.clientWidth);
-        const containerHeight = Math.max(1, visualizationContainer.clientHeight);
-
-        const minDisplaySize = 300; // 最小显示边长
-
-        console.log(`图片原始尺寸: ${width}x${height}, 容器尺寸: ${containerWidth}x${containerHeight}`);
-
-        // 步骤1: 计算“适应容器”的缩放比例
-        const fitScale = Math.min(containerWidth / width, containerHeight / height);
-
-        // 步骤2: 计算“满足最小尺寸”的缩放比例
-        const minScale = Math.max(minDisplaySize / width, minDisplaySize / height);
-
-        // 步骤3: 最终缩放比例 = max(适应容器, 满足最小尺寸)，但不能无限大
-        // 如果容器本身很小（比如 <300），我们允许图像略大于容器以满足可读性
-        let finalScale = Math.max(fitScale, minScale);
-
-        // 可选：限制最大缩放（防止在超小容器中图像过大）
-        // const maxScale = Math.min(containerWidth / width * 2, containerHeight / height * 2, 2);
-        // finalScale = Math.min(finalScale, maxScale);
-
-        // 应用最终尺寸
-        width = Math.floor(width * finalScale);
-        height = Math.floor(height * finalScale);
-
-        // 额外保护：防止尺寸为 0
-        width = Math.max(1, width);
-        height = Math.max(1, height);
-
-        console.log(`最终显示尺寸: ${width}x${height} (缩放比例: ${finalScale.toFixed(3)})`);
-        
-        // 设置画布物理像素尺寸（考虑设备像素比以获得更清晰的渲染）
-        const dpr = window.devicePixelRatio || 1;
-        visualizationCanvas.style.width = width + 'px';
-        visualizationCanvas.style.height = height + 'px';
-        visualizationCanvas.width = width * dpr;
-        visualizationCanvas.height = height * dpr;
-        
-        // 缩放上下文以匹配设备像素比
-        ctx.scale(dpr, dpr);
-        
-        // 启用最高质量图像平滑
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.msImageSmoothingEnabled = true; // IE支持
-        ctx.mozImageSmoothingEnabled = true; // Firefox支持
-        ctx.webkitImageSmoothingEnabled = true; // Safari支持
-        
-        // 清除画布并设置白色背景
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, width, height);
-        
-        // 绘制图片（使用高质量双线性插值）
-        ctx.save();
-        ctx.drawImage(img, 0, 0, width, height);
-        ctx.restore();
-        
-        // 绘制识别区域 - 考虑设备像素比
-        const scaleX = width / img.width;
-        const scaleY = height / img.height;
-        
-        // 计算所有识别项的中心点，用于调整显示位置
-        const centers = displayTextItems.map(item => {
-            const location = item.location || {};
-            // 坐标转换（反归一化）
-            const scaledLocation = rescaleCoordinates(location, img.width, img.height);
-            const x = (scaledLocation.left || 0) * scaleX;
-            const y = (scaledLocation.top || 0) * scaleY;
-            const w = (scaledLocation.width || 0) * scaleX;
-            const h = (scaledLocation.height || 0) * scaleY;
-            return {
-                x: x + w / 2,
-                y: y + h / 2,
-                w: w,
-                h: h
-            };
-        });
-        
-        displayTextItems.forEach((item, index) => {
-            const location = item.location || {};
-            // 坐标转换（反归一化）
-            const scaledLocation = rescaleCoordinates(location, img.width, img.height);
-            const x = (scaledLocation.left || 0) * scaleX;
-            const y = (scaledLocation.top || 0) * scaleY;
-            const w = (scaledLocation.width || 0) * scaleX;
-            const h = (scaledLocation.height || 0) * scaleY;
-            
-            // 根据设备像素比调整线宽和字体大小
-            const dpr = window.devicePixelRatio || 1;
-            const baseLineWidth = 2;
-            const baseFontSize = 11;
-            
-            // 根据类型设置颜色
-            let color;
-            switch (item.type) {
-                case 'dimension': color = '#3498db'; break; // 蓝色
-                case 'tolerance': color = '#f39c12'; break; // 橙色
-                default: color = '#e74c3c'; // 红色
-            }
-            
-            // 绘制矩形框（半透明填充）
-            ctx.fillStyle = color + '20'; // 20表示12%透明度
-            //ctx.fillRect(x, y, w-x, h-y);
-            
-            // 绘制矩形边框 - 根据设备像素比调整线宽
-            ctx.strokeStyle = color;
-            ctx.lineWidth = baseLineWidth / dpr; // 调整线宽以适应设备像素比
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-            //ctx.strokeRect(x, y, w-x, h-y);
-            
-            // 计算标签位置，避免重叠
-            let labelX = x;
-            let labelY = y - 25; // 默认在框上方
-            
-            // 计算文本内容
-            const displayText = item.text.length > 12 ? item.text.substring(0, 10) + '...' : item.text;
-            const labelText = `#${item.id}: ${displayText}`;
-            
-            // 测量文本宽度
-            const fontSize = Math.max(baseFontSize / dpr, 10); // 确保最小字体大小
-            ctx.font = `bold 12px Arial, sans-serif`;
-            const textMetrics = ctx.measureText(labelText);
-            const textWidth = textMetrics.width;
-            
-            // 动态计算标签宽度（文本宽度 + 内边距，但不超过框宽度）
-            const labelPadding = 16; // 左右内边距各8px
-            const dynamicLabelWidth = Math.min(Math.max(textWidth + labelPadding, 60), w);
-            const labelHeight = 22;
-            
-            // 如果上方空间不足，尝试放在框内
-            if (labelY < 0) {
-                labelY = y + 5;
-            }
-            
-            // 绘制背景标签（圆角矩形）
-            ctx.fillStyle = color;
-            //const borderRadius = 0;
-            //ctx.beginPath();
-            //ctx.roundRect(labelX, labelY, dynamicLabelWidth, labelHeight, borderRadius);
-            //ctx.fill();
-            
-            // 绘制文本（显示ID和部分文本）- 根据设备像素比调整字体大小
-            //ctx.fillStyle = 'white';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(labelText, labelX, labelY + labelHeight / 2);
-            
-            // 在框中心绘制一个小圆点，表示检测中心
-            //ctx.fillStyle = 'white';
-            //ctx.beginPath();
-            //ctx.arc(x + w/2, y + h/2, 3 / dpr, 0, Math.PI * 2);
-            //ctx.fill();
-            
-            //ctx.strokeStyle = color;
-            //ctx.lineWidth = 1 / dpr;
-            //ctx.beginPath();
-            //ctx.arc(x + w/2, y + h/2, 5 / dpr, 0, Math.PI * 2);
-            //ctx.stroke();
-        });
-        
-        // 添加缩放比例信息（移动到右上角，不遮挡图片）
-        // ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        // const infoWidth = 200;
-        // const infoHeight = 40;
-        // const infoX = width - infoWidth - 10; // 右上角，距离右边10px
-        // const infoY = 10; // 距离顶部10px
-        // ctx.fillRect(infoX, infoY, infoWidth, infoHeight);
-        
-        // ctx.fillStyle = 'white';
-        // ctx.font = 'bold 11px Arial';
-        // ctx.fillText(`图像尺寸: ${img.width} × ${img.height}`, infoX + 10, infoY + 20);
-        // ctx.fillText(`画布尺寸: ${width} × ${height} (缩放: ${scaleX.toFixed(2)}x)`, infoX + 10, infoY + 35);
-    };
-    
-    img.src = imagePreview.src;
+    // 显示标注图片（从后端返回的 result_image）
+    if (currentResults.result_image) {
+        visualizationResultImage.src = currentResults.result_image;
+        visualizationPlaceholder.style.display = 'none';
+        visualizationResultContainer.style.display = 'block';
+    } else {
+        // 如果后端没有返回标注图片，显示占位符
+        visualizationPlaceholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>标注图片生成失败，请重新识别</p>';
+        visualizationPlaceholder.style.display = 'flex';
+        visualizationResultContainer.style.display = 'none';
+    }
 }
 
 // 导出结果

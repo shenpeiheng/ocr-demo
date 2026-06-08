@@ -1452,6 +1452,16 @@ def process_image_file(filename, filepath, data):
             markdown_content = markdown_formatter.format_ocr_results(results, include_raw=data.get("include_raw", False))
             save_markdown(markdown_content, markdown_path)
 
+        # 生成标注图片（与 /api/process/custom 保持一致）
+        result_image_base64 = None
+        text_items = results.get("text_items", [])
+        draw_source = preprocessed_path if os.path.exists(preprocessed_path) else filepath
+        if os.path.exists(draw_source) and text_items:
+            try:
+                result_image_base64 = draw_ocr_boxes(draw_source, text_items)
+            except Exception as draw_err:
+                print(f"[WARN] 绘制标注框失败: {draw_err}")
+
         response = {
             "success": True,
             "message": "图片处理成功",
@@ -1463,6 +1473,8 @@ def process_image_file(filename, filepath, data):
         }
         if markdown_filename:
             response["result_files"]["markdown"] = markdown_filename
+        if result_image_base64:
+            response["result_image"] = result_image_base64
 
         return jsonify(response)
     except Exception as exc:

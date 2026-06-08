@@ -205,9 +205,9 @@
                                     <button class="btn btn-export" id="exportJsonBtn" disabled>
                                         <i class="fas fa-file-code"></i> 下载JSON
                                     </button>
-                                    <button class="btn btn-export" id="exportImageBtn" disabled>
+                                    <!--<button class="btn btn-export" id="exportImageBtn" disabled>
                                         <i class="fas fa-file-image"></i> 下载图像
-                                    </button>
+                                    </button>-->
                                 </div>
                             </div>
                             
@@ -288,12 +288,18 @@
 
                                     <!-- 可视化标签页 -->
                                     <div class="tab-pane" id="visualization">
-                                        <div class="visualization-container">
-                                            <div class="visualization-placeholder" id="visualizationPlaceholder">
-                                                <i class="fas fa-image"></i>
-                                                <p>识别完成后，这里将显示图片和识别区域的可视化</p>
+                                        <div class="visualization-result-container" id="visualizationResultContainer" style="display: none;">
+                                            <div class="visualization-image-wrapper">
+                                                <img id="visualizationResultImage" src="" alt="标注结果" class="visualization-image" onclick="openFullscreenViewer(this.src)">
+                                                <div class="visualization-image-hint">
+                                                    <i class="fas fa-search-plus"></i>
+                                                    <span>点击图片可放大查看</span>
+                                                </div>
                                             </div>
-                                            <canvas id="visualizationCanvas" style="display: none;"></canvas>
+                                        </div>
+                                        <div class="visualization-placeholder" id="visualizationPlaceholder">
+                                            <i class="fas fa-image"></i>
+                                            <p>识别完成后，这里将显示标注结果图</p>
                                         </div>
                                     </div>
                                 </div>

@@ -300,8 +300,8 @@ class OpenAIVLProcessor:
             payload = {
                 "model": self.model,
                 "messages": messages,
-                "max_tokens": 4000,
-                "temperature": 0.1
+                "max_tokens": 8000,  # 增加到8000以获取更完整的输出
+                "temperature": 0.01  # 降低到0.01以提高确定性和精度
             }
             
             logger.info(f"发送OpenAI VL API请求到: {url}")

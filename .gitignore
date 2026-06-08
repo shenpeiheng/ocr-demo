@@ -72,3 +72,5 @@ temp/
 
 # OS generated files
 *~
+
+.claude

@@ -108,7 +108,7 @@ def resize_with_padding(image_path: str, target_size: int = 990, output_path: st
         logger.error(f"图片填充白边失败: {e}")
         raise
 
-def preprocess_image_for_ocr(image_path: str, target_size: int = 990, max_size: int = 2048, max_file_size: int = 5 * 1024 * 1024) -> str:
+def preprocess_image_for_ocr(image_path: str, target_size: int = 1200, max_size: int = 2048, max_file_size: int = 5 * 1024 * 1024) -> str:
     """
     为OCR预处理图片：检查尺寸并调整到目标尺寸，同时确保不超过最大尺寸限制和文件大小限制
     
@@ -147,8 +147,8 @@ def preprocess_image_for_ocr(image_path: str, target_size: int = 990, max_size: 
             # 等比缩小并压缩
             with Image.open(image_path) as img:
                 img_resized = img.resize((new_width, new_height), Image.LANCZOS)
-                # 如果文件大，使用较低质量压缩
-                quality = 60 if needs_compress else 85
+                # 使用较高质量压缩以保持细节
+                quality = 85 if needs_compress else 95
                 img_resized.save(preprocessed_path, quality=quality, optimize=True)
             
             logger.info(f"图片已从{width}x{height}缩小到{new_width}x{new_height}，质量={quality}，保存到: {preprocessed_path}")

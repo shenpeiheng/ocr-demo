@@ -6758,3 +6758,112 @@ textarea:focus,
         grid-template-columns: 1fr;
     }
 }
+
+/* ========================================
+   可视化图片区域样式 - 统一 index.html 和 image_ocr.html
+   ======================================== */
+
+/* 可视化结果容器 */
+.visualization-result-container {
+    width: 100%;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafbfc;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* 可视化图片包装器 */
+.visualization-image-wrapper {
+    position: relative;
+    max-width: 100%;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+/* 可视化图片 */
+.visualization-image {
+    max-width: 100%;
+    max-height: 550px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.visualization-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 可视化图片提示 */
+.visualization-image-hint {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #7f8c8d;
+    font-size: 13px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.visualization-image-wrapper:hover .visualization-image-hint {
+    opacity: 1;
+    color: #3498db;
+}
+
+.visualization-image-hint i {
+    font-size: 14px;
+}
+
+/* 可视化占位符 */
+.visualization-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #95a5a6;
+    text-align: center;
+}
+
+.visualization-placeholder i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.visualization-placeholder p {
+    font-size: 15px;
+    color: #7f8c8d;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .visualization-result-container {
+        min-height: 300px;
+        padding: 15px;
+    }
+    
+    .visualization-image {
+        max-height: 400px;
+    }
+    
+    .visualization-placeholder {
+        min-height: 300px;
+    }
+    
+    .visualization-placeholder i {
+        font-size: 48px;
+    }
+}
