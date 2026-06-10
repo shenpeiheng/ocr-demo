@@ -220,6 +220,20 @@ async function startWordProcess() {
         return;
     }
 
+    // 显示扫描动画
+    const container = document.querySelector('.word-flowchart-results-section');
+    if (container) {
+        container.style.position = 'relative';
+        let overlay = container.querySelector('.scanning-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'scanning-overlay';
+            overlay.innerHTML = '<div class="scanning-content"><div class="scanning-animation"><div class="scan-line"></div></div><div class="scanning-text">正在识别中<span class="scanning-dots"></span></div></div>';
+            container.appendChild(overlay);
+        }
+        overlay.classList.add('active');
+    }
+
     stopPolling();
     resetTaskView();
     setProcessingState(true, 'extract');
@@ -267,6 +281,20 @@ async function startSelectedImages() {
     if (!selectedFiles.length) {
         showError('请至少勾选一张图片后再开始检测');
         return;
+    }
+
+    // 显示扫描动画
+    const container = document.querySelector('.word-flowchart-results-section');
+    if (container) {
+        container.style.position = 'relative';
+        let overlay = container.querySelector('.scanning-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'scanning-overlay';
+            overlay.innerHTML = '<div class="scanning-content"><div class="scanning-animation"><div class="scan-line"></div></div><div class="scanning-text">正在识别中<span class="scanning-dots"></span></div></div>';
+            container.appendChild(overlay);
+        }
+        overlay.classList.add('active');
     }
 
     stopPolling();
@@ -371,6 +399,12 @@ async function pollTaskStatus() {
             updateDownloadButtons(task);
             updateSelectionControls();
             showNotification(`已提取 ${task.total_images || 0} 张图片，请勾选后开始检测`, 'info');
+            // 隐藏扫描动画
+            const container = document.querySelector('.word-flowchart-results-section');
+            if (container) {
+                const overlay = container.querySelector('.scanning-overlay');
+                if (overlay) overlay.classList.remove('active');
+            }
         } else if (task.status === 'completed') {
             stopPolling();
             setProcessingState(false);
@@ -380,6 +414,12 @@ async function pollTaskStatus() {
                 showNotification(`处理完成，成功 ${task.successful_images || 0} 张，失败 ${failedCount} 张`, 'info');
             } else {
                 showSuccess('Word流程图批量识别完成');
+            }
+            // 隐藏扫描动画
+            const container = document.querySelector('.word-flowchart-results-section');
+            if (container) {
+                const overlay = container.querySelector('.scanning-overlay');
+                if (overlay) overlay.classList.remove('active');
             }
         } else if (task.status === 'failed') {
             stopPolling();

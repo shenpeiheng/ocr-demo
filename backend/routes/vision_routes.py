@@ -558,71 +558,77 @@ def license_plate_detection():
             return jsonify({"error": "无法解码图片"}), 400
 
         img_height, img_width = img.shape[:2]
-        ocr = _get_license_ocr()
         detections = []
 
-        if ocr is None:
-            return (
-                jsonify(
-                    {
-                        "error": "OCR 模型未加载",
-                        "suggestion": "PaddleOCR模型初始化失败。请检查: 1) 服务器网络是否可访问PaddleOCR模型下载地址; 2) 是否在Docker构建时预下载了模型; 3) 模型文件是否完整。可尝试重启容器或重新构建镜像。",
-                    }
-                ),
-                500,
-            )
+        # 优先使用在线 API（如果 MODE 为 online）
+        from paddleocr_online_api import create_paddleocr_online_client
+        from config import Config
 
-        try:
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            ocr_result = ocr.predict(img_rgb)
-            if ocr_result and len(ocr_result) > 0:
-                ocr_data = ocr_result[0]
-                if isinstance(ocr_data, dict):
-                    rec_texts = ocr_data.get("rec_texts", [])
-                    rec_scores = ocr_data.get("rec_scores", [])
-                    rec_polys = ocr_data.get("rec_polys", [])
-                    for index in range(len(rec_texts)):
-                        text = rec_texts[index]
-                        confidence = float(rec_scores[index]) if index < len(rec_scores) else 0.0
-                        if not _is_license_plate_text(text):
-                            continue
-                        poly = rec_polys[index] if index < len(rec_polys) else None
-                        if poly is None or not isinstance(poly, np.ndarray):
-                            continue
-                        xs = poly[:, 0]
-                        ys = poly[:, 1]
-                        x1, y1 = int(min(xs)), int(min(ys))
-                        x2, y2 = int(max(xs)), int(max(ys))
-                        detections.append(
-                            {
-                                "bbox": {
-                                    "x1": float(x1),
-                                    "y1": float(y1),
-                                    "x2": float(x2),
-                                    "y2": float(y2),
-                                    "width": float(x2 - x1),
-                                    "height": float(y2 - y1),
-                                },
+        online_client = None
+        if Config.PADDLEOCR_MODE == 'online':
+            online_client = create_paddleocr_online_client(Config.PADDLEOCR_ONLINE_API_URL, Config.PADDLEOCR_ONLINE_TOKEN)
+
+        use_online = False
+
+        if online_client:
+            api_result = online_client.recognize(image_bytes)
+            if api_result.get("success"):
+                use_online = True
+                data = api_result.get("data", {})
+                results = data.get("result", [])
+                for item in results:
+                    text = item.get("text", "").strip()
+                    if not _is_license_plate_text(text):
+                        continue
+                    box = item.get("box", [])
+                    if len(box) >= 4:
+                        x1, y1 = int(box[0][0]), int(box[0][1])
+                        x2, y2 = int(box[2][0]), int(box[2][1])
+                        confidence = item.get("score", 0.0)
+                        detections.append({
+                            "bbox": {"x1": float(x1), "y1": float(y1), "x2": float(x2), "y2": float(y2), "width": float(x2 - x1), "height": float(y2 - y1)},
+                            "confidence": round(confidence, 4),
+                            "plate_text": text,
+                            "plate_text_confidence": round(confidence, 4),
+                        })
+
+        # 在线 API 失败，使用本地模型
+        if not use_online:
+            ocr = _get_license_ocr()
+            if ocr is None:
+                return jsonify({"error": "OCR 模型未加载"}), 500
+
+            try:
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                ocr_result = ocr.predict(img_rgb)
+                if ocr_result and len(ocr_result) > 0:
+                    ocr_data = ocr_result[0]
+                    if isinstance(ocr_data, dict):
+                        rec_texts = ocr_data.get("rec_texts", [])
+                        rec_scores = ocr_data.get("rec_scores", [])
+                        rec_polys = ocr_data.get("rec_polys", [])
+                        for index in range(len(rec_texts)):
+                            text = rec_texts[index]
+                            confidence = float(rec_scores[index]) if index < len(rec_scores) else 0.0
+                            if not _is_license_plate_text(text):
+                                continue
+                            poly = rec_polys[index] if index < len(rec_polys) else None
+                            if poly is None or not isinstance(poly, np.ndarray):
+                                continue
+                            xs = poly[:, 0]
+                            ys = poly[:, 1]
+                            x1, y1 = int(min(xs)), int(min(ys))
+                            x2, y2 = int(max(xs)), int(max(ys))
+                            detections.append({
+                                "bbox": {"x1": float(x1), "y1": float(y1), "x2": float(x2), "y2": float(y2), "width": float(x2 - x1), "height": float(y2 - y1)},
                                 "confidence": round(confidence, 4),
                                 "plate_text": text,
                                 "plate_text_confidence": round(confidence, 4),
-                            }
-                        )
-            detector_name = "PaddleOCR (License Plate Recognition)"
-        except Exception as exc:
-            error_msg = str(exc)
-            print(f"[LicensePlate] OCR 识别失败: {error_msg}")
-            if any(token in error_msg.lower() for token in ("download", "connection", "timeout", "http")):
-                return (
-                    jsonify(
-                        {
-                            "error": f"OCR模型加载失败: {error_msg}",
-                            "suggestion": "请检查服务器网络连接，确保可以访问PaddleOCR模型下载地址。如果使用Docker，请尝试: docker build --network=host 或在Dockerfile中预下载模型。也可以手动下载模型后挂载到 /root/.paddleocr 目录。",
-                        }
-                    ),
-                    500,
-                )
-            return jsonify({"error": f"OCR识别失败: {error_msg}"}), 500
+                            })
+            except Exception as exc:
+                return jsonify({"error": f"OCR识别失败: {str(exc)}"}), 500
+
+        detector_name = "PaddleOCR Online API" if use_online else "PaddleOCR (License Plate Recognition)"
 
         img_draw = img.copy()
         img_pil = Image.fromarray(cv2.cvtColor(img_draw, cv2.COLOR_BGR2RGB))

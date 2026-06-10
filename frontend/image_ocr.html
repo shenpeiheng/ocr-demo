@@ -1184,7 +1184,29 @@
             if (processBtn) {
                 processBtn.addEventListener('click', async function() {
                     var prompt = promptInput.value.trim();
+
+                    // 显示扫描动画
+                    const container = document.querySelector('.results-section');
+                    if (container) {
+                        container.style.position = 'relative';
+                        let overlay = container.querySelector('.scanning-overlay');
+                        if (!overlay) {
+                            overlay = document.createElement('div');
+                            overlay.className = 'scanning-overlay';
+                            overlay.innerHTML = '<div class="scanning-content"><div class="scanning-animation"><div class="scan-line"></div></div><div class="scanning-text">正在识别中<span class="scanning-dots"></span></div></div>';
+                            container.appendChild(overlay);
+                        }
+                        overlay.classList.add('active');
+                        setTimeout(() => overlay.classList.remove('active'), 300000);
+                    }
+
                     await processWithPrompt(prompt);
+
+                    // 识别完成后隐藏动画
+                    if (container) {
+                        const overlay = container.querySelector('.scanning-overlay');
+                        if (overlay) overlay.classList.remove('active');
+                    }
                 });
             }
 
@@ -1247,5 +1269,6 @@
         });
     </script>
     <script src="static/js/json-viewer-helper.js"></script>
+
 </body>
 </html>

@@ -28,6 +28,30 @@ def get_pdf_info(filename):
 
     try:
         pdf_info = pdf_processor._get_pdf_info(filepath)
+
+        # 生成预览图（使用 PyMuPDF）
+        try:
+            import fitz  # PyMuPDF
+            pdf_base_name = os.path.splitext(filename)[0]
+            preview_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"preview_{pdf_base_name}")
+            os.makedirs(preview_dir, exist_ok=True)
+
+            preview_paths = []
+            doc = fitz.open(filepath)
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                pix = page.get_pixmap(dpi=300)  # 提高到 300 DPI
+                preview_path = os.path.join(preview_dir, f"page_{page_num + 1}.jpg")
+                pix.save(preview_path)
+                relative_path = os.path.relpath(preview_path, app.config["UPLOAD_FOLDER"])
+                preview_paths.append(relative_path)
+            doc.close()
+
+            pdf_info["preview_images"] = preview_paths
+        except Exception:
+            # 预览图生成失败，返回空数组
+            pdf_info["preview_images"] = []
+
         return jsonify({"success": True, "filename": filename, "pdf_info": pdf_info})
     except Exception as exc:
         return jsonify({"error": f"获取PDF信息失败: {str(exc)}"}), 500

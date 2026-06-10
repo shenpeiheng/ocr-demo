@@ -834,6 +834,20 @@
             detectBtn.addEventListener('click', function() {
                 if (!selectedFile && !selectedSampleSrc) return;
 
+                // 显示扫描动画
+                const container = document.querySelector('.ai-result-card');
+                if (container) {
+                    container.style.position = 'relative';
+                    let overlay = container.querySelector('.scanning-overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.className = 'scanning-overlay';
+                        overlay.innerHTML = '<div class="scanning-content"><div class="scanning-animation"><div class="scan-line"></div></div><div class="scanning-text">正在识别中<span class="scanning-dots"></span></div></div>';
+                        container.appendChild(overlay);
+                    }
+                    overlay.classList.add('active');
+                }
+
                 // 禁用按钮，显示加载
                 detectBtn.disabled = true;
                 detectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
@@ -918,6 +932,13 @@
                     alert('请求失败: ' + err.message);
                 })
                 .finally(function() {
+                    // 隐藏扫描动画
+                    const container = document.querySelector('.ai-result-card');
+                    if (container) {
+                        const overlay = container.querySelector('.scanning-overlay');
+                        if (overlay) overlay.classList.remove('active');
+                    }
+
                     detectBtn.disabled = false;
                     detectBtn.innerHTML = '<i class="fas fa-search"></i> 开始检测';
                     loadingIndicator.classList.remove('active');

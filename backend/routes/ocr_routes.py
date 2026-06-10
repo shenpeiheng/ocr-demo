@@ -74,11 +74,12 @@ def api_index():
             "pdf_support": pdf_processor.initialized,
             "pdf_engines": {
                 "current": Config.PDF_ENGINE,
-                "available": ["ocr", "mineru"],
+                "available": ["ocr", "mineru", "paddleocr_vl"],
                 "mineru_configured": bool(Config.MINERU_API_KEY or Config.MINERU_OFFICIAL_TOKEN),
                 "mineru_mode": Config.MINERU_REQUEST_MODE,
                 "mineru_model": Config.MINERU_MODEL,
                 "mineru_official_enabled": bool(Config.MINERU_OFFICIAL_TOKEN),
+                "paddleocr_vl_configured": bool(Config.PADDLEOCR_ONLINE_TOKEN),
             },
             "ocr_engine": {
                 "current": engine_info["current_engine"],
@@ -714,6 +715,34 @@ def download_word_flowchart_json(batch_id):
 @ocr_bp.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+@ocr_bp.route("/uploads/<path:subpath>")
+def uploaded_file_subpath(subpath):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], subpath)
+
+
+@ocr_bp.route("/api/pdf/images/list/<filename>")
+def get_pdf_images_list(filename):
+    """获取PDF的预览图列表"""
+    try:
+        pdf_base_name = os.path.splitext(filename)[0]
+        images_dir = os.path.join(app.config["UPLOAD_FOLDER"], f"images_{pdf_base_name}")
+
+        if not os.path.exists(images_dir):
+            return jsonify({"success": False, "error": "预览图尚未生成"}), 404
+
+        images = []
+        for img_file in sorted(os.listdir(images_dir)):
+            if img_file.endswith(('.png', '.jpg', '.jpeg')):
+                images.append({
+                    "url": f"/uploads/images_{pdf_base_name}/{img_file}",
+                    "filename": img_file
+                })
+        return jsonify({"success": True, "images": images})
+
+    except Exception as e:
+        logger.error(f"获取PDF图像列表失败: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 def _run_word_flowchart_prepare_task(task_id, batch_id, document_path, original_filename):
@@ -1485,7 +1514,7 @@ def process_image_file(filename, filepath, data):
 def process_pdf_file(filename, filepath, data):
     try:
         pdf_engine = (data.get("pdf_engine") or Config.PDF_ENGINE or "ocr").strip().lower()
-        if pdf_engine not in {"ocr", "mineru"}:
+        if pdf_engine not in {"ocr", "mineru", "paddleocr_vl"}:
             return jsonify({"success": False, "error": f"不支持的PDF解析方式: {pdf_engine}", "file_type": "pdf"}), 400
 
         if pdf_engine == "ocr" and not pdf_processor.initialized:
@@ -1523,6 +1552,18 @@ def process_pdf_file(filename, filepath, data):
             )
             if not pdf_result.get("conversion_info", {}).get("image_paths"):
                 _render_pdf_preview_images(filepath, images_dir, dpi, max_pages, pdf_result)
+        elif pdf_engine == "paddleocr_vl":
+            from paddleocr_vl_processor import create_paddleocr_vl_processor
+            paddleocr_vl_processor = create_paddleocr_vl_processor(
+                api_url=Config.PADDLEOCR_ONLINE_API_URL,
+                token=Config.PADDLEOCR_ONLINE_TOKEN,
+            )
+            if not paddleocr_vl_processor:
+                return jsonify({"success": False, "error": "PaddleOCR-VL 未配置 token"}), 500
+
+            # 获取模型参数，默认 PaddleOCR-VL-1.6
+            model = data.get("paddleocr_model", "PaddleOCR-VL-1.6")
+            pdf_result = paddleocr_vl_processor.process_pdf(filepath, model=model, max_pages=max_pages)
         else:
             pdf_result = pdf_processor.process_pdf_with_ocr(
                 filepath,
@@ -1539,9 +1580,20 @@ def process_pdf_file(filename, filepath, data):
         with open(result_path, "w", encoding="utf-8") as file_obj:
             json.dump(pdf_result, file_obj, ensure_ascii=False, indent=2)
 
-        excel_filename = f"result_{pdf_base_name}.xlsx"
-        excel_path = os.path.join(app.config["UPLOAD_FOLDER"], excel_filename)
-        generate_pdf_excel(pdf_result, excel_path)
+        # PaddleOCR-VL 不生成 Excel（格式不兼容）
+        if pdf_engine != "paddleocr_vl":
+            excel_filename = f"result_{pdf_base_name}.xlsx"
+            excel_path = os.path.join(app.config["UPLOAD_FOLDER"], excel_filename)
+            generate_pdf_excel(pdf_result, excel_path)
+        else:
+            excel_filename = None
+
+        # PaddleOCR-VL 单独保存 Markdown 文件
+        if pdf_engine == "paddleocr_vl" and pdf_result.get("markdown"):
+            markdown_filename = f"result_{pdf_base_name}.md"
+            markdown_path = os.path.join(app.config["UPLOAD_FOLDER"], markdown_filename)
+            with open(markdown_path, "w", encoding="utf-8") as md_file:
+                md_file.write(pdf_result["markdown"])
 
         if "conversion_info" in pdf_result and "image_paths" in pdf_result["conversion_info"]:
             relative_image_paths = []
@@ -1549,6 +1601,10 @@ def process_pdf_file(filename, filepath, data):
                 if os.path.exists(img_path):
                     relative_image_paths.append(os.path.relpath(img_path, app.config["UPLOAD_FOLDER"]))
             pdf_result["conversion_info"]["relative_image_paths"] = relative_image_paths
+
+        result_files = {"json": result_filename}
+        if excel_filename:
+            result_files["excel"] = excel_filename
 
         return jsonify(
             {
@@ -1558,7 +1614,7 @@ def process_pdf_file(filename, filepath, data):
                 "file_type": "pdf",
                 "pdf_engine": pdf_engine,
                 "results": pdf_result,
-                "result_files": {"json": result_filename, "excel": excel_filename},
+                "result_files": result_files,
             }
         )
     except Exception as exc:
@@ -1593,3 +1649,4 @@ def _render_pdf_preview_images(filepath, images_dir, dpi, max_pages, pdf_result)
     if preview_result.get("success"):
         pdf_result["conversion_info"].update(preview_result.get("conversion_info", {}))
         pdf_result["conversion_info"]["image_paths"] = preview_result.get("image_paths", [])
+

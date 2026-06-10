@@ -52,7 +52,12 @@ class Config:
 
     # 文件上传服务配置（用于 MinerU 官方 API）
     MINERU_FILE_UPLOAD_SERVICE = os.getenv('MINERU_FILE_UPLOAD_SERVICE', 'transfer.sh').strip()
-    
+
+    # PaddleOCR 在线 API 配置
+    PADDLEOCR_ONLINE_API_URL = os.getenv('PADDLEOCR_ONLINE_API_URL', 'https://paddleocr.aistudio-app.com/api/v2/ocr/jobs').strip()
+    PADDLEOCR_ONLINE_TOKEN = os.getenv('PADDLEOCR_ONLINE_TOKEN', '').strip()
+    PADDLEOCR_MODE = os.getenv('PADDLEOCR_MODE', 'online').strip().lower()
+
     # CORS配置
     ENABLE_CORS = os.getenv('ENABLE_CORS', 'true').lower() == 'true'
     

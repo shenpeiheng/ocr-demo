@@ -28,6 +28,7 @@ let processingStartTime = null;
 let currentPage = 1;
 let totalPages = 0;
 let pdfImages = []; // 存储PDF转换后的图像URL
+let currentPreviewImages = []; // 存储预览图路径
 let scale = 1.0;
 
 // DOM元素
@@ -133,6 +134,11 @@ function bindEvents() {
 
     pdfEngineSetting?.addEventListener('change', () => {
         updatePdfProcessingText(pdfEngineSetting.value);
+        // 显示/隐藏 PaddleOCR 模型选择器
+        const modelSetting = document.getElementById('paddleocrModelSetting');
+        if (modelSetting) {
+            modelSetting.style.display = pdfEngineSetting.value === 'paddleocr_vl' ? 'block' : 'none';
+        }
     });
     
     // 导出按钮
@@ -193,9 +199,14 @@ function initTabs() {
             // 显示对应的标签页内容
             document.querySelectorAll('.tab-pane').forEach(pane => {
                 pane.classList.remove('active');
+                pane.style.display = 'none';
             });
-            
-            document.getElementById(tabId).classList.add('active');
+
+            const targetPane = document.getElementById(tabId);
+            if (targetPane) {
+                targetPane.classList.add('active');
+                targetPane.style.display = 'block';
+            }
             
             // 根据标签页类型更新内容
             if (currentResults) {
@@ -245,6 +256,9 @@ async function handleSampleSelect(event) {
 
         // 自动上传以获取页数信息
         await handleUpload({ silent: true, enableProcess: true });
+
+        // 加载预览图
+        await loadPdfImages();
     } catch (error) {
         console.error('加载示例文件失败:', error);
         showError('示例文件加载失败，请手动选择PDF文件');
@@ -371,10 +385,18 @@ async function handleUpload(options = {}) {
         const pdfInfoResponse = await fetch(`${API_BASE_URL}/api/pdf/info/${data.filename}`);
         if (pdfInfoResponse.ok) {
             const pdfInfoData = await pdfInfoResponse.json();
+            console.log('PDF Info Data:', pdfInfoData);
             if (pdfInfoData.success) {
                 const pageCount = pdfInfoData.pdf_info.total_pages || 0;
                 pdfPages.textContent = pageCount > 0 ? pageCount : '未知';
                 totalPages = pageCount;
+
+                // 保存预览图路径
+                if (pdfInfoData.pdf_info.preview_images) {
+                    console.log('Preview images:', pdfInfoData.pdf_info.preview_images);
+                    currentPreviewImages = pdfInfoData.pdf_info.preview_images;
+                    displayPreviewImages();
+                }
 
                 // 更新页面设置的最大值和提示
                 if (pageCount > 0) {
@@ -433,6 +455,10 @@ async function handleProcess() {
         if (ocrLoadingIndicator) ocrLoadingIndicator.classList.add('active');
         if (ocrStatsCard) ocrStatsCard.style.display = 'none';
 
+        // 显示扫描遮罩
+        const scanningOverlay = document.getElementById('scanningOverlay');
+        if (scanningOverlay) scanningOverlay.classList.add('active');
+
         if (!currentFile.serverFilename) {
             const uploaded = await handleUpload({ silent: true, enableProcess: false });
             if (!uploaded || !currentFile.serverFilename) {
@@ -445,15 +471,16 @@ async function handleProcess() {
         const dpi = parseInt(dpiSetting.value) || 200;
         const lang = languageSetting.value || 'ch';
         const pdfEngine = pdfEngineSetting?.value || 'ocr';
+        const paddleocrModel = document.getElementById('paddleocrModel')?.value || 'PaddleOCR-VL-1.6';
         updatePdfProcessingText(pdfEngine);
 
         updateProgress(60, pdfEngine === 'mineru' ? '正在调用MinerU模型解析PDF' : '正在转换PDF为图像');
         updateStatus('convert', 'active');
-        
+
         // 显示页面处理进度
         if (pagesProgress) pagesProgress.style.display = 'block';
         updatePagesProgress(0, 0);
-        
+
         // 发送处理请求
         const response = await fetch(`${API_BASE_URL}/api/process`, {
             method: 'POST',
@@ -463,6 +490,7 @@ async function handleProcess() {
             body: JSON.stringify({
                 filename: currentFile.serverFilename,
                 pdf_engine: pdfEngine,
+                paddleocr_model: paddleocrModel,
                 max_pages: maxPages,
                 dpi: dpi,
                 lang: lang
@@ -502,6 +530,13 @@ async function handleProcess() {
         exportImagesBtn.disabled = false;
         
         showSuccess(pdfEngine === 'mineru' ? 'PDF解析完成！' : 'PDF识别完成！');
+
+        // 自动切换到 Markdown tab
+        const markdownTab = document.querySelector('[data-tab="markdownView"]');
+        if (markdownTab) {
+            markdownTab.click();
+            console.log('已切换到 Markdown tab');
+        }
         
     } catch (error) {
         console.error('处理错误:', error);
@@ -515,6 +550,10 @@ async function handleProcess() {
         }
         updatePdfProcessingText(pdfEngineSetting?.value || 'ocr');
         if (ocrLoadingIndicator) ocrLoadingIndicator.classList.remove('active');
+
+        // 隐藏扫描遮罩
+        const scanningOverlay = document.getElementById('scanningOverlay');
+        if (scanningOverlay) scanningOverlay.classList.remove('active');
     }
 }
 
@@ -561,6 +600,16 @@ function displayResults(data) {
             markdownContent.innerHTML = html;
             markdownContent.style.whiteSpace = 'normal';
         }
+    } else {
+        // PaddleOCR-VL：从 text_items 生成 Markdown
+        const textItems = combinedResults.text_items || [];
+        if (textItems.length > 0) {
+            const markdownContent = document.getElementById('markdownContent');
+            if (markdownContent && typeof marked !== 'undefined') {
+                const markdown = textItems.map(item => item.text || '').join('\n\n');
+                markdownContent.innerHTML = marked.parse(markdown);
+            }
+        }
     }
 
     // 加载 JSON 文件
@@ -581,12 +630,19 @@ function displayResults(data) {
                 }
             })
             .catch(err => {
-                console.warn('JSON 加载失败');
+                console.warn('MinerU JSON 加载失败，尝试显示 combined_results');
+                // PaddleOCR-VL 或其他引擎：直接显示 combined_results
                 const jsonContent = document.getElementById('jsonContent');
-                if (jsonContent) {
-                    jsonContent.textContent = '暂无 JSON 数据';
+                if (jsonContent && typeof $ !== 'undefined') {
+                    $(jsonContent).jsonViewer(combinedResults, {collapsed: false, withQuotes: true});
                 }
             });
+    } else {
+        // PaddleOCR-VL：直接显示 combined_results 为 JSON
+        const jsonContent = document.getElementById('jsonContent');
+        if (jsonContent && typeof $ !== 'undefined') {
+            $(jsonContent).jsonViewer(combinedResults, {collapsed: false, withQuotes: true});
+        }
     }
 
     // 显示PDF摘要
@@ -701,8 +757,10 @@ function jumpToPage(pageNum) {
 
 // 更新文本结果表格
 function updateTextResultsTable(textItems) {
+    if (!textResultsBody) return;
+
     textResultsBody.innerHTML = '';
-    
+
     if (textItems.length === 0) {
         textResultsBody.innerHTML = `
             <tr>
@@ -711,11 +769,11 @@ function updateTextResultsTable(textItems) {
         `;
         return;
     }
-    
+
     textItems.forEach((item, index) => {
         const confidenceClass = getConfidenceClass(item.confidence);
         const confidencePercent = (item.confidence * 100).toFixed(1);
-        
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${item.page || 1}</td>
@@ -732,7 +790,7 @@ function updateTextResultsTable(textItems) {
                 </button>
             </td>
         `;
-        
+
         textResultsBody.appendChild(row);
     });
     
@@ -850,19 +908,53 @@ function showCurrentPageImage() {
     // 创建图像对象
     const img = new Image();
     img.onload = function() {
+        // 限制最大显示尺寸
+        const maxWidth = 1200;
+        const maxHeight = 1600;
+        let width = img.width;
+        let height = img.height;
+
+        console.log('原始图片尺寸:', img.width, 'x', img.height);
+
+        // 按比例缩放
+        if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = width * ratio;
+            height = height * ratio;
+        }
+
+        console.log('Canvas 尺寸:', width, 'x', height);
+
         // 设置画布尺寸
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        
+        canvas.width = width;
+        canvas.height = height;
+
         // 清除画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // 绘制图像
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
+        ctx.drawImage(img, 0, 0, width, height);
+
+        console.log('图像绘制完成');
+
         // 显示画布，隐藏占位符
         visualizationPlaceholder.style.display = 'none';
         canvas.style.display = 'block';
+
+        // 立即滚动容器到顶部
+        const container = canvas.closest('.visualization-container');
+        if (container) {
+            console.log('容器信息 - scrollTop:', container.scrollTop, 'scrollHeight:', container.scrollHeight, 'clientHeight:', container.clientHeight);
+            container.scrollTop = 0;
+            console.log('滚动后 scrollTop:', container.scrollTop);
+        }
+
+        // 同时滚动页面到容器位置
+        setTimeout(() => {
+            if (container) {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
         
         // 如果有OCR结果，可以在图像上绘制边界框
         if (currentResults && currentResults.combined_results && currentResults.combined_results.text_items) {
@@ -1500,13 +1592,15 @@ function resetResults() {
     if (totalItems) totalItems.textContent = '0';
     if (avgConfidence) avgConfidence.textContent = '0%';
     if (processingTime) processingTime.textContent = '0s';
-    
+
     // 重置表格
-    textResultsBody.innerHTML = `
-        <tr>
-            <td colspan="6" class="empty-message">暂无识别结果</td>
-        </tr>
-    `;
+    if (textResultsBody) {
+        textResultsBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-message">暂无识别结果</td>
+            </tr>
+        `;
+    }
     
     coordinateResultsBody.innerHTML = `
         <tr>
@@ -1529,6 +1623,76 @@ function resetResults() {
     currentPage = 1;
     totalPages = 0;
     scale = 1.0;
+}
+
+// 显示预览图
+function displayPreviewImages() {
+    console.log('displayPreviewImages called, images:', currentPreviewImages);
+    if (!currentPreviewImages || currentPreviewImages.length === 0) return;
+
+    // 更新页面预览数据
+    pdfImages = currentPreviewImages.map(path => `${API_BASE_URL}/uploads/${path.replace(/\\/g, '/')}`);
+    currentPage = 1;
+    totalPages = pdfImages.length;
+    console.log('pdfImages:', pdfImages);
+
+    // 更新总页数显示
+    if (pdfTotalPages) {
+        pdfTotalPages.textContent = totalPages;
+    }
+    if (currentPageDisplay) {
+        currentPageDisplay.textContent = `页面: ${currentPage}/${totalPages}`;
+    }
+
+    // 填充页面摘要（初始状态）
+    console.log('pagesSummaryBody:', pagesSummaryBody);
+    if (pagesSummaryBody) {
+        pagesSummaryBody.innerHTML = '';
+        for (let i = 1; i <= currentPreviewImages.length; i++) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${i}</td>
+                <td>-</td>
+                <td>-</td>
+                <td><span class="status-badge">未处理</span></td>
+                <td>
+                    <button class="btn-small btn-jump-to-preview" data-page="${i}" title="跳转到该页面">
+                        <i class="fas fa-external-link-alt"></i>
+                    </button>
+                </td>
+            `;
+            pagesSummaryBody.appendChild(row);
+        }
+        console.log('页面摘要已填充，行数:', currentPreviewImages.length);
+
+        // 绑定跳转按钮
+        document.querySelectorAll('.btn-jump-to-preview').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const pageNum = parseInt(e.target.closest('button').getAttribute('data-page'));
+                currentPage = pageNum;
+                document.querySelector('[data-tab="visualization"]')?.click();
+            });
+        });
+    }
+
+    // 激活页面摘要 tab（确保显示）
+    const summaryTab = document.querySelector('[data-tab="pagesSummary"]');
+    if (summaryTab) {
+        summaryTab.click();
+        console.log('已激活页面摘要 tab');
+    }
+
+    // 触发页面预览渲染
+    if (typeof updateVisualization === 'function') {
+        updateVisualization();
+        console.log('已触发页面预览渲染');
+    }
+
+    // 加载第一张图片
+    if (typeof showCurrentPageImage === 'function') {
+        showCurrentPageImage();
+        console.log('已加载第一张预览图');
+    }
 }
 
 // 页面加载完成后初始化

@@ -101,6 +101,16 @@
                                         <select id="pdfEngineSetting" class="setting-select">
                                             <option value="ocr">OCR逐页识别</option>
                                             <option value="mineru" selected>MinerU文档解析</option>
+                                            <option value="paddleocr_vl">PaddleOCR在线</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="setting-item" id="paddleocrModelSetting" style="display: none;">
+                                        <label for="paddleocrModel">PaddleOCR模型:</label>
+                                        <select id="paddleocrModel" class="setting-select">
+                                            <option value="PaddleOCR-VL-1.6" selected>PaddleOCR-VL-1.6</option>
+                                            <option value="PP-OCRv5">PP-OCRv5</option>
+                                            <option value="PP-StructureV3">PP-StructureV3</option>
                                         </select>
                                     </div>
 
@@ -198,7 +208,19 @@
 
                     <!-- 右侧列：结果展示 -->
                     <div class="right-column">
-                        <div class="results-section card">
+                        <div class="results-section card" style="position: relative;">
+                            <!-- 扫描中遮罩 -->
+                            <div class="scanning-overlay" id="scanningOverlay">
+                                <div class="scanning-content">
+                                    <div class="scanning-animation">
+                                        <div class="scan-line"></div>
+                                    </div>
+                                    <div class="scanning-text">
+                                        正在识别中<span class="scanning-dots"></span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="section-header">
                                 <h2><i class="fas fa-chart-bar"></i> PDF识别结果</h2>
                                 <div class="export-buttons">
@@ -213,34 +235,17 @@
                                     </button>
                                 </div>
                             </div>
-                            
-                            <!-- 页面摘要 -->
-                            <div class="pages-summary" id="pagesSummary" style="display: none;">
-                                <div class="section-header">
-                                    <h3><i class="fas fa-copy"></i> 页面处理摘要</h3>
-                                </div>
-                                <div class="table-container">
-                                    <table class="pages-table">
-                                        <thead>
-                                            <tr>
-                                                <th>页码</th>
-                                                <th>识别项数</th>
-                                                <th>处理时间</th>
-                                                <th>状态</th>
-                                                <th>操作</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="pagesSummaryBody">
-                                            <!-- 页面摘要行将通过JavaScript动态添加 -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            
+
                             <div class="results-tabs">
                                 <div class="tab-buttons">
-                                    <button class="tab-btn active" data-tab="textResults">
-                                        <i class="fas fa-font"></i> 文本内容
+                                    <button class="tab-btn active" data-tab="pagesSummary">
+                                        <i class="fas fa-list-alt"></i> 页面摘要
+                                    </button>
+                                    <button class="tab-btn" data-tab="visualization">
+                                        <i class="fas fa-eye"></i> 页面预览
+                                    </button>
+                                    <button class="tab-btn" data-tab="pageResults">
+                                        <i class="fas fa-copy"></i> 查看内容
                                     </button>
                                     <button class="tab-btn" data-tab="markdownView">
                                         <i class="fab fa-markdown"></i> Markdown
@@ -248,32 +253,25 @@
                                     <button class="tab-btn" data-tab="jsonView">
                                         <i class="fas fa-code"></i> JSON
                                     </button>
-                                    <button class="tab-btn" data-tab="pageResults">
-                                        <i class="fas fa-copy"></i> 按页面查看
-                                    </button>
-                                    <button class="tab-btn" data-tab="visualization">
-                                        <i class="fas fa-eye"></i> 页面预览
-                                    </button>
                                 </div>
 
                                 <div class="tab-content">
-                                    <!-- 文本内容标签页 -->
-                                    <div class="tab-pane active" id="textResults">
+                                    <!-- 页面摘要标签页 -->
+                                    <div class="tab-pane active" id="pagesSummary">
                                         <div class="table-container">
-                                            <table class="results-table">
+                                            <table class="pages-table">
                                                 <thead>
                                                     <tr>
                                                         <th>页码</th>
-                                                        <th>序号</th>
-                                                        <th>文本内容</th>
-                                                        <th>置信度</th>
-                                                        <th>类型</th>
+                                                        <th>识别项数</th>
+                                                        <th>处理时间</th>
+                                                        <th>状态</th>
                                                         <th>操作</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody id="textResultsBody">
+                                                <tbody id="pagesSummaryBody">
                                                     <tr>
-                                                        <td colspan="6" class="empty-message">暂无识别结果</td>
+                                                        <td colspan="5" class="empty-message">暂无页面摘要</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -369,7 +367,7 @@
                                                     <i class="fas fa-image"></i>
                                                     <p>识别完成后，这里将显示PDF页面的可视化结果</p>
                                                 </div>
-                                                <canvas id="visualizationCanvas" style="display: none;"></canvas>
+                                                <canvas id="visualizationCanvas"></canvas>
                                             </div>
                                             <div class="image-controls">
                                                 <button class="control-btn" id="zoomInBtn">

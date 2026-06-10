@@ -359,6 +359,21 @@ async function processFlowcharts() {
     processingStartTime = Date.now();
     currentBatchId = null;
     currentResults = null;
+
+    // 显示扫描动画
+    const container = document.querySelector('.results-section');
+    if (container) {
+        container.style.position = 'relative';
+        let overlay = container.querySelector('.scanning-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'scanning-overlay';
+            overlay.innerHTML = '<div class="scanning-content"><div class="scanning-animation"><div class="scan-line"></div></div><div class="scanning-text">正在识别中<span class="scanning-dots"></span></div></div>';
+            container.appendChild(overlay);
+        }
+        overlay.classList.add('active');
+    }
+
     const formData = new FormData();
     selectedFiles.forEach(function(item) {
         formData.append('files', item.file);
@@ -400,6 +415,13 @@ async function processFlowcharts() {
         console.error('流程图识别错误:', error);
         showError(`识别失败: ${error.message}`);
     } finally {
+        // 隐藏扫描动画
+        const container = document.querySelector('.results-section');
+        if (container) {
+            const overlay = container.querySelector('.scanning-overlay');
+            if (overlay) overlay.classList.remove('active');
+        }
+
         setProcessingState(false);
     }
 }
