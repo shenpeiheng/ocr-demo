@@ -608,7 +608,7 @@ def license_plate_detection():
         if not use_online:
             ocr = _get_license_ocr()
             if ocr is None:
-                return jsonify({"error": "OCR 模型未加载"}), 500
+                return jsonify({"error": "车牌识别失败: 在线API不可用且本地模型未加载"}), 500
 
             try:
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

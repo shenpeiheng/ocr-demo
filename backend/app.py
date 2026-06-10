@@ -36,7 +36,10 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("[启动预加载] 正在预加载各功能模型...")
     print("=" * 60)
-    preload_license_ocr()
+    if Config.PADDLEOCR_MODE == 'local':
+        preload_license_ocr()
+    else:
+        print("[LicensePlate] 在线模式，跳过本地模型预加载")
     preload_safety_helmet()
     preload_keypoint()
     print("=" * 60)
