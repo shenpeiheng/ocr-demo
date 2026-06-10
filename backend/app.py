@@ -2,6 +2,7 @@
 OCR 工业图片识别系统后端入口。
 """
 
+from flask import send_from_directory
 from app_core import app, ocr_processor
 from config import Config
 from routes.ocr_routes import ocr_bp
@@ -12,6 +13,14 @@ from routes.vision_routes import preload_keypoint, preload_license_ocr, preload_
 app.register_blueprint(ocr_bp)
 app.register_blueprint(pdf_bp)
 app.register_blueprint(vision_bp)
+
+
+@app.route('/mineru_results/<path:filename>')
+def serve_mineru_results(filename):
+    """提供 MinerU 解析结果静态文件"""
+    import os
+    results_dir = Config.UPLOAD_FOLDER
+    return send_from_directory(results_dir, filename)
 
 
 if __name__ == "__main__":

@@ -75,9 +75,10 @@ def api_index():
             "pdf_engines": {
                 "current": Config.PDF_ENGINE,
                 "available": ["ocr", "mineru"],
-                "mineru_configured": bool(Config.MINERU_API_KEY),
+                "mineru_configured": bool(Config.MINERU_API_KEY or Config.MINERU_OFFICIAL_TOKEN),
                 "mineru_mode": Config.MINERU_REQUEST_MODE,
                 "mineru_model": Config.MINERU_MODEL,
+                "mineru_official_enabled": bool(Config.MINERU_OFFICIAL_TOKEN),
             },
             "ocr_engine": {
                 "current": engine_info["current_engine"],
@@ -1511,6 +1512,7 @@ def process_pdf_file(filename, filepath, data):
                 model=Config.MINERU_MODEL,
                 timeout=Config.MINERU_TIMEOUT,
                 request_mode=Config.MINERU_REQUEST_MODE,
+                official_token=Config.MINERU_OFFICIAL_TOKEN,
             )
             pdf_result = mineru_processor.process_pdf(
                 filepath,

@@ -524,6 +524,9 @@
             }
         }
     </style>
+    <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.css">
+    <script src="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.js"></script>
 </head>
 <body>
     <div class="container">
@@ -842,7 +845,7 @@
                 plateResultsList.style.display = 'none';
                 resultImage.style.display = 'none';
                 resultPlaceholder.style.display = 'block';
-                jsonOutput.textContent = '{\n    "status": "正在检测..."\n}';
+                displayJSON('jsonOutput', {status: "正在检测..."});
 
                 var formData = new FormData();
 
@@ -931,14 +934,14 @@
                         }
 
                         // 显示 JSON
-                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                        displayJSON('jsonOutput', result.data);
                     } else {
-                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                        displayJSON('jsonOutput', result.data);
                         alert('检测失败: ' + (result.data.error || '未知错误'));
                     }
                 })
                 .catch(function(err) {
-                    jsonOutput.textContent = '{\n    "error": "' + err.message + '"\n}';
+                    displayJSON('jsonOutput', {error: err.message});
                     alert('请求失败: ' + err.message);
                 })
                 .finally(function() {
@@ -1039,5 +1042,6 @@
     });
 })();
 </script>
+    <script src="static/js/json-viewer-helper.js"></script>
 </body>
 </html>

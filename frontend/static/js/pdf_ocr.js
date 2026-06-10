@@ -22,8 +22,6 @@ function getApiBaseUrl() {
 }
 
 const API_BASE_URL = getApiBaseUrl(); // 动态检测基础路径
-const DEFAULT_PDF_URL = `${API_BASE_URL}/static/pdf/1.pdf`;
-const DEFAULT_PDF_NAME = '1.pdf';
 let currentFile = null;
 let currentResults = null;
 let processingStartTime = null;
@@ -38,7 +36,6 @@ const selectFileBtn = document.getElementById('selectFileBtn');
 const uploadBtn = document.getElementById('uploadBtn');
 const processBtn = document.getElementById('processBtn');
 const uploadArea = document.getElementById('uploadArea');
-const defaultPdfSample = document.getElementById('defaultPdfSample');
 const fileInfo = document.getElementById('fileInfo');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
@@ -90,16 +87,20 @@ const extractDirectText = document.getElementById('extractDirectText');
 // 初始化函数
 function init() {
     console.log('PDF OCR识别系统初始化...');
-    
+
     // 绑定事件监听器
     bindEvents();
-    
+
     // 初始化标签页
     initTabs();
 
-    // 加载默认PDF示例
-    loadDefaultPdfFile();
-    
+    // 自动加载第一个示例文件
+    const pdfSampleSelect = document.getElementById('pdfSampleSelect');
+    if (pdfSampleSelect && pdfSampleSelect.options.length > 1) {
+        pdfSampleSelect.selectedIndex = 1;
+        pdfSampleSelect.dispatchEvent(new Event('change'));
+    }
+
     console.log('PDF OCR系统初始化完成');
 }
 
@@ -123,7 +124,13 @@ function bindEvents() {
     if (processBtn) {
         processBtn.addEventListener('click', handleProcess);
     }
-    defaultPdfSample?.addEventListener('click', loadDefaultPdfFile);
+
+    // 示例文件下拉选择
+    const pdfSampleSelect = document.getElementById('pdfSampleSelect');
+    if (pdfSampleSelect) {
+        pdfSampleSelect.addEventListener('change', handleSampleSelect);
+    }
+
     pdfEngineSetting?.addEventListener('change', () => {
         updatePdfProcessingText(pdfEngineSetting.value);
     });
@@ -206,24 +213,24 @@ function initTabs() {
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    setDefaultPdfSampleSelected(false);
+
     previewFile(file);
 }
 
-function setDefaultPdfSampleSelected(isSelected) {
-    defaultPdfSample?.classList.toggle('selected', isSelected);
-}
+// 处理示例文件选择
+async function handleSampleSelect(event) {
+    const sampleUrl = event.target.value;
+    if (!sampleUrl) return;
 
-async function loadDefaultPdfFile() {
     try {
-        const response = await fetch(DEFAULT_PDF_URL);
+        const response = await fetch(`${API_BASE_URL}/${sampleUrl}`);
         if (!response.ok) {
-            throw new Error(`默认PDF加载失败: ${response.status}`);
+            throw new Error(`示例文件加载失败: ${response.status}`);
         }
 
         const blob = await response.blob();
-        const file = new File([blob], DEFAULT_PDF_NAME, {
+        const fileName = sampleUrl.split('/').pop();
+        const file = new File([blob], fileName, {
             type: blob.type || 'application/pdf',
             lastModified: Date.now()
         });
@@ -235,10 +242,12 @@ async function loadDefaultPdfFile() {
         }
 
         previewFile(file);
-        setDefaultPdfSampleSelected(true);
+
+        // 自动上传以获取页数信息
+        await handleUpload({ silent: true, enableProcess: true });
     } catch (error) {
-        console.error('加载默认PDF失败:', error);
-        showError('默认PDF文件加载失败，请手动选择PDF文件');
+        console.error('加载示例文件失败:', error);
+        showError('示例文件加载失败，请手动选择PDF文件');
     }
 }
 
@@ -256,16 +265,15 @@ function handleDragLeave(event) {
 function handleDrop(event) {
     event.preventDefault();
     uploadArea.classList.remove('drag-over');
-    
+
     const file = event.dataTransfer.files[0];
     if (!file) return;
-    
+
     // 更新文件输入
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(file);
     fileInput.files = dataTransfer.files;
-    
-    setDefaultPdfSampleSelected(false);
+
     previewFile(file);
 }
 
@@ -367,11 +375,15 @@ async function handleUpload(options = {}) {
                 const pageCount = pdfInfoData.pdf_info.total_pages || 0;
                 pdfPages.textContent = pageCount > 0 ? pageCount : '未知';
                 totalPages = pageCount;
-                
-                // 更新页面设置的最大值
+
+                // 更新页面设置的最大值和提示
                 if (pageCount > 0) {
-                    pagesSetting.max = Math.min(pageCount, 50);
+                    pagesSetting.max = Math.min(pageCount, 100);
                     pagesSetting.value = Math.min(10, pageCount);
+                    const pagesHint = document.getElementById('pagesHint');
+                    if (pagesHint) {
+                        pagesHint.textContent = `(共${pageCount}页，最大100页)`;
+                    }
                 }
             }
         }
@@ -521,10 +533,62 @@ function displayResults(data) {
         showError('没有识别结果');
         return;
     }
-    
+
     const combinedResults = currentResults.combined_results;
     const processingTimeMs = Date.now() - processingStartTime;
-    
+
+    // 显示 Markdown 和 JSON（MinerU 专用）
+    if (combinedResults.markdown) {
+        const markdownContent = document.getElementById('markdownContent');
+        if (markdownContent && typeof marked !== 'undefined') {
+            let markdown = combinedResults.markdown;
+
+            // 修正图片路径：将 images/ 替换为完整路径
+            const outputDir = combinedResults.output_dir;
+            if (outputDir) {
+                const relativePath = outputDir.replace(/\\/g, '/').replace(/.*uploads\//, '');
+                markdown = markdown.replace(/!\[([^\]]*)\]\(images\//g, `![$1](${API_BASE_URL}/mineru_results/${relativePath}/images/`);
+            }
+
+            let html = marked.parse(markdown);
+
+            // 修正 HTML 表格中的图片路径
+            if (outputDir) {
+                const relativePath = outputDir.replace(/\\/g, '/').replace(/.*uploads\//, '');
+                html = html.replace(/src=["']images\//g, `src="${API_BASE_URL}/mineru_results/${relativePath}/images/`);
+            }
+
+            markdownContent.innerHTML = html;
+            markdownContent.style.whiteSpace = 'normal';
+        }
+    }
+
+    // 加载 JSON 文件
+    const outputDir = combinedResults.output_dir;
+    if (outputDir) {
+        const relativePath = outputDir.replace(/\\/g, '/').replace(/.*uploads\//, '');
+        console.log('尝试加载 JSON:', `${API_BASE_URL}/mineru_results/${relativePath}/layout.json`);
+
+        fetch(`${API_BASE_URL}/mineru_results/${relativePath}/layout.json`)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(json => {
+                const jsonContent = document.getElementById('jsonContent');
+                if (jsonContent && typeof $ !== 'undefined') {
+                    $(jsonContent).jsonViewer(json, {collapsed: false, withQuotes: true});
+                }
+            })
+            .catch(err => {
+                console.warn('JSON 加载失败');
+                const jsonContent = document.getElementById('jsonContent');
+                if (jsonContent) {
+                    jsonContent.textContent = '暂无 JSON 数据';
+                }
+            });
+    }
+
     // 显示PDF摘要
     if (pdfSummary) pdfSummary.style.display = 'grid';
     if (ocrStatsCard) ocrStatsCard.style.display = 'block';

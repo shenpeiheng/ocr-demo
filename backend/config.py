@@ -31,6 +31,12 @@ class Config:
     PDF_DPI = int(os.getenv('PDF_DPI', '200'))  # PDF转换DPI
     PDF_ENGINE = os.getenv('PDF_ENGINE', 'ocr').strip().lower()  # ocr 或 mineru
     MINERU_REQUEST_MODE = os.getenv('MINERU_REQUEST_MODE', 'modelscope_vl').strip().lower()
+
+    # MinerU 官方 API 配置
+    MINERU_OFFICIAL_API_URL = os.getenv('MINERU_OFFICIAL_API_URL', 'https://mineru.net/api/v4/extract').strip()
+    MINERU_OFFICIAL_TOKEN = os.getenv('MINERU_OFFICIAL_TOKEN', '').strip()
+
+    # MinerU 其他配置
     _MINERU_DEFAULT_API_URL = (
         os.getenv('MODELSCOPE_BASE_URL', 'https://api-inference.modelscope.cn/v1')
         if MINERU_REQUEST_MODE in {'modelscope', 'modelscope_vl', 'openai_vl'}
@@ -43,6 +49,9 @@ class Config:
     MINERU_API_KEY = os.getenv('MINERU_API_KEY', os.getenv('MODELSCOPE_API_KEY', '')).strip()
     MINERU_MODEL = os.getenv('MINERU_MODEL', 'OpenDataLab/MinerU2.5-2509-1.2B').strip()
     MINERU_TIMEOUT = int(os.getenv('MINERU_TIMEOUT', '300'))
+
+    # 文件上传服务配置（用于 MinerU 官方 API）
+    MINERU_FILE_UPLOAD_SERVICE = os.getenv('MINERU_FILE_UPLOAD_SERVICE', 'transfer.sh').strip()
     
     # CORS配置
     ENABLE_CORS = os.getenv('ENABLE_CORS', 'true').lower() == 'true'

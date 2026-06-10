@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODELSCOPE_BASE_URL = "https://api-inference.modelscope.cn/v1"
 DEFAULT_MODELSCOPE_MINERU_MODEL = "OpenDataLab/MinerU2.5-2509-1.2B"
 MODELSCOPE_REQUEST_MODES = {"modelscope", "modelscope_vl", "openai_vl"}
+MINERU_OFFICIAL_MODES = {"mineru_official", "official"}
 SUPPORTED_INLINE_IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 MINERU_MODEL_INPUT_MAX_DIMENSION = int(os.getenv("MINERU_MAX_IMAGE_DIMENSION", "2048"))
 MINERU_MODEL_MAX_TOKENS = int(os.getenv("MINERU_MAX_TOKENS", "8192"))
@@ -43,14 +44,30 @@ class MinerUProcessor:
         model: str = DEFAULT_MODELSCOPE_MINERU_MODEL,
         timeout: int = 300,
         request_mode: str = "modelscope_vl",
+        official_token: str = "",
     ):
         requested_mode = (request_mode or "modelscope_vl").strip().lower()
         provided_api_url = (api_url or "").strip()
+
+        # 优先使用 MinerU 官方 API
+        if requested_mode in MINERU_OFFICIAL_MODES:
+            self.request_mode = "mineru_official"
+            self.official_token = (official_token or os.getenv("MINERU_OFFICIAL_TOKEN", "")).strip()
+            self.api_url = ""
+            self.api_key = ""
+            self.model = "mineru_official"
+            self.timeout = timeout
+            self.initialized = bool(self.official_token)
+            if not self.initialized:
+                logger.warning("MinerU 官方 API 模式需要配置 MINERU_OFFICIAL_TOKEN")
+            return
+
         if requested_mode not in MODELSCOPE_REQUEST_MODES and not provided_api_url:
             logger.info("未配置自建MinerU服务地址，自动使用ModelScope MinerU模型")
             requested_mode = "modelscope_vl"
 
         self.request_mode = requested_mode
+        self.official_token = ""
         default_api_url = DEFAULT_MODELSCOPE_BASE_URL if self._is_modelscope_mode() else ""
         self.api_url = (provided_api_url or default_api_url).strip()
         self.api_key = (api_key or "").strip()
@@ -69,6 +86,15 @@ class MinerUProcessor:
         """解析 PDF 并返回兼容现有前端的结果结构。"""
         pdf_info = pdf_info or self._build_basic_pdf_info(pdf_path)
 
+        # MinerU 官方 API 模式
+        if self._is_official_mode():
+            return self._process_pdf_with_official_api(
+                pdf_path,
+                pdf_info=pdf_info,
+                max_pages=max_pages,
+            )
+
+        # ModelScope VL 模式
         if self._is_modelscope_mode():
             return self._process_pdf_with_modelscope_vl(
                 pdf_path,
@@ -78,6 +104,7 @@ class MinerUProcessor:
                 dpi=dpi,
             )
 
+        # 自建服务模式
         if not self.initialized:
             return self._get_error_result(
                 "未配置 MinerU 服务地址，请设置 MINERU_API_URL 后重试",
@@ -103,6 +130,139 @@ class MinerUProcessor:
 
     def _is_modelscope_mode(self) -> bool:
         return self.request_mode in MODELSCOPE_REQUEST_MODES
+
+    def _is_official_mode(self) -> bool:
+        return self.request_mode == "mineru_official"
+
+    def _process_pdf_with_official_api(
+        self,
+        pdf_path: str,
+        pdf_info: Dict[str, Any],
+        max_pages: int,
+    ) -> Dict[str, Any]:
+        """使用 MinerU 官方 API 处理 PDF - 上传到公网后调用"""
+        if not self.official_token:
+            return self._get_error_result(
+                "未配置 MinerU 官方 API Token，请设置 MINERU_OFFICIAL_TOKEN 后重试",
+                pdf_info,
+            )
+
+        if not os.path.exists(pdf_path):
+            return self._get_error_result(f"PDF文件不存在: {pdf_path}", pdf_info)
+
+        try:
+            from file_upload_service import create_file_upload_service
+            from mineru_official_api import create_mineru_official_client
+            from config import Config
+
+            logger.info("上传 PDF 到公网...")
+            upload_service = create_file_upload_service()
+            upload_result = upload_service.upload_file(pdf_path)
+
+            if not upload_result.get("success"):
+                return self._get_error_result(
+                    f"文件上传失败: {upload_result.get('error', '未知错误')}",
+                    pdf_info,
+                )
+
+            file_url = upload_result["url"]
+            logger.info(f"文件上传成功: {file_url}")
+
+            logger.info("调用 MinerU 官方 API 解析 PDF...")
+            start_time = time.time()
+            mineru_client = create_mineru_official_client(
+                self.official_token,
+                Config.MINERU_OFFICIAL_API_URL
+            )
+            page_ranges = f"1-{max_pages}" if max_pages > 0 else None
+
+            api_result = mineru_client.parse_pdf_url(
+                file_url=file_url,
+                model_version="vlm",
+                enable_formula=True,
+                enable_table=True,
+                is_ocr=True,
+                language="ch",
+                page_ranges=page_ranges,
+                max_wait_time=self.timeout,
+            )
+
+            if not api_result.get("success"):
+                return self._get_error_result(
+                    f"MinerU 官方 API 解析失败: {api_result.get('error', '未知错误')}",
+                    pdf_info,
+                )
+
+            zip_url = api_result.get("full_zip_url")
+            if not zip_url:
+                return self._get_error_result("MinerU API 返回结果中未包含 full_zip_url", pdf_info)
+
+            # 下载并解压完整结果
+            logger.info(f"下载并解压 ZIP: {zip_url}")
+            output_dir = os.path.join(os.path.dirname(pdf_path), f"mineru_{os.path.basename(pdf_path)}_result")
+            extract_result = mineru_client.download_and_extract_zip(zip_url, output_dir)
+
+            if not extract_result.get("success"):
+                return self._get_error_result(
+                    f"下载解压失败: {extract_result.get('error', '未知错误')}",
+                    pdf_info,
+                )
+
+            # 读取 Markdown
+            md_path = extract_result.get("markdown_path")
+            if not md_path or not os.path.exists(md_path):
+                return self._get_error_result("未找到 Markdown 文件", pdf_info)
+
+            with open(md_path, 'r', encoding='utf-8') as f:
+                markdown_content = f.read()
+
+            processing_time = round(time.time() - start_time, 2)
+            total_pages = int(pdf_info.get("total_pages") or 0)
+            actual_pages = min(total_pages, max_pages) if total_pages > 0 else max_pages
+            text_items = self._markdown_to_text_items(markdown_content, actual_pages)
+
+            return {
+                "success": True,
+                "pdf_info": pdf_info,
+                "conversion_info": {
+                    "engine": "mineru_official",
+                    "provider": "mineru.net",
+                    "task_id": api_result.get("task_id"),
+                    "file_url": file_url,
+                    "upload_service": upload_result.get("service"),
+                },
+                "ocr_results": [],
+                "combined_results": {
+                    "text_items": text_items,
+                    "total_items": len(text_items),
+                    "total_pages": actual_pages,
+                    "total_processing_time": processing_time,
+                    "markdown": markdown_content,
+                    "markdown_path": md_path,
+                    "json_path": extract_result.get("json_path"),
+                    "images_dir": extract_result.get("images_dir"),
+                    "output_dir": output_dir,
+                    "raw_text": markdown_content,
+                    "raw_response": api_result,
+                },
+                "pages_summary": self._build_pages_summary(text_items, actual_pages, processing_time),
+                "processing_info": {
+                    "engine": "mineru_official",
+                    "provider": "mineru.net",
+                    "model": "vlm",
+                    "max_pages": max_pages,
+                    "actual_pages_processed": actual_pages,
+                    "request_mode": self.request_mode,
+                    "api_endpoint": Config.MINERU_OFFICIAL_API_URL,
+                },
+            }
+
+        except Exception as exc:
+            logger.error(f"MinerU 官方 API 处理失败: {exc}")
+            return self._get_error_result(f"MinerU 官方 API 处理失败: {str(exc)}", pdf_info)
+
+    def _is_official_mode(self) -> bool:
+        return self.request_mode == "mineru_official"
 
     def _process_pdf_with_modelscope_vl(
         self,
@@ -708,12 +868,21 @@ class MinerUProcessor:
 
         return self._empty_location()
 
-    def _markdown_to_text_items(self, markdown: str, page_number: int = 1) -> List[Dict[str, Any]]:
+    def _markdown_to_text_items(self, markdown: str, total_pages: int = 1) -> List[Dict[str, Any]]:
+        """将 Markdown 转换为文本项，根据图片标记分页"""
         text_items = []
+        current_page = 1
+
         for line in markdown.splitlines():
             text = line.strip()
             if not text:
                 continue
+
+            # 检测分页标记：![](images/xxx.png) 或 ![](images/xxx.jpg)
+            if text.startswith("![](images/") and current_page < total_pages:
+                current_page += 1
+                continue  # 跳过图片标记本身
+
             text_items.append(
                 {
                     "id": len(text_items) + 1,
@@ -721,7 +890,7 @@ class MinerUProcessor:
                     "confidence": 0.95,
                     "location": self._empty_location(),
                     "type": "table" if text.startswith("|") else "text",
-                    "page": page_number,
+                    "page": current_page,
                     "source": "mineru",
                 }
             )

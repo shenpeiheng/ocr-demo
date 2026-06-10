@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="static/css/all.min.css">
     <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.css">
+    <script src="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -268,7 +272,7 @@
                                                 <i class="fas fa-copy"></i>
                                             </button>
                                         </div>
-                                        <textarea id="outputContent" class="output-textarea json-output" placeholder="识别完成后，JSON结果将显示在这里..." readonly></textarea>
+                                        <div id="outputContent" style="padding: 20px; background: #f8f9fa; border-radius: 8px; max-height: 600px; overflow-y: auto; font-family: monospace; font-size: 14px; line-height: 1.8; border: 1px solid #ddd;"></div>
                                     </div>
                                 </div>
                                 <!-- 兼容旧版纯文本输出（无坐标数据时显示） -->
@@ -923,11 +927,10 @@
             if (imageContainer) {
                 imageContainer.innerHTML = '<div class="result-loading"><div class="result-loading-spinner"><i class="fas fa-spinner fa-pulse fa-3x"></i></div><div class="result-loading-text">正在检测中...</div></div>';
             }
-            
+
             // 右侧JSON区域显示加载动画
-            outputContent.value = '';
-            outputContent.placeholder = '正在处理，请稍候...';
-            
+            clearJSON("outputContent");
+
             // 按钮旋转动画
             if (processBtn) {
                 processBtn.disabled = true;
@@ -960,9 +963,11 @@
                     throw new Error(data.error || `请求失败: ${response.status}`);
                 }
 
-                // 保存 raw_text 和 json_result 供切换使用
+                // 保存 raw_text、json_result 和 output_dir 供切换使用
                 window._lastRawText = data.raw_text || '';
                 window._lastJsonResult = data.json_result || '';
+                window._outputDir = (data.json_result && data.json_result.output_dir) || '';
+                console.log('Output Dir:', window._outputDir);
 
                 // 更新动态统计
                 updateDynamicStats(data, Date.now() - startTime);
@@ -978,10 +983,9 @@
                     if (newResultImage) {
                         newResultImage.src = data.result_image;
                     }
-                    
+
                     // 默认显示JSON结果
-                    outputContent.value = data.json_result;
-                    outputContent.placeholder = '识别完成后，JSON结果将显示在这里...';
+                    displayJSON('outputContent', data.json_result);
                     // 重置tab状态为JSON
                     document.querySelectorAll('.result-tab-btn').forEach(function(btn) {
                         btn.classList.toggle('active', btn.dataset.tab === 'json');
@@ -1038,9 +1042,23 @@
             });
             // 切换内容
             if (tab === 'json') {
-                outputContent.value = window._lastJsonResult || '';
+                displayJSON("outputContent", window._lastJsonResult);
             } else {
-                outputContent.value = window._lastRawText || '';
+                // 渲染 Markdown
+                if (window._lastRawText && typeof marked !== 'undefined') {
+                    var html = marked.parse(window._lastRawText);
+                    // 修复图片路径：<img src="images/xxx.jpg"> -> <img src="/uploads/mineru_xxx/images/xxx.jpg">
+                    if (window._outputDir) {
+                        var match = window._outputDir.match(/mineru_[^\\\/]+/);
+                        if (match) {
+                            // 替换所有 src="images/ 和 src='images/
+                            html = html.replace(/src=["']images\//g, 'src="/uploads/' + match[0] + '/images/');
+                        }
+                    }
+                    outputContent.innerHTML = html;
+                } else {
+                    outputContent.textContent = window._lastRawText || '';
+                }
             }
         }
 
@@ -1228,5 +1246,6 @@
             }, 800);
         });
     </script>
+    <script src="static/js/json-viewer-helper.js"></script>
 </body>
 </html>

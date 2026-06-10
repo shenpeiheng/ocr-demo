@@ -534,6 +534,9 @@
             }
         }
     </style>
+    <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.css">
+    <script src="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.js"></script>
 </head>
 <body>
     <div class="container">
@@ -925,9 +928,9 @@
                         radiusValue.textContent = result.data.radius + ' px';
                         statsCard.style.display = 'block';
 
-                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                        displayJSON("jsonOutput", result.data);
                     } else {
-                        jsonOutput.textContent = JSON.stringify(result.data, null, 4);
+                        displayJSON("jsonOutput", result.data);
                         alert('检测失败: ' + (result.data.error || '未知错误'));
                     }
                 })
@@ -1005,5 +1008,6 @@
         });
     })();
     </script>
+    <script src="static/js/json-viewer-helper.js"></script>
 </body>
 </html>
