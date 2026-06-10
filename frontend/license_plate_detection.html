@@ -581,6 +581,17 @@
                                             </div>
                                         </div>
 
+                                        <!-- 模式选择 -->
+                                        <div style="margin: 15px 0;">
+                                            <label style="display: block; margin-bottom: 8px; color: #4a6572; font-weight: 500;">
+                                                <i class="fas fa-cog"></i> 识别模式：
+                                            </label>
+                                            <select id="paddleocrMode" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                                                <option value="online" selected>在线API（推荐，无需本地模型）</option>
+                                                <option value="local">本地模型（需要安装依赖）</option>
+                                            </select>
+                                        </div>
+
                                         <!-- 检测按钮 -->
                                         <button class="btn-detect-plate" id="detectBtn">
                                             <i class="fas fa-search"></i>
@@ -899,6 +910,10 @@
             }
 
             function doDetect(formData) {
+                // 添加模式参数
+                const mode = document.getElementById('paddleocrMode').value;
+                formData.append('mode', mode);
+
                 fetch(getApiBaseUrl() + '/api/license_plate_detection', {
                     method: 'POST',
                     body: formData

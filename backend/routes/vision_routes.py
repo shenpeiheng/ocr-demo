@@ -1,4 +1,5 @@
 import base64
+import logging
 import os
 import tempfile
 import threading
@@ -13,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 vision_bp = Blueprint("vision", __name__)
+logger = logging.getLogger(__name__)
 
 _face_detection_lock = threading.Lock()
 _face_detection_pipeline = None
@@ -560,12 +562,13 @@ def license_plate_detection():
         img_height, img_width = img.shape[:2]
         detections = []
 
-        # 优先使用在线 API（如果 MODE 为 online）
+        # 从前端获取模式（优先）或使用配置
         from paddleocr_online_api import create_paddleocr_online_client
         from config import Config
 
+        frontend_mode = request.form.get('mode', Config.PADDLEOCR_MODE)
         online_client = None
-        if Config.PADDLEOCR_MODE == 'online':
+        if frontend_mode == 'online':
             online_client = create_paddleocr_online_client(Config.PADDLEOCR_ONLINE_API_URL, Config.PADDLEOCR_ONLINE_TOKEN)
 
         use_online = False
@@ -575,22 +578,31 @@ def license_plate_detection():
             if api_result.get("success"):
                 use_online = True
                 data = api_result.get("data", {})
-                results = data.get("result", [])
-                for item in results:
-                    text = item.get("text", "").strip()
-                    if not _is_license_plate_text(text):
-                        continue
-                    box = item.get("box", [])
-                    if len(box) >= 4:
-                        x1, y1 = int(box[0][0]), int(box[0][1])
-                        x2, y2 = int(box[2][0]), int(box[2][1])
-                        confidence = item.get("score", 0.0)
-                        detections.append({
-                            "bbox": {"x1": float(x1), "y1": float(y1), "x2": float(x2), "y2": float(y2), "width": float(x2 - x1), "height": float(y2 - y1)},
-                            "confidence": round(confidence, 4),
-                            "plate_text": text,
-                            "plate_text_confidence": round(confidence, 4),
-                        })
+                ocr_results = data.get("ocrResults", [])
+                for ocr_item in ocr_results:
+                    pruned_result = ocr_item.get("prunedResult", {})
+                    rec_texts = pruned_result.get("rec_texts", [])
+                    rec_scores = pruned_result.get("rec_scores", [])
+                    rec_polys = pruned_result.get("rec_polys", [])
+
+                    for i, text in enumerate(rec_texts):
+                        text = text.strip()
+                        if not _is_license_plate_text(text):
+                            continue
+
+                        poly = rec_polys[i] if i < len(rec_polys) else None
+                        if poly and len(poly) >= 4:
+                            xs = [p[0] for p in poly]
+                            ys = [p[1] for p in poly]
+                            x1, y1 = int(min(xs)), int(min(ys))
+                            x2, y2 = int(max(xs)), int(max(ys))
+                            confidence = rec_scores[i] if i < len(rec_scores) else 0.0
+                            detections.append({
+                                "bbox": {"x1": float(x1), "y1": float(y1), "x2": float(x2), "y2": float(y2), "width": float(x2 - x1), "height": float(y2 - y1)},
+                                "confidence": round(confidence, 4),
+                                "plate_text": text,
+                                "plate_text_confidence": round(confidence, 4),
+                            })
 
         # 在线 API 失败，使用本地模型
         if not use_online:
