@@ -6868,3 +6868,77 @@ textarea:focus,
         font-size: 48px;
     }
 }
+
+/* Markdown 表格样式 */
+#outputContent table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 15px 0;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#outputContent table th,
+#outputContent table td {
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    text-align: left;
+}
+
+#outputContent table th {
+    background: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+#outputContent table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+#outputContent table tr:hover {
+    background: #f1f1f1;
+}
+
+
+/* Markdown 表格强制样式（覆盖 monospace） */
+#outputContent table {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    border: 1px solid #ddd !important;
+}
+
+#outputContent table th,
+#outputContent table td {
+    border: 1px solid #ddd !important;
+}
+
+/* PDF OCR Markdown 表格样式 */
+#markdownContent table {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    border: 1px solid #ddd !important;
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 15px 0 !important;
+    background: white !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+#markdownContent table th,
+#markdownContent table td {
+    border: 1px solid #ddd !important;
+    padding: 12px 15px !important;
+    text-align: left !important;
+}
+
+#markdownContent table th {
+    background: #4CAF50 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+#markdownContent table tr:nth-child(even) {
+    background: #f9f9f9 !important;
+}
+
+#markdownContent table tr:hover {
+    background: #f1f1f1 !important;
+}
