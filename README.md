@@ -146,6 +146,8 @@ MKL_NUM_THREADS=4
 
 #### 5.2 安装后端依赖
 ```bash
+python -m venv venv
+
 source venv/bin/activate
 deactivate
 

@@ -233,6 +233,9 @@ async function handleSampleSelect(event) {
     const sampleUrl = event.target.value;
     if (!sampleUrl) return;
 
+    const scanningOverlay = document.getElementById('scanningOverlay');
+    if (scanningOverlay) scanningOverlay.classList.add('active');
+
     try {
         const response = await fetch(`${API_BASE_URL}/${sampleUrl}`);
         if (!response.ok) {
@@ -1664,6 +1667,10 @@ function displayPreviewImages() {
             pagesSummaryBody.appendChild(row);
         }
         console.log('页面摘要已填充，行数:', currentPreviewImages.length);
+
+        // 隐藏扫描遮罩
+        const scanningOverlay = document.getElementById('scanningOverlay');
+        if (scanningOverlay) scanningOverlay.classList.remove('active');
 
         // 绑定跳转按钮
         document.querySelectorAll('.btn-jump-to-preview').forEach(btn => {
