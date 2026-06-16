@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商机快速录入 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        /* 商机录入页面布局 */
+        .opportunity-page .content-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            height: calc(100vh - 60px);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* 左侧AI助手区域 */
+        .ai-assistant-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .ai-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        .ai-panel-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #303133;
+            font-weight: 600;
+        }
+
+        .ai-panel-header h2 i {
+            color: #ad063e;
+        }
+
+        .ai-panel-header p {
+            margin: 8px 0 0 0;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        /* AI输入区域 */
+        .ai-input-section {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 移除旧的tab样式，使用preset-btn样式 */
+
+        /* 文本输入区 */
+        .text-input-area {
+            display: none;
+        }
+
+        .text-input-area.active {
+            display: block;
+        }
+
+        .text-input-area textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .text-input-area textarea:focus {
+            outline: none;
+            border-color: #ad063e;
+        }
+
+        /* 语音输入区 */
+        .voice-input-area {
+            display: none;
+            text-align: center;
+        }
+
+        .voice-input-area.active {
+            display: block;
+        }
+
+        .voice-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ad063e, #ad063e);
+            border: none;
+            color: white;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px auto;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .voice-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .voice-button.recording {
+            animation: pulse 1.5s ease-in-out infinite;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* 拍照上传区 */
+        .photo-upload-area {
+            display: none;
+        }
+
+        .photo-upload-area.active {
+            display: block;
+        }
+
+        .upload-box {
+            border: 2px dashed #dcdfe6;
+            border-radius: 6px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafbfc;
+        }
+
+        .upload-box:hover {
+            border-color: #ad063e;
+            background: #f0f8ff;
+        }
+
+        .upload-box i {
+            font-size: 3rem;
+            color: #ad063e;
+            text-align: center;
+            /**display: block;*/
+            margin-bottom: 10px;
+        }
+
+        /* 右侧表单区域 */
+        .opportunity-form-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .form-header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-header h2 {
+            margin: 0 0 8px 0;
+            color: #303133;
+            font-size: 1.3rem;
+        }
+
+        .form-header p {
+            margin: 0;
+            color: #909399;
+            font-size: 0.9rem;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ad063e;
+            margin-bottom: 15px;
+            padding-left: 12px;
+            border-left: 4px solid #ad063e;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #606266;
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ad063e;
+            box-shadow: 0 0 0 3px rgba(173, 6, 62, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #ad063e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #920535;
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 3px rgba(180, 35, 70, 0.12);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #606266;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .opportunity-page .content-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+
+            <main class="main-content-area opportunity-page">
+                <div class="content-grid">
+                    <!-- 左侧AI助手 -->
+                    <div class="ai-assistant-panel">
+                        <div class="ai-panel-header">
+                            <div class="section-header">
+                                <h2><i class="fas fa-robot"></i> AI智能助手</h2>
+                            </div>
+                            <p style="margin: 8px 0 0 0; font-size: 0.85rem; color: #7f8c8d;">支持语音、文字、拍照三种方式快速录入商机信息</p>
+                        </div>
+
+                        <div class="ai-input-section">
+                            <!-- 输入模式选择 - 参考智能场景按钮样式 -->
+                            <div class="prompt-preset-buttons" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                                <button class="preset-btn active" data-mode="text" onclick="switchInputMode('text')">
+                                    <i class="fas fa-keyboard"></i> 文字输入
+                                </button>
+                                <button class="preset-btn" data-mode="voice" onclick="switchInputMode('voice')">
+                                    <i class="fas fa-microphone"></i> 语音输入
+                                </button>
+                                <button class="preset-btn" data-mode="photo" onclick="switchInputMode('photo')">
+                                    <i class="fas fa-camera"></i> 拍照上传
+                                </button>
+                            </div>
+
+                            <!-- 文字输入区 -->
+                            <div class="text-input-area active" id="textInputArea">
+                                <textarea id="textInput" placeholder="请描述商机信息，例如：&#10;客户：深圳市创新科技公司&#10;联系人：张伟，电话13800138000&#10;需求：ERP系统升级改造&#10;预算：80万元&#10;预计3个月内成交&#10;...&#10;&#10;或点击下方"加载示例文本"按钮查看完整示例"></textarea>
+                            </div>
+
+                            <!-- 语音输入区 -->
+                            <div class="voice-input-area" id="voiceInputArea">
+                                <div style="text-align: center;">
+                                    <button class="voice-button" id="voiceButton" onclick="toggleVoiceRecording()">
+                                        <i class="fas fa-microphone"></i>
+                                    </button>
+                                    <p id="voiceStatus">点击开始录音</p>
+                                </div>
+                                <div style="margin-top: 15px;">
+                                    <label style="font-size: 0.9rem; font-weight: 600; color: #606266; margin-bottom: 8px; display: block;">
+                                        语音转文字结果：
+                                    </label>
+                                    <textarea id="voiceTextOutput" placeholder="录音的文字将显示在这里..." style="width: 100%; min-height: 150px; padding: 12px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 0.9rem; resize: vertical; font-family: inherit;"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- 拍照上传区 -->
+                            <div class="photo-upload-area" id="photoInputArea">
+                                <!-- 示例图片预览 -->
+                                <div id="defaultPhotoPreview" style="margin-bottom: 15px;">
+                                    <label style="font-size: 0.9rem; font-weight: 600; color: #606266; margin-bottom: 8px; display: block;">
+                                        示例图片：
+                                    </label>
+                                    <img src="static/images/demo/845d6fb9-27e4-4f67-98f3-084958264a6d.png"
+                                         style="max-width: 100%; border-radius: 6px; border: 1px solid #dcdfe6; cursor: pointer;"
+                                         onclick="recognizeDefaultImage()"
+                                         title="点击识别示例图片">
+                                    <p style="margin: 8px 0 0 0; font-size: 0.85rem; color: #909399; text-align: center;">
+                                        点击图片识别示例内容，或上传自己的图片
+                                    </p>
+                                </div>
+
+                                <!-- 上传区域 -->
+                                <div class="upload-box" id="photoUploadBox" onclick="document.getElementById('photoInput').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>点击上传图片或拖拽文件到此处</p>
+                                    <p style="font-size: 0.85rem; color: #909399;">支持名片、文档、手写笔记等</p>
+                                </div>
+                                <input type="file" id="photoInput" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
+
+                                <!-- 上传的图片预览 -->
+                                <div id="uploadedPhotoPreview" style="margin-top: 15px; display: none;">
+                                    <label style="font-size: 0.9rem; font-weight: 600; color: #606266; margin-bottom: 8px; display: block;">
+                                        上传的图片：
+                                    </label>
+                                    <img id="photoPreviewImg" style="max-width: 100%; border-radius: 6px; border: 1px solid #dcdfe6;">
+                                </div>
+
+                                <!-- OCR识别中提示 -->
+                                <div id="ocrLoading" style="display: none; margin-top: 15px; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 6px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #ad063e; margin-bottom: 10px;"></i>
+                                    <div style="font-size: 0.9rem; color: #606266;">正在识别图片中的文字...</div>
+                                </div>
+
+                                <!-- OCR识别结果 -->
+                                <div id="ocrResult" style="display: none; margin-top: 15px;">
+                                    <label style="font-size: 0.9rem; font-weight: 600; color: #606266; margin-bottom: 8px; display: block;">
+                                        识别结果：
+                                    </label>
+                                    <textarea id="ocrTextOutput" placeholder="图片识别的文字将显示在这里..." style="width: 100%; min-height: 150px; padding: 12px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 0.9rem; resize: vertical; font-family: inherit;"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- 按钮区域 - 改为一行两个按钮 -->
+                            <div class="upload-actions" style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button class="btn btn-detect action-btn" onclick="processAIInput()" style="flex: 1;">
+                                    <i class="fas fa-magic"></i> AI智能解析
+                                </button>
+                                <button class="btn btn-secondary action-btn" onclick="loadExampleText()" style="flex: 1;">
+                                    <i class="fas fa-file-alt"></i> 加载示例
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧商机表单 -->
+                    <div class="opportunity-form-panel">
+                        <div class="form-header">
+                            <h2><i class="fas fa-file-alt"></i> 商机信息表单</h2>
+                            <p>请填写完整的商机信息，带 <span style="color: #e74c3c;">*</span> 为必填项</p>
+                        </div>
+
+                        <form id="opportunityForm">
+                            <!-- 基本信息 -->
+                            <div class="form-section">
+                                <div class="section-title">基本信息</div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>客户名称<span class="required">*</span></label>
+                                        <input type="text" id="customerName" required placeholder="请输入客户公司名称">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>商机名称<span class="required">*</span></label>
+                                        <input type="text" id="opportunityName" required placeholder="请输入商机名称">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>联系人<span class="required">*</span></label>
+                                        <input type="text" id="contactPerson" required placeholder="请输入联系人姓名">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>联系电话<span class="required">*</span></label>
+                                        <input type="tel" id="contactPhone" required placeholder="请输入联系电话">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>联系邮箱</label>
+                                        <input type="email" id="contactEmail" placeholder="请输入联系邮箱">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>商机来源<span class="required">*</span></label>
+                                        <select id="opportunitySource" required>
+                                            <option value="">请选择商机来源</option>
+                                            <option value="市场活动">市场活动</option>
+                                            <option value="客户推荐">客户推荐</option>
+                                            <option value="电话营销">电话营销</option>
+                                            <option value="网络推广">网络推广</option>
+                                            <option value="展会">展会</option>
+                                            <option value="其他">其他</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 商机详情 -->
+                            <div class="form-section">
+                                <div class="section-title">商机详情</div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>预计金额（元）<span class="required">*</span></label>
+                                        <input type="number" id="estimatedAmount" required placeholder="请输入预计金额">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>预计成交时间<span class="required">*</span></label>
+                                        <input type="date" id="expectedCloseDate" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>商机阶段<span class="required">*</span></label>
+                                        <select id="opportunityStage" required>
+                                            <option value="">请选择商机阶段</option>
+                                            <option value="初步接触">初步接触</option>
+                                            <option value="需求确认">需求确认</option>
+                                            <option value="方案报价">方案报价</option>
+                                            <option value="商务谈判">商务谈判</option>
+                                            <option value="合同签订">合同签订</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>成交概率</label>
+                                        <select id="winProbability">
+                                            <option value="">请选择成交概率</option>
+                                            <option value="10%">10% - 初步接触</option>
+                                            <option value="30%">30% - 需求明确</option>
+                                            <option value="50%">50% - 方案认可</option>
+                                            <option value="70%">70% - 商务谈判</option>
+                                            <option value="90%">90% - 即将签约</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>产品/服务</label>
+                                        <input type="text" id="productService" placeholder="请输入产品或服务名称">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>行业分类</label>
+                                        <select id="industry">
+                                            <option value="">请选择行业</option>
+                                            <option value="制造业">制造业</option>
+                                            <option value="金融">金融</option>
+                                            <option value="互联网">互联网</option>
+                                            <option value="零售">零售</option>
+                                            <option value="医疗">医疗</option>
+                                            <option value="教育">教育</option>
+                                            <option value="房地产">房地产</option>
+                                            <option value="其他">其他</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 需求信息 -->
+                            <div class="form-section">
+                                <div class="section-title">需求信息</div>
+                                <div class="form-row full-width">
+                                    <div class="form-group">
+                                        <label>客户需求描述<span class="required">*</span></label>
+                                        <textarea id="customerRequirement" required placeholder="请详细描述客户的需求和期望"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-row full-width">
+                                    <div class="form-group">
+                                        <label>痛点分析</label>
+                                        <textarea id="painPoints" placeholder="请描述客户当前面临的主要问题和痛点"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>预算范围</label>
+                                        <input type="text" id="budgetRange" placeholder="例如：50-100万元">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>决策人信息</label>
+                                        <input type="text" id="decisionMaker" placeholder="请输入决策人姓名和职位">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 竞争信息 -->
+                            <div class="form-section">
+                                <div class="section-title">竞争信息</div>
+                                <div class="form-row full-width">
+                                    <div class="form-group">
+                                        <label>竞争对手</label>
+                                        <textarea id="competitors" placeholder="请列出主要竞争对手及其优劣势"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-row full-width">
+                                    <div class="form-group">
+                                        <label>我方优势</label>
+                                        <textarea id="ourAdvantages" placeholder="请描述我方相对于竞争对手的优势"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-row full-width">
+                                    <div class="form-group">
+                                        <label>风险评估</label>
+                                        <textarea id="riskAssessment" placeholder="请评估该商机可能面临的风险和挑战"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 跟进信息 -->
+                            <div class="form-section">
+                                <div class="section-title">跟进信息</div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>下次跟进时间</label>
+                                        <input type="datetime-local" id="nextFollowUpDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>负责人<span class="required">*</span></label>
+                                        <input type="text" id="owner" required placeholder="请输入负责人姓名">
+                                    </div>
+                                </div>
+                                <div class="form-row full-width">
+                                    <div class="form-group">
+                                        <label>备注</label>
+                                        <textarea id="notes" placeholder="其他需要说明的信息"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 表单操作按钮 -->
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="fas fa-redo"></i> 重置
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="saveDraft()">
+                                    <i class="fas fa-save"></i> 保存草稿
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> 提交商机
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script>
+        let currentInputMode = 'text';
+        let isRecording = false;
+        let recognition = null;
+
+        // 切换输入模式
+        function switchInputMode(mode) {
+            console.log('切换到模式:', mode);
+            currentInputMode = mode;
+
+            // 更新按钮样式
+            document.querySelectorAll('.prompt-preset-buttons .preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const activeBtn = document.querySelector(`.prompt-preset-buttons .preset-btn[data-mode="${mode}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+
+            // 显示对应的输入区域
+            const textArea = document.getElementById('textInputArea');
+            const voiceArea = document.getElementById('voiceInputArea');
+            const photoArea = document.getElementById('photoInputArea');
+
+            console.log('移除active前:');
+            console.log('  文字区域classes:', textArea ? textArea.className : 'null');
+            console.log('  语音区域classes:', voiceArea ? voiceArea.className : 'null');
+            console.log('  拍照区域classes:', photoArea ? photoArea.className : 'null');
+
+            if (textArea) textArea.classList.remove('active');
+            if (voiceArea) voiceArea.classList.remove('active');
+            if (photoArea) photoArea.classList.remove('active');
+
+            console.log('移除active后:');
+            console.log('  文字区域classes:', textArea ? textArea.className : 'null');
+            console.log('  语音区域classes:', voiceArea ? voiceArea.className : 'null');
+            console.log('  拍照区域classes:', photoArea ? photoArea.className : 'null');
+
+            const targetArea = document.getElementById(mode + 'InputArea');
+            console.log('目标区域ID:', mode + 'InputArea', '元素:', targetArea);
+
+            if (targetArea) {
+                targetArea.classList.add('active');
+                console.log('添加active后，目标区域classes:', targetArea.className);
+            } else {
+                console.error('找不到目标区域:', mode + 'InputArea');
+            }
+        }
+
+        // 切换语音录音
+        function toggleVoiceRecording() {
+            const button = document.getElementById('voiceButton');
+            const status = document.getElementById('voiceStatus');
+            const voiceTextOutput = document.getElementById('voiceTextOutput');
+
+            if (!isRecording) {
+                // 开始录音
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    recognition = new SpeechRecognition();
+                    recognition.lang = 'zh-CN';
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+
+                    recognition.onstart = function() {
+                        isRecording = true;
+                        button.classList.add('recording');
+                        status.textContent = '正在录音中...';
+                        voiceTextOutput.value = '';
+                        voiceTextOutput.dataset.finalText = '';  // 重置最终文本
+                    };
+
+                    recognition.onresult = function(event) {
+                        // 分别处理最终结果和临时结果
+                        let finalTranscript = '';
+                        let interimTranscript = '';
+
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            const transcript = event.results[i][0].transcript;
+                            if (event.results[i].isFinal) {
+                                finalTranscript += transcript;
+                            } else {
+                                interimTranscript += transcript;
+                            }
+                        }
+
+                        // 保留之前的最终结果，添加新的临时结果
+                        const currentFinal = voiceTextOutput.dataset.finalText || '';
+                        voiceTextOutput.dataset.finalText = currentFinal + finalTranscript;
+                        voiceTextOutput.value = voiceTextOutput.dataset.finalText + interimTranscript;
+
+                        // 输出日志便于调试
+                        console.log('语音识别结果:', {
+                            final: voiceTextOutput.dataset.finalText,
+                            interim: interimTranscript,
+                            total: voiceTextOutput.value
+                        });
+                    };
+
+                    recognition.onerror = function(event) {
+                        console.error('语音识别错误:', event.error);
+                        isRecording = false;
+                        button.classList.remove('recording');
+
+                        let errorMsg = '录音出错：';
+                        if (event.error === 'network') {
+                            errorMsg = '⚠️ 网络错误：语音识别服务在当前网络环境下不可用\n\n建议使用：\n✅ 文字输入 - 直接输入商机信息\n✅ 拍照上传 - 拍摄名片或文档自动识别';
+                            alert(errorMsg);
+                            status.textContent = '网络错误（建议使用文字或拍照）';
+                        } else if (event.error === 'not-allowed') {
+                            errorMsg = '请授权麦克风权限';
+                            status.textContent = errorMsg;
+                        } else if (event.error === 'no-speech') {
+                            errorMsg = '未检测到语音，请重试';
+                            status.textContent = errorMsg;
+                        } else {
+                            errorMsg = '请重试或使用文字/拍照方式输入';
+                            status.textContent = errorMsg;
+                        }
+                    };
+
+                    recognition.onend = function() {
+                        isRecording = false;
+                        button.classList.remove('recording');
+                        status.textContent = '点击开始录音';
+                    };
+
+                    recognition.start();
+                } else {
+                    alert('您的浏览器不支持语音识别功能，请使用Chrome浏览器');
+                }
+            } else {
+                // 停止录音
+                if (recognition) {
+                    recognition.stop();
+                }
+                isRecording = false;
+                button.classList.remove('recording');
+                status.textContent = '点击开始录音';
+            }
+        }
+
+        // 识别默认示例图片
+        async function recognizeDefaultImage() {
+            // 显示加载状态
+            document.getElementById('ocrLoading').style.display = 'block';
+            document.getElementById('ocrResult').style.display = 'none';
+
+            try {
+                // 获取示例图片的Blob
+                const response = await fetch('static/images/demo/845d6fb9-27e4-4f67-98f3-084958264a6d.png');
+                const blob = await response.blob();
+
+                // 创建FormData
+                const formData = new FormData();
+                formData.append('file', blob, '845d6fb9-27e4-4f67-98f3-084958264a6d.png');
+                formData.append('engine', 'auto');
+                formData.append('prompt', '请识别图片中的所有文字内容，按原样输出。');
+
+                // 调用OCR API
+                const ocrResponse = await fetch('/api/ocr/process-custom', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!ocrResponse.ok) {
+                    throw new Error('OCR识别失败');
+                }
+
+                const result = await ocrResponse.json();
+
+                // 隐藏加载状态
+                document.getElementById('ocrLoading').style.display = 'none';
+
+                // 提取识别的文字
+                let recognizedText = '';
+                if (result.results && result.results.text_items) {
+                    recognizedText = result.results.text_items.map(item => item.text).join('\n');
+                } else if (result.raw_text) {
+                    recognizedText = result.raw_text;
+                }
+
+                // 显示识别结果
+                document.getElementById('ocrTextOutput').value = recognizedText;
+                document.getElementById('ocrResult').style.display = 'block';
+
+            } catch (error) {
+                console.error('示例图片识别错误:', error);
+                document.getElementById('ocrLoading').style.display = 'none';
+                alert('示例图片识别失败：' + error.message);
+            }
+        }
+
+        // 处理拍照上传
+        async function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 显示图片预览
+            const preview = document.getElementById('uploadedPhotoPreview');
+            const previewImg = document.getElementById('photoPreviewImg');
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // 显示加载状态
+            document.getElementById('ocrLoading').style.display = 'block';
+            document.getElementById('ocrResult').style.display = 'none';
+
+            // 调用OCR API识别图片
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('engine', 'auto');
+                formData.append('prompt', '请识别图片中的所有文字内容，按原样输出。');
+
+                const response = await fetch('/api/ocr/process-custom', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('OCR识别失败');
+                }
+
+                const result = await response.json();
+
+                // 隐藏加载状态
+                document.getElementById('ocrLoading').style.display = 'none';
+
+                // 提取识别的文字
+                let recognizedText = '';
+                if (result.results && result.results.text_items) {
+                    recognizedText = result.results.text_items.map(item => item.text).join('\n');
+                } else if (result.raw_text) {
+                    recognizedText = result.raw_text;
+                }
+
+                // 显示识别结果
+                document.getElementById('ocrTextOutput').value = recognizedText;
+                document.getElementById('ocrResult').style.display = 'block';
+
+            } catch (error) {
+                console.error('OCR识别错误:', error);
+                document.getElementById('ocrLoading').style.display = 'none';
+                alert('图片识别失败：' + error.message + '\n\n请检查图片是否清晰，或稍后重试。');
+            }
+        }
+
+        // AI智能解析输入内容
+        async function processAIInput() {
+            let inputText = '';
+
+            if (currentInputMode === 'text') {
+                inputText = document.getElementById('textInput').value.trim();
+                if (!inputText) {
+                    alert('请输入商机信息');
+                    return;
+                }
+            } else if (currentInputMode === 'voice') {
+                inputText = document.getElementById('voiceTextOutput').value.trim();
+                if (!inputText) {
+                    alert('请先录音');
+                    return;
+                }
+            } else if (currentInputMode === 'photo') {
+                inputText = document.getElementById('ocrTextOutput').value.trim();
+                if (!inputText) {
+                    alert('请先上传图片并等待识别完成');
+                    return;
+                }
+            }
+
+            // 调用AI接口解析自然语言
+            await parseWithAI(inputText);
+        }
+
+        // 通过AI解析自然语言并填充表单
+        async function parseWithAI(text) {
+            try {
+                // 显示加载提示
+                const loadingMsg = document.createElement('div');
+                loadingMsg.id = 'aiLoadingMsg';
+                loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 10000; text-align: center;';
+                loadingMsg.innerHTML = '<div style="margin-bottom: 15px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #ad063e;"></i></div><div style="font-size: 1rem; color: #303133;">AI正在解析中，请稍候...</div>';
+                document.body.appendChild(loadingMsg);
+
+                // 构造AI提示词
+                const prompt = `你是一个商机信息提取助手。请从以下自然语言描述中提取商机信息，并按JSON格式返回。
+
+用户描述：
+${text}
+
+请提取以下字段（如果有的话）：
+- customerName: 客户名称/公司名称
+- opportunityName: 商机名称/项目名称
+- contactPerson: 联系人姓名
+- contactPhone: 联系电话
+- contactEmail: 联系邮箱
+- opportunitySource: 商机来源（市场活动/客户推荐/电话营销/网络推广/展会/其他）
+- estimatedAmount: 预计金额（数字，单位：元）
+- expectedCloseDate: 预计成交时间（YYYY-MM-DD格式，如果是"3个月后"这种描述，计算具体日期）
+- opportunityStage: 商机阶段（初步接触/需求确认/方案报价/商务谈判/合同签订）
+- winProbability: 成交概率（10%/30%/50%/70%/90%）
+- productService: 产品或服务
+- industry: 行业（制造业/金融/互联网/零售/医疗/教育/房地产/其他）
+- customerRequirement: 客户需求描述（详细）
+- painPoints: 痛点分析
+- budgetRange: 预算范围（文本描述）
+- decisionMaker: 决策人信息
+- competitors: 竞争对手
+- ourAdvantages: 我方优势
+- riskAssessment: 风险评估
+- owner: 负责人
+- notes: 备注
+
+只返回JSON对象，不要其他文字。如果某个字段在描述中没有提到，则不要包含该字段。`;
+
+                // 调用后端API - ModelScope DeepSeek-V4-Flash
+                const response = await fetch('/api/opportunity/parse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'AI解析失败');
+                }
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'AI解析失败');
+                }
+
+                const parsedData = result.data;
+
+                // 移除加载提示
+                document.body.removeChild(loadingMsg);
+
+                // 填充表单
+                fillFormWithAIResult(parsedData);
+
+                //alert('✅ AI解析完成！\n\n已自动填充表单字段，请检查并补充完整信息。');
+
+            } catch (error) {
+                // 移除加载提示
+                const loadingMsg = document.getElementById('aiLoadingMsg');
+                if (loadingMsg) {
+                    document.body.removeChild(loadingMsg);
+                }
+
+                console.error('AI解析错误:', error);
+
+                // 如果API失败，降级使用正则表达式解析
+                const useRegex = confirm('AI服务暂时不可用，是否使用基础规则解析？\n\n注意：基础规则只能识别固定格式，如"客户：xxx"、"电话：xxx"等。');
+
+                if (useRegex) {
+                    parseInputToForm(text);
+                }
+            }
+        }
+
+        // 用AI解析结果填充表单
+        function fillFormWithAIResult(data) {
+            const form = document.getElementById('opportunityForm');
+
+            // 基本信息
+            if (data.customerName) form.customerName.value = data.customerName;
+            if (data.opportunityName) form.opportunityName.value = data.opportunityName;
+            if (data.contactPerson) form.contactPerson.value = data.contactPerson;
+            if (data.contactPhone) form.contactPhone.value = data.contactPhone;
+            if (data.contactEmail) form.contactEmail.value = data.contactEmail;
+            if (data.opportunitySource) form.opportunitySource.value = data.opportunitySource;
+
+            // 商机详情
+            if (data.estimatedAmount) form.estimatedAmount.value = data.estimatedAmount;
+            if (data.expectedCloseDate) form.expectedCloseDate.value = data.expectedCloseDate;
+            if (data.opportunityStage) form.opportunityStage.value = data.opportunityStage;
+            if (data.winProbability) form.winProbability.value = data.winProbability;
+            if (data.productService) form.productService.value = data.productService;
+            if (data.industry) form.industry.value = data.industry;
+
+            // 需求信息
+            if (data.customerRequirement) form.customerRequirement.value = data.customerRequirement;
+            if (data.painPoints) form.painPoints.value = data.painPoints;
+            if (data.budgetRange) form.budgetRange.value = data.budgetRange;
+            if (data.decisionMaker) form.decisionMaker.value = data.decisionMaker;
+
+            // 竞争信息
+            if (data.competitors) form.competitors.value = data.competitors;
+            if (data.ourAdvantages) form.ourAdvantages.value = data.ourAdvantages;
+            if (data.riskAssessment) form.riskAssessment.value = data.riskAssessment;
+
+            // 跟进信息
+            if (data.owner) form.owner.value = data.owner;
+            if (data.notes) form.notes.value = data.notes;
+        }
+
+        // 解析输入文本并填充表单
+        function parseInputToForm(text) {
+            const form = document.getElementById('opportunityForm');
+
+            // 客户名称
+            const customerMatch = text.match(/客户[名称]*[：:]\s*([^\n，,。]+)/);
+            if (customerMatch) {
+                form.customerName.value = customerMatch[1].trim();
+            }
+
+            // 商机名称
+            const oppNameMatch = text.match(/商机[名称]*[：:]\s*([^\n，,。]+)/);
+            if (oppNameMatch) {
+                form.opportunityName.value = oppNameMatch[1].trim();
+            }
+
+            // 联系人
+            const contactMatch = text.match(/联系人[：:]\s*([^\n，,。]+)/);
+            if (contactMatch) {
+                form.contactPerson.value = contactMatch[1].trim();
+            }
+
+            // 电话
+            const phoneMatch = text.match(/电话[：:]?\s*(1[3-9]\d{9}|\d{3,4}-?\d{7,8})/);
+            if (phoneMatch) {
+                form.contactPhone.value = phoneMatch[1];
+            }
+
+            // 邮箱
+            const emailMatch = text.match(/邮箱[：:]?\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+            if (emailMatch) {
+                form.contactEmail.value = emailMatch[1];
+            }
+
+            // 商机来源
+            const sourceMatch = text.match(/来源[：:]\s*([^\n，,。]+)/);
+            if (sourceMatch) {
+                const source = sourceMatch[1].trim();
+                const validSources = ['市场活动', '客户推荐', '电话营销', '网络推广', '展会', '其他'];
+                if (validSources.includes(source)) {
+                    form.opportunitySource.value = source;
+                }
+            }
+
+            // 预算/金额
+            const budgetMatch = text.match(/(?:预算|金额)[：:]?\s*(\d+\.?\d*)\s*万/);
+            if (budgetMatch) {
+                form.estimatedAmount.value = parseFloat(budgetMatch[1]) * 10000;
+            }
+
+            // 预计成交时间
+            const timeMatch = text.match(/(\d+)\s*个?月/);
+            if (timeMatch) {
+                const months = parseInt(timeMatch[1]);
+                const futureDate = new Date();
+                futureDate.setMonth(futureDate.getMonth() + months);
+                form.expectedCloseDate.value = futureDate.toISOString().split('T')[0];
+            }
+
+            // 商机阶段
+            const stageMatch = text.match(/阶段[：:]\s*([^\n，,。]+)/);
+            if (stageMatch) {
+                const stage = stageMatch[1].trim();
+                const validStages = ['初步接触', '需求确认', '方案报价', '商务谈判', '合同签订'];
+                if (validStages.includes(stage)) {
+                    form.opportunityStage.value = stage;
+                }
+            }
+
+            // 成交概率
+            const probMatch = text.match(/概率[：:]?\s*(\d+)%/);
+            if (probMatch) {
+                form.winProbability.value = probMatch[1] + '%';
+            }
+
+            // 产品/服务
+            const productMatch = text.match(/(?:产品|服务)[：:]\s*([^\n，,。]+)/);
+            if (productMatch) {
+                form.productService.value = productMatch[1].trim();
+            }
+
+            // 行业
+            const industryMatch = text.match(/行业[：:]\s*([^\n，,。]+)/);
+            if (industryMatch) {
+                const industry = industryMatch[1].trim();
+                const validIndustries = ['制造业', '金融', '互联网', '零售', '医疗', '教育', '房地产', '其他'];
+                if (validIndustries.includes(industry)) {
+                    form.industry.value = industry;
+                }
+            }
+
+            // 客户需求
+            const requirementMatch = text.match(/需求[：:]\s*([^\n]+(?:\n(?!.*?[：:]).+)*)/);
+            if (requirementMatch) {
+                form.customerRequirement.value = requirementMatch[1].trim();
+                // 如果没有单独设置商机名称，用需求的前50字
+                if (!form.opportunityName.value) {
+                    form.opportunityName.value = requirementMatch[1].trim().substring(0, 50);
+                }
+            }
+
+            // 痛点
+            const painMatch = text.match(/痛点[：:]\s*([^\n]+(?:\n(?!.*?[：:]).+)*)/);
+            if (painMatch) {
+                form.painPoints.value = painMatch[1].trim();
+            }
+
+            // 预算范围
+            const budgetRangeMatch = text.match(/预算范围[：:]\s*([^\n，,。]+)/);
+            if (budgetRangeMatch) {
+                form.budgetRange.value = budgetRangeMatch[1].trim();
+            }
+
+            // 决策人
+            const decisionMatch = text.match(/决策人[：:]\s*([^\n，,。]+)/);
+            if (decisionMatch) {
+                form.decisionMaker.value = decisionMatch[1].trim();
+            }
+
+            // 竞争对手
+            const competitorMatch = text.match(/竞争对手[：:]\s*([^\n]+(?:\n(?!.*?[：:]).+)*)/);
+            if (competitorMatch) {
+                form.competitors.value = competitorMatch[1].trim();
+            }
+
+            // 我方优势
+            const advantageMatch = text.match(/(?:我方)?优势[：:]\s*([^\n]+(?:\n(?!.*?[：:]).+)*)/);
+            if (advantageMatch) {
+                form.ourAdvantages.value = advantageMatch[1].trim();
+            }
+
+            // 风险
+            const riskMatch = text.match(/风险[：:]\s*([^\n]+(?:\n(?!.*?[：:]).+)*)/);
+            if (riskMatch) {
+                form.riskAssessment.value = riskMatch[1].trim();
+            }
+
+            // 负责人
+            const ownerMatch = text.match(/负责人[：:]\s*([^\n，,。]+)/);
+            if (ownerMatch) {
+                form.owner.value = ownerMatch[1].trim();
+            }
+
+            // 备注
+            const noteMatch = text.match(/备注[：:]\s*([^\n]+(?:\n(?!.*?[：:]).+)*)/);
+            if (noteMatch) {
+                form.notes.value = noteMatch[1].trim();
+            }
+
+            //alert('✅ AI解析完成！\n\n已自动填充表单字段，请检查并补充完整信息。');
+        }
+
+        // 表单提交
+        document.getElementById('opportunityForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                customerName: this.customerName.value,
+                opportunityName: this.opportunityName.value,
+                contactPerson: this.contactPerson.value,
+                contactPhone: this.contactPhone.value,
+                contactEmail: this.contactEmail.value,
+                opportunitySource: this.opportunitySource.value,
+                estimatedAmount: this.estimatedAmount.value,
+                expectedCloseDate: this.expectedCloseDate.value,
+                opportunityStage: this.opportunityStage.value,
+                winProbability: this.winProbability.value,
+                productService: this.productService.value,
+                industry: this.industry.value,
+                customerRequirement: this.customerRequirement.value,
+                painPoints: this.painPoints.value,
+                budgetRange: this.budgetRange.value,
+                decisionMaker: this.decisionMaker.value,
+                competitors: this.competitors.value,
+                ourAdvantages: this.ourAdvantages.value,
+                riskAssessment: this.riskAssessment.value,
+                nextFollowUpDate: this.nextFollowUpDate.value,
+                owner: this.owner.value,
+                notes: this.notes.value
+            };
+
+            console.log('提交商机数据:', formData);
+
+            // 这里应该调用后端API保存数据
+            alert('商机信息提交成功！\n\n客户：' + formData.customerName + '\n商机：' + formData.opportunityName);
+
+            // 可选：提交后重置表单
+            // this.reset();
+        });
+
+        // 重置表单
+        function resetForm() {
+            if (confirm('确定要重置表单吗？所有已填写的内容将被清空。')) {
+                document.getElementById('opportunityForm').reset();
+                document.getElementById('textInput').value = '';
+            }
+        }
+
+        // 保存草稿
+        function saveDraft() {
+            const formData = new FormData(document.getElementById('opportunityForm'));
+            const data = Object.fromEntries(formData);
+
+            // 保存到本地存储
+            localStorage.setItem('opportunityDraft', JSON.stringify(data));
+            alert('草稿已保存到本地');
+        }
+
+        // 页面加载时尝试恢复草稿
+        window.addEventListener('DOMContentLoaded', function() {
+            // 初始化：确保文字输入区域显示
+            switchInputMode('text');
+
+            // 恢复草稿
+            const draft = localStorage.getItem('opportunityDraft');
+            if (draft) {
+                const shouldRestore = confirm('发现未完成的草稿，是否恢复？');
+                if (shouldRestore) {
+                    const data = JSON.parse(draft);
+                    const form = document.getElementById('opportunityForm');
+                    for (let key in data) {
+                        if (form[key]) {
+                            form[key].value = data[key];
+                        }
+                    }
+                } else {
+                    localStorage.removeItem('opportunityDraft');
+                }
+            }
+        });
+
+        // 加载示例文本到输入框
+        function loadExampleText() {
+            const exampleText = `昨天下午接触了一个很不错的客户，是深圳市创新科技有限公司。他们的张总（张伟）对我们的ERP系统很感兴趣，当场交换了名片，他的电话是13800138000，邮箱zhangwei@innovtech.com。这个客户是通过上周的行业展会认识的。
+
+张总说他们公司现在用的ERP系统已经用了8年多了，太老旧了，跟不上企业发展的速度。他们想升级到新一代云ERP系统，实现财务、采购、生产、销售全流程的数字化管理。主要需求有这几个方面：一是要支持多工厂、多组织架构管理，因为他们在全国有好几个分厂；二是希望能在手机上审批和查数据，现在领导出差在外很不方便；三是必须跟他们现有的MES系统对接；四是要有实时的数据分析和BI报表，方便做决策；五是系统要有扩展性，因为公司还在快速发展。
+
+聊下来发现他们现在的痛点还挺多的。首先系统响应速度太慢，经常卡顿，影响工作效率；然后就是数据孤岛问题严重，各个部门的信息都不互通，要人工去对；还有报表都得手工做，费时费力；库存管理也很混乱，经常出现缺货或者积压；财务对账周期特别长，每到月末都得加班到很晚；另外系统维护成本也高，需要专门的IT人员维护。
+
+张总说他们这个项目的预算大概在80到100万之间，希望能在3个月内上线，因为公司下半年要冲业绩。现在处于需求确认阶段，初步判断成交概率大概50%左右。我们推荐的产品是SAP ERP企业管理系统，他们是制造业。
+
+决策方面主要是两个人，一个是李总经理（CEO），另一个是王财务总监（CFO），他们两个人意见要达成一致才行。
+
+竞争对手方面，主要有三家：用友U8价格比较便宜，但是功能比较基础；金蝶云ERP是同档次的产品，在当地有一定市场份额；还有Oracle NetSuite，国际大品牌，但是价格偏高。目前客户倾向于选择性价比高、服务好的本土化方案。
+
+我们的优势还是挺明显的：第一是SAP品牌在全球都很有影响力，是领先的ERP解决方案；第二是我们有丰富的制造业实施经验，同行业的成功案例很多；第三是本地化服务团队响应速度快；第四是支持模块化部署，可以分期实施降低风险；第五是培训体系和售后服务都很完善；第六在价格策略上，我们可以提供首年优惠和分期付款方案。
+
+不过风险也要考虑到：预算风险方面，客户的预算可能不够支持全功能实施；竞争风险是用友和金蝶的价格确实更有竞争力；时间风险是客户希望3个月上线，时间比较紧；技术风险是跟现有MES系统集成可能会有技术难点；决策风险是有多位决策人，需要统一意见。应对措施我们计划提供分期实施方案降低一次性投入，强调长期TCO优势和投资回报率，安排技术团队提前做集成可行性评估，组织客户去参观我们的成功案例企业。
+
+这个项目由我们销售部的陈明负责跟进。
+
+需要重点关注的事项：客户已经邀请我们下周二去现场做方案演示，要准备制造业行业解决方案的PPT和演示环境；邀请技术顾问一起参与，解答技术问题；了解到竞争对手金蝶已经提交了方案，动作比较快；客户的决策周期预计1到2个月；客户最关心的三点是性价比、实施周期、售后服务。`;
+
+            document.getElementById('textInput').value = exampleText;
+
+            //alert('✅ 示例文本已加载！\n\n这是一段自然语言的商机描述，现在点击"AI智能解析"按钮，系统会自动提取关键信息并填充到表单中。');
+        }
+
+        // 原来的 loadExampleOpportunity 函数重命名并保留（以防需要）
+        function loadExampleOpportunityDirect() {
+            const form = document.getElementById('opportunityForm');
+
+            // 基本信息
+            form.customerName.value = '深圳市创新科技有限公司';
+            form.opportunityName.value = 'ERP系统升级改造项目';
+            form.contactPerson.value = '张伟';
+            form.contactPhone.value = '13800138000';
+            form.contactEmail.value = 'zhangwei@innovtech.com';
+            form.opportunitySource.value = '市场活动';
+
+            // 商机详情
+            form.estimatedAmount.value = '800000';
+            const today = new Date();
+            const futureDate = new Date(today);
+            futureDate.setMonth(today.getMonth() + 3);
+            form.expectedCloseDate.value = futureDate.toISOString().split('T')[0];
+            form.opportunityStage.value = '需求确认';
+            form.winProbability.value = '50%';
+            form.productService.value = 'SAP ERP企业管理系统';
+            form.industry.value = '制造业';
+
+            // 需求信息
+            form.customerRequirement.value = '客户现有ERP系统使用已超过8年，功能老旧，无法满足企业快速发展需要。希望升级到新一代云ERP系统，实现财务、采购、生产、销售全流程数字化管理。重点需求包括：\n1. 多工厂、多组织架构管理\n2. 移动端审批和数据查询\n3. 与现有MES系统集成\n4. 实时数据分析和BI报表\n5. 支持未来业务扩展';
+
+            form.painPoints.value = '当前痛点：\n1. 系统响应速度慢，影响业务效率\n2. 数据孤岛严重，各部门信息不互通\n3. 报表制作繁琐，决策支持不足\n4. 库存管理混乱，经常出现缺货或积压\n5. 财务对账周期长，月末结账需要加班\n6. 系统维护成本高，需要专人维护';
+
+            form.budgetRange.value = '80-100万元';
+            form.decisionMaker.value = '李总经理（CEO）、王财务总监（CFO）';
+
+            // 竞争信息
+            form.competitors.value = '主要竞争对手：\n1. 用友U8 - 价格相对较低，但功能较为基础\n2. 金蝶云ERP - 同档次产品，在本地有一定市场份额\n3. Oracle NetSuite - 国际品牌，价格较高\n\n竞争态势：客户倾向于选择性价比高、服务好的本土化方案';
+
+            form.ourAdvantages.value = '我方优势：\n1. SAP品牌优势，全球领先的ERP解决方案\n2. 丰富的制造业实施经验，有同行业成功案例\n3. 本地化服务团队，响应速度快\n4. 灵活的模块化部署，支持分期实施降低风险\n5. 完善的培训体系和售后服务\n6. 价格策略：可提供首年优惠和分期付款方案';
+
+            form.riskAssessment.value = '风险因素：\n1. 预算风险：客户预算可能不足以支持全功能实施\n2. 竞争风险：用友和金蝶价格更有竞争力\n3. 时间风险：客户希望3个月内上线，时间紧迫\n4. 技术风险：与现有MES系统集成可能存在技术难点\n5. 决策风险：多位决策人，需要统一意见\n\n应对措施：\n- 提供分期实施方案，降低一次性投入\n- 强调长期TCO优势和投资回报率\n- 安排技术团队提前进行集成可行性评估\n- 组织客户参观成功案例企业';
+
+            // 跟进信息
+            const nextFollowUp = new Date(today);
+            nextFollowUp.setDate(today.getDate() + 7);
+            const nextFollowUpStr = nextFollowUp.toISOString().slice(0, 16);
+            form.nextFollowUpDate.value = nextFollowUpStr;
+            form.owner.value = '销售经理-陈明';
+            form.notes.value = '备注：\n1. 客户已邀请我们下周二进行现场方案演示\n2. 需要准备制造业行业解决方案PPT和演示环境\n3. 邀请技术顾问一同参与，解答技术问题\n4. 了解到竞争对手金蝶已经提交了方案\n5. 客户决策周期预计1-2个月\n6. 重点关注：性价比、实施周期、售后服务';
+
+            //alert('✅ 示例商机已加载！\n\n这是一个完整的ERP系统升级项目商机案例，包含了所有关键信息。\n您可以基于此示例修改或直接提交。');
+        }
+    </script>
+</body>
+</html>
+

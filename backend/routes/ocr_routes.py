@@ -565,6 +565,71 @@ def process_with_custom_prompt():
         return jsonify({"error": f"自定义提示词处理失败: {str(exc)}"}), 500
 
 
+@ocr_bp.route("/api/ocr/process-custom", methods=["POST"])
+def process_ocr_with_file_upload():
+    """
+    商机页面专用OCR接口 - 支持直接文件上传和OCR识别
+    """
+    if "file" not in request.files:
+        return jsonify({"success": False, "error": "缺少文件参数"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "error": "没有选择文件"}), 400
+
+    # 获取参数
+    engine = request.form.get("engine", "auto")
+    prompt = request.form.get("prompt", "请识别图片中的所有文字内容，按原样输出。")
+
+    try:
+        # 保存上传的文件
+        original_filename = file.filename
+        file_ext = os.path.splitext(original_filename)[1].lower()
+        file_ext = file_ext[1:] if file_ext else "png"
+        unique_filename = f"{uuid.uuid4().hex}.{file_ext}"
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], unique_filename)
+        file.save(filepath)
+
+        # 预处理图片
+        preprocessed_path = preprocess_image_for_ocr(filepath, target_size=990, max_size=2048)
+
+        # 根据引擎选择处理方式
+        if engine == "paddleocr":
+            # 使用PaddleOCR
+            results = ocr_processor.process_image_with_engine(preprocessed_path, "paddleocr")
+        elif engine == "auto":
+            # 自动选择：优先使用PaddleOCR（本地、快速、免费）
+            results = ocr_processor.process_image(preprocessed_path)
+        else:
+            # 默认使用当前配置的引擎
+            results = ocr_processor.process_image(preprocessed_path, prompt)
+
+        # 提取识别的文字
+        raw_text = ""
+        if results.get("success") and results.get("text_items"):
+            raw_text = "\n".join(item.get("text", "") for item in results.get("text_items", []))
+
+        return jsonify({
+            "success": True,
+            "message": "OCR识别成功",
+            "filename": unique_filename,
+            "original_filename": original_filename,
+            "engine": results.get("ocr_engine", engine),
+            "raw_text": raw_text,
+            "results": results,
+            "total_items": results.get("total_items", 0)
+        })
+
+    except Exception as exc:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"[ERROR] OCR识别失败: {error_detail}")
+        return jsonify({
+            "success": False,
+            "error": f"OCR识别失败: {str(exc)}"
+        }), 500
+
+
 @ocr_bp.route("/api/prompts", methods=["GET"])
 def get_prompts():
     try:

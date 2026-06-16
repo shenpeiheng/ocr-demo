@@ -169,6 +169,20 @@
                         '</a>' +
                     '</div>' +
                 '</div>' +
+                /* 业务应用 */
+                '<div class="menu-section">' +
+                    '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
+                        '<div class="menu-group-icon"><i class="fas fa-briefcase"></i></div>' +
+                        '<span class="menu-group-title">业务应用</span>' +
+                        '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
+                    '</div>' +
+                    '<div class="menu-sub-items expanded">' +
+                        '<a href="opportunity_entry.html" class="menu-item menu-sub-item" data-page="opportunity_entry">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">商机快速录入</div>' +
+                        '</a>' +
+                    '</div>' +
+                '</div>' +
                 /* 其他 */
                 '<div class="menu-section">' +
                     '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
