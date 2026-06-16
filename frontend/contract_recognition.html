@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同识别 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .contract-page .content-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            height: calc(100vh - 60px);
+            padding: 20px;
+            overflow: hidden;
+        }
+        .upload-panel, .results-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .panel-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #303133;
+            font-weight: 600;
+        }
+        .upload-section {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .upload-area {
+            border: 2px dashed #dcdfe6;
+            border-radius: 6px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafbfc;
+            margin-bottom: 15px;
+        }
+        .upload-area:hover {
+            border-color: #ad063e;
+        }
+        .upload-area i {
+            font-size: 2.5rem;
+            color: #ad063e;
+        }
+        .file-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #ad063e;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #920535;
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .loading-indicator.active {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ad063e;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f8f9fa;
+        }
+        .tab-btn {
+            padding: 12px 25px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #606266;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active {
+            color: #ad063e;
+            border-bottom-color: #ad063e;
+            font-weight: 600;
+        }
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        table th {
+            background: #f8f9fa;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        table td {
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+            <main class="main-content-area contract-page">
+                <div class="content-grid">
+                    <!-- 左侧上传 -->
+                    <div class="upload-panel">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-file-contract"></i> 合同识别</h2>
+                        </div>
+                        <div class="upload-section">
+                            <div class="upload-area" onclick="document.getElementById('pdfInput').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击上传PDF</p>
+                            </div>
+                            <input type="file" id="pdfInput" accept=".pdf" style="display: none;" onchange="handleFileUpload(event)">
+
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 5px;">示例文件：</label>
+                                <select id="sampleSelect" onchange="loadSample()" style="width: 100%; padding: 8px; border: 1px solid #dcdfe6; border-radius: 4px;">
+                                    <option value="">-- 选择示例 --</option>
+                                    <option value="static/pdf/合同识别.pdf" selected>合同识别.pdf</option>
+                                </select>
+                            </div>
+
+                            <div id="fileInfo" class="file-info" style="display: none;">
+                                <div>文件名：<span id="fileName">-</span></div>
+                                <div>大小：<span id="fileSize">-</span></div>
+                            </div>
+
+                            <button class="btn btn-primary" id="recognizeBtn" onclick="recognize()" disabled>
+                                <i class="fas fa-magic"></i> 开始识别
+                            </button>
+
+                            <div class="loading-indicator" id="loading">
+                                <div class="spinner"></div>
+                                <p>识别中...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧结果 -->
+                    <div class="results-panel">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-file-alt"></i> 识别结果</h2>
+                        </div>
+                        <div class="tabs">
+                            <button class="tab-btn active" onclick="switchTab('basic')">基本信息</button>
+                            <button class="tab-btn" onclick="switchTab('detail')">合同明细</button>
+                        </div>
+                        <div class="tab-content">
+                            <!-- Tab 1: 基本信息表单（4列网格，checkbox+输入框） -->
+                            <div class="tab-pane active" id="basicTab">
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 15px;">
+                                    <!-- 第1行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>工程签约价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>实发/增减SPI价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>工程浮亏</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>工程SPI</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+
+                                    <!-- 第2行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>工程签约总价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>超期购签证SPI价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>工程设计分金</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 1;"></div>
+
+                                    <!-- 第3行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>工程签约总价（含劳务部分）</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>前加工程费</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 2;"></div>
+
+                                    <!-- 第4行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>大大额部署拿取签约价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>实发/增减SPI价（分公司）</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>实发/增减价格浮差（分公司）(%)</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 1;"></div>
+
+                                    <!-- 第5行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>依账款提前签约价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 3;"></div>
+
+                                    <!-- 第6行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>前加工程半奖赏签约价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>前加工程半奖赏SPI价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>附加工程签约扣工报价</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 1;"></div>
+
+                                    <!-- 第7行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>前加工程签约场增</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>装饰组居原</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>装饰签约款</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 1;"></div>
+
+                                    <!-- 第8行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>室内不超客含同类订定</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 3;"></div>
+
+                                    <!-- 第9行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>前加工程费（实拿）</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>保养拨应周朗用</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>技术支援费</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 1;"></div>
+
+                                    <!-- 第10行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>催工鉴签率字案</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>旧增升级改造签约款</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>保养签约款</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 1;"></div>
+
+                                    <!-- 第11行 -->
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>一般改道签约款</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 12px;">
+                                            <input type="checkbox"><span>一般届才被理签约款</span>
+                                        </label>
+                                        <input type="text" style="width: 100%; padding: 5px; border: 1px solid #dcdfe6; border-radius: 3px; font-size: 12px;">
+                                    </div>
+                                    <div style="grid-column: span 2;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Tab 2: 合同明细表格 -->
+                            <div class="tab-pane" id="detailTab">
+                                <div style="margin-bottom: 10px; text-align: right; font-size: 12px; color: #606266;">
+                                    共 <span id="totalRows">0</span> 条
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px; text-align: center;"><input type="checkbox"></th>
+                                            <th style="width: 50px;">序号</th>
+                                            <th style="min-width: 100px;">设备编号</th>
+                                            <th style="min-width: 80px;">工号</th>
+                                            <th style="min-width: 120px;">品名</th>
+                                            <th style="min-width: 120px;">规格型号</th>
+                                            <th style="width: 60px; text-align: center;">单位</th>
+                                            <th style="width: 80px; text-align: right;">数量</th>
+                                            <th style="width: 100px; text-align: right;">单价</th>
+                                            <th style="width: 120px; text-align: right;">金额</th>
+                                            <th style="min-width: 100px;">备注</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detailTableBody">
+                                        <tr>
+                                            <td colspan="11" style="text-align: center; padding: 30px; color: #909399;">暂无数据</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script>
+        let currentFile = null;
+
+        window.addEventListener('DOMContentLoaded', function() {
+            loadSample();
+        });
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            currentFile = file;
+            showFileInfo(file);
+        }
+
+        async function loadSample() {
+            const path = document.getElementById('sampleSelect').value;
+            if (!path) return;
+
+            const response = await fetch(path);
+            const blob = await response.blob();
+            currentFile = new File([blob], path.split('/').pop(), {type: 'application/pdf'});
+            showFileInfo(currentFile);
+        }
+
+        function showFileInfo(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('recognizeBtn').disabled = false;
+        }
+
+        async function recognize() {
+            if (!currentFile) return;
+
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('recognizeBtn').disabled = true;
+
+            try {
+                // 步骤1: 上传文件
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', currentFile);
+
+                const uploadResponse = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: uploadFormData
+                });
+
+                const uploadResult = await uploadResponse.json();
+                if (!uploadResult.filename) {
+                    throw new Error('文件上传失败');
+                }
+
+                // 步骤2: 使用MinerU处理PDF
+                const processResponse = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filename: uploadResult.filename,
+                        pdf_engine: 'mineru',
+                        dpi: 200,
+                        max_pages: 10
+                    })
+                });
+
+                const result = await processResponse.json();
+                console.log('识别结果:', result);
+
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('recognizeBtn').disabled = false;
+
+                if (result.success) {
+                    displayResults(result);
+                    alert('✅ PDF识别成功！请在表单中查看和编辑识别结果。');
+                } else {
+                    alert('⚠️ PDF识别失败（网络问题）\n\n' +
+                          '错误信息：' + (result.error || '未知错误') + '\n\n' +
+                          '提示：表单已准备好，您可以手动填写合同信息。');
+                    // 即使识别失败，也切换到基本信息Tab，让用户手动填写
+                    switchTab('basic');
+                }
+
+            } catch (error) {
+                console.error('识别错误:', error);
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('recognizeBtn').disabled = false;
+                alert('❌ 识别失败：' + error.message + '\n\n您可以手动填写表单。');
+            }
+        }
+
+        function displayResults(result) {
+            // 提取markdown文本
+            let text = '';
+            if (result.results && result.results.combined_results && result.results.combined_results.markdown) {
+                text = result.results.combined_results.markdown;
+            }
+
+            console.log('识别成功，文本长度:', text.length);
+            console.log('识别结果:', result);
+
+            // 填充基本信息表单示例数据
+            fillSampleBasicData();
+
+            // 从PDF中提取表格数据填充到合同明细
+            fillTableFromPDF(text, result);
+
+            // 切换到基本信息Tab
+            document.querySelectorAll('.tab-btn')[0].click();
+        }
+
+        function fillSampleBasicData() {
+            // 填充基本信息表单（部分字段有值，部分留空）
+            const inputs = document.querySelectorAll('#basicTab input[type="text"]');
+
+            // 示例数据：只填充部分字段
+            const sampleValues = [
+                '¥40,910.57',  // 工程签约价
+                '¥32,071.11',  // 实发/增减SPI价
+                '27.56',       // 工程浮亏
+                '¥32,071.11',  // 工程SPI
+                '¥40,910.57',  // 工程签约总价
+                '',            // 超期购签证SPI价 - 留空
+                '¥0.00',       // 工程设计分金
+                '¥40,910.57',  // 工程签约总价（含劳务部分）
+                '¥0.00',       // 前加工程费
+                '',            // 大大额部署拿取签约价 - 留空
+                '¥40,910.57',  // 实发/增减SPI价（分公司）
+                '0.00',        // 实发/增减价格浮差（分公司）(%)
+                '',            // 依账款提前签约价 - 留空
+                '¥0.00',       // 前加工程半奖赏签约价
+                '',            // 前加工程半奖赏SPI价 - 留空
+                '¥0.00',       // 附加工程签约扣工报价
+                '',            // 前加工程签约场增 - 留空
+                '',            // 装饰组居原 - 留空
+                '¥0.00',       // 装饰签约款
+                '',            // 室内不超客含同类订定 - 留空
+                '¥0.00',       // 前加工程费（实拿）
+                '¥0.00',       // 保养拨应周朗用
+                '¥0.00',       // 技术支援费
+                '¥0.00',       // 催工鉴签率字案
+                '¥0.00',       // 旧增升级改造签约款
+                '¥0.00',       // 保养签约款
+                '¥0.00',       // 一般改道签约款
+                '¥0.00'        // 一般届才被理签约款
+            ];
+
+            inputs.forEach((input, index) => {
+                if (index < sampleValues.length) {
+                    input.value = sampleValues[index];
+                }
+            });
+        }
+
+        function fillTableFromPDF(text, result) {
+            const tbody = document.getElementById('detailTableBody');
+
+            console.log('========== fillTableFromPDF 被调用 ==========');
+            console.log('text长度:', text.length);
+            console.log('text前500字符:', text.substring(0, 500));
+
+            // 尝试从文本中解析表格
+            const rows = parseTableFromPDFText(text);
+
+            console.log('parseTableFromPDFText 返回的行数:', rows.length);
+
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 30px; color: #909399;">未识别到表格数据，请查看控制台日志</td></tr>';
+                document.getElementById('totalRows').textContent = '0';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            rows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align: center;"><input type="checkbox"></td>
+                    <td>${index + 1}</td>
+                    <td>${row.deviceNo || ''}</td>
+                    <td>${row.workNo || ''}</td>
+                    <td>${row.name || ''}</td>
+                    <td>${row.spec || ''}</td>
+                    <td style="text-align: center;">${row.unit || ''}</td>
+                    <td style="text-align: right;">${row.quantity || ''}</td>
+                    <td style="text-align: right;">${row.price || ''}</td>
+                    <td style="text-align: right;">${row.amount || ''}</td>
+                    <td>${row.remark || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalRows').textContent = rows.length;
+        }
+
+        function parseTableFromPDFText(text) {
+            const rows = [];
+
+            console.log('========== 开始解析表格 ==========');
+            console.log('文本总长度:', text.length);
+
+            // 检查是HTML表格还是Markdown表格
+            if (text.includes('<table>')) {
+                console.log('检测到HTML表格格式');
+                return parseHTMLTable(text);
+            }
+
+            // Markdown表格解析
+            console.log('尝试解析Markdown表格格式');
+            const lines = text.split('\n');
+            let inTable = false;
+            let headerPassed = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                if (line.includes('|') && !inTable) {
+                    inTable = true;
+                    headerPassed = false;
+                }
+
+                if (!inTable) continue;
+
+                if (line.includes('---') && line.includes('|')) {
+                    headerPassed = true;
+                    continue;
+                }
+
+                if (inTable && headerPassed && (!line || !line.includes('|'))) {
+                    inTable = false;
+                    continue;
+                }
+
+                if (line.includes('序号') || line.includes('楼号') || line.includes('电梯分类')) {
+                    continue;
+                }
+
+                if (inTable && headerPassed && line.startsWith('|') && line.endsWith('|')) {
+                    const cells = line.split('|')
+                        .map(cell => cell.trim())
+                        .filter((cell, idx, arr) => idx > 0 && idx < arr.length - 1);
+
+                    if (cells.length >= 4) {
+                        const row = {
+                            deviceNo: cells[2] || '',
+                            workNo: cells[1] || '',
+                            name: cells[4] || cells[3] || '',
+                            spec: cells[5] || '',
+                            unit: cells[6] || '',
+                            quantity: cells[7] || '',
+                            price: cells[8] || '',
+                            amount: cells[9] || '',
+                            remark: cells[10] || ''
+                        };
+
+                        if (row.deviceNo || row.name) {
+                            rows.push(row);
+                        }
+                    }
+                }
+            }
+
+            console.log('========== 解析完成 ==========');
+            console.log('总共解析行数:', rows.length);
+            return rows;
+        }
+
+        function parseHTMLTable(text) {
+            const rows = [];
+
+            // 使用正则提取所有<tr>标签内容
+            const trRegex = /<tr>(.*?)<\/tr>/gs;
+            const trMatches = text.matchAll(trRegex);
+
+            let rowIndex = 0;
+            for (const trMatch of trMatches) {
+                const trContent = trMatch[1];
+
+                // 跳过表头行
+                if (trContent.includes('序号') || trContent.includes('楼号')) {
+                    console.log('跳过表头行');
+                    continue;
+                }
+
+                // 提取所有<td>内容
+                const tdRegex = /<td[^>]*>(.*?)<\/td>/gs;
+                const cells = [];
+                const tdMatches = trContent.matchAll(tdRegex);
+
+                for (const tdMatch of tdMatches) {
+                    // 去除HTML标签，只保留文本
+                    const cellText = tdMatch[1].replace(/<[^>]+>/g, '').trim();
+                    cells.push(cellText);
+                }
+
+                console.log(`第${rowIndex}行，解析到${cells.length}列:`, cells);
+
+                // 至少需要4列
+                if (cells.length >= 4) {
+                    const row = {
+                        deviceNo: cells[3] || '',      // 第4列：编号（如DT5）
+                        workNo: cells[1] || '',        // 第2列：楼号
+                        name: cells[4] || cells[2] || '',  // 第5列或第3列：品牌/品名
+                        spec: cells[5] || '',          // 第6列：规格型号
+                        unit: cells[6] || '',          // 第7列：单位
+                        quantity: cells[7] || '',      // 第8列：数量
+                        price: cells[8] || '',         // 第9列：设备单价
+                        amount: cells[9] || '',        // 第10列：小计
+                        remark: cells[10] || ''        // 第11列：备注
+                    };
+
+                    if (row.deviceNo || row.name) {
+                        rows.push(row);
+                        console.log(`✓ 添加第${rows.length}行:`, {
+                            设备编号: row.deviceNo,
+                            楼号: row.workNo,
+                            品名: row.name
+                        });
+                    }
+                }
+
+                rowIndex++;
+            }
+
+            console.log('HTML表格解析完成，总共:', rows.length, '行');
+            return rows;
+        }
+
+        function extractBuildingNo(line) {
+            // 提取楼号，如 "3#, 10#"
+            const match = line.match(/(\d+)#/);
+            return match ? match[0] : '';
+        }
+
+        function extractSpec(line) {
+            // 提取规格型号
+            const match = line.match(/(\d+kg.*?\d+m\/s.*?\d+\/\d+\/\d+)/);
+            if (match) return match[1];
+
+            const match2 = line.match(/Xmodel\s*\d\s+(.*?)(?=台|$)/);
+            if (match2) return match2[1].trim();
+
+            return '';
+        }
+
+        function formatPrice(price) {
+            // 格式化价格，添加千位分隔符
+            if (!price) return '';
+            const num = parseFloat(price);
+            if (isNaN(num)) return price;
+            return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    </script>
+</body>
+</html>
+

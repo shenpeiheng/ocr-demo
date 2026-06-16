@@ -181,6 +181,10 @@
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">商机快速录入</div>' +
                         '</a>' +
+                        '<a href="contract_recognition.html" class="menu-item menu-sub-item" data-page="contract_recognition">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">合同识别</div>' +
+                        '</a>' +
                     '</div>' +
                 '</div>' +
                 /* 其他 */
