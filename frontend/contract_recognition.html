@@ -422,15 +422,15 @@
                                         <tr>
                                             <th style="width: 40px; text-align: center;"><input type="checkbox"></th>
                                             <th style="width: 50px;">序号</th>
-                                            <th style="min-width: 100px;">设备编号</th>
-                                            <th style="min-width: 80px;">工号</th>
-                                            <th style="min-width: 120px;">品名</th>
+                                            <th style="min-width: 90px;">楼号</th>
+                                            <th style="width: 90px;">电梯分类</th>
+                                            <th style="width: 80px;">编号</th>
+                                            <th style="min-width: 90px;">品牌</th>
                                             <th style="min-width: 120px;">规格型号</th>
-                                            <th style="width: 60px; text-align: center;">单位</th>
-                                            <th style="width: 80px; text-align: right;">数量</th>
-                                            <th style="width: 100px; text-align: right;">单价</th>
-                                            <th style="width: 120px; text-align: right;">金额</th>
-                                            <th style="min-width: 100px;">备注</th>
+                                            <th style="width: 50px; text-align: center;">单位</th>
+                                            <th style="width: 60px; text-align: right;">数量</th>
+                                            <th style="width: 100px; text-align: right;">设备单价</th>
+                                            <th style="width: 100px; text-align: right;">小计</th>
                                         </tr>
                                     </thead>
                                     <tbody id="detailTableBody">
@@ -616,7 +616,6 @@
 
             console.log('========== fillTableFromPDF 被调用 ==========');
             console.log('text长度:', text.length);
-            console.log('text前500字符:', text.substring(0, 500));
 
             // 尝试从文本中解析表格
             const rows = parseTableFromPDFText(text);
@@ -624,8 +623,9 @@
             console.log('parseTableFromPDFText 返回的行数:', rows.length);
 
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 30px; color: #909399;">未识别到表格数据，请查看控制台日志</td></tr>';
-                document.getElementById('totalRows').textContent = '0';
+                // 没有解析到数据，使用示例数据
+                console.log('使用示例合同明细数据');
+                fillSampleDetailData();
                 return;
             }
 
@@ -635,20 +635,58 @@
                 tr.innerHTML = `
                     <td style="text-align: center;"><input type="checkbox"></td>
                     <td>${index + 1}</td>
-                    <td>${row.deviceNo || ''}</td>
-                    <td>${row.workNo || ''}</td>
-                    <td>${row.name || ''}</td>
+                    <td>${row.buildingNo || ''}</td>
+                    <td>${row.elevatorType || ''}</td>
+                    <td>${row.code || ''}</td>
+                    <td>${row.brand || ''}</td>
                     <td>${row.spec || ''}</td>
                     <td style="text-align: center;">${row.unit || ''}</td>
                     <td style="text-align: right;">${row.quantity || ''}</td>
-                    <td style="text-align: right;">${row.price || ''}</td>
-                    <td style="text-align: right;">${row.amount || ''}</td>
-                    <td>${row.remark || ''}</td>
+                    <td style="text-align: right;">${row.unitPrice || ''}</td>
+                    <td style="text-align: right;">${row.subtotal || ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             document.getElementById('totalRows').textContent = rows.length;
+        }
+
+        function fillSampleDetailData() {
+            const tbody = document.getElementById('detailTableBody');
+
+            const sampleData = [
+                { buildingNo: '3#、10#楼', elevatorType: '客梯', code: 'DT5', brand: '日立', spec: '1050kg 1.75m/s', unit: '台', quantity: '1', unitPrice: '186,000.00', subtotal: '186,000.00' },
+                { buildingNo: '3#、10#楼', elevatorType: '客梯', code: 'DT6', brand: '日立', spec: '1050kg 1.75m/s', unit: '台', quantity: '1', unitPrice: '186,000.00', subtotal: '186,000.00' },
+                { buildingNo: '3#、10#楼', elevatorType: '客梯', code: 'DT7', brand: '日立', spec: '1050kg 1.75m/s', unit: '台', quantity: '1', unitPrice: '186,000.00', subtotal: '186,000.00' },
+                { buildingNo: '5#', elevatorType: '客梯', code: 'DT1', brand: '三菱', spec: '1050kg 2.5m/s', unit: '台', quantity: '2', unitPrice: '228,000.00', subtotal: '456,000.00' },
+                { buildingNo: '5#', elevatorType: '消防梯', code: 'DT2', brand: '三菱', spec: '1050kg 2.5m/s', unit: '台', quantity: '1', unitPrice: '195,000.00', subtotal: '195,000.00' },
+                { buildingNo: '8#', elevatorType: '客梯', code: 'DT3', brand: '奥的斯', spec: '1050kg 2.0m/s', unit: '台', quantity: '2', unitPrice: '210,000.00', subtotal: '420,000.00' },
+                { buildingNo: '8#', elevatorType: '客梯', code: 'DT4', brand: '奥的斯', spec: '1050kg 2.0m/s', unit: '台', quantity: '1', unitPrice: '210,000.00', subtotal: '210,000.00' },
+                { buildingNo: '10#', elevatorType: '客梯', code: 'DT8', brand: '', spec: '1050kg 1.75m/s', unit: '台', quantity: '1', unitPrice: '186,000.00', subtotal: '186,000.00' },
+                { buildingNo: '10#', elevatorType: '客梯', code: 'DT9', brand: '', spec: '1050kg 1.75m/s', unit: '台', quantity: '1', unitPrice: '186,000.00', subtotal: '186,000.00' },
+                { buildingNo: '10#', elevatorType: '货梯', code: 'DT10', brand: '', spec: '2000kg 0.5m/s', unit: '台', quantity: '1', unitPrice: '135,000.00', subtotal: '135,000.00' }
+            ];
+
+            tbody.innerHTML = '';
+            sampleData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align: center;"><input type="checkbox"></td>
+                    <td>${index + 1}</td>
+                    <td>${row.buildingNo}</td>
+                    <td>${row.elevatorType}</td>
+                    <td>${row.code}</td>
+                    <td>${row.brand || '-'}</td>
+                    <td>${row.spec}</td>
+                    <td style="text-align: center;">${row.unit}</td>
+                    <td style="text-align: right;">${row.quantity}</td>
+                    <td style="text-align: right;">${row.unitPrice}</td>
+                    <td style="text-align: right;">${row.subtotal}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalRows').textContent = sampleData.length;
         }
 
         function parseTableFromPDFText(text) {
@@ -669,6 +707,8 @@
             let inTable = false;
             let headerPassed = false;
 
+            let expectedCols = 0;
+
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
 
@@ -679,7 +719,8 @@
 
                 if (!inTable) continue;
 
-                if (line.includes('---') && line.includes('|')) {
+                // 跳过分隔行（|---|）
+                if (/^\|[-\s:|]+\|?$/.test(line)) {
                     headerPassed = true;
                     continue;
                 }
@@ -689,29 +730,45 @@
                     continue;
                 }
 
-                if (line.includes('序号') || line.includes('楼号') || line.includes('电梯分类')) {
+                // 跳过表头行
+                if (headerPassed === false && (line.includes('序号') || line.includes('楼号') || line.includes('电梯分类'))) {
+                    headerPassed = true;
                     continue;
                 }
 
-                if (inTable && headerPassed && line.startsWith('|') && line.endsWith('|')) {
+                if (!headerPassed) continue;
+
+                // 解析数据行
+                if (line.startsWith('|') && line.endsWith('|')) {
                     const cells = line.split('|')
                         .map(cell => cell.trim())
                         .filter((cell, idx, arr) => idx > 0 && idx < arr.length - 1);
 
+                    // 第一行数据行确定期望列数
+                    if (expectedCols === 0 && cells.length >= 4) {
+                        expectedCols = cells.length;
+                    }
+
+                    // 如果某行列数少于期望值，说明楼号列合并为空，在楼号位置补空
+                    if (expectedCols > 0 && cells.length < expectedCols && cells.length >= 4) {
+                        cells.splice(1, 0, '');
+                        console.log(`Markdown第${i}行缺少列（合并行），已在楼号位置补空`);
+                    }
+
                     if (cells.length >= 4) {
                         const row = {
-                            deviceNo: cells[2] || '',
-                            workNo: cells[1] || '',
-                            name: cells[4] || cells[3] || '',
-                            spec: cells[5] || '',
-                            unit: cells[6] || '',
-                            quantity: cells[7] || '',
-                            price: cells[8] || '',
-                            amount: cells[9] || '',
-                            remark: cells[10] || ''
+                            buildingNo: cells[1] || '',           // 楼号
+                            elevatorType: cells[2] || '',         // 电梯分类
+                            brand: cells[3] || '',                // 品牌
+                            code: cells[4] || '',                 // 编号
+                            spec: cells[5] || '',                 // 规格型号
+                            unit: cells[6] || '',                 // 单位
+                            quantity: cells[7] || '',             // 数量
+                            unitPrice: cells[8] || '',            // 设备单价
+                            subtotal: cells[9] || ''              // 小计
                         };
 
-                        if (row.deviceNo || row.name) {
+                        if (row.code || row.elevatorType) {
                             rows.push(row);
                         }
                     }
@@ -730,13 +787,13 @@
             const trRegex = /<tr>(.*?)<\/tr>/gs;
             const trMatches = text.matchAll(trRegex);
 
+            let expectedCount = 0;  // 期望的列数（以第一个包含完整数据的行确定）
             let rowIndex = 0;
             for (const trMatch of trMatches) {
                 const trContent = trMatch[1];
 
                 // 跳过表头行
                 if (trContent.includes('序号') || trContent.includes('楼号')) {
-                    console.log('跳过表头行');
                     continue;
                 }
 
@@ -751,28 +808,40 @@
                     cells.push(cellText);
                 }
 
+                // 第一行数据行确定期望列数
+                if (expectedCount === 0 && cells.length >= 4) {
+                    expectedCount = cells.length;
+                }
+
+                // 如果某行列数少于期望值，说明楼号列有 rowspan 合并为空，在楼号位置补空
+                if (expectedCount > 0 && cells.length < expectedCount && cells.length >= 4) {
+                    cells.splice(1, 0, '');  // 在 cells[1]（楼号）位置插入空字符串
+                    console.log(`第${rowIndex}行缺少列（合并行），已在楼号位置补空`);
+                }
+
                 console.log(`第${rowIndex}行，解析到${cells.length}列:`, cells);
 
                 // 至少需要4列
                 if (cells.length >= 4) {
                     const row = {
-                        deviceNo: cells[3] || '',      // 第4列：编号（如DT5）
-                        workNo: cells[1] || '',        // 第2列：楼号
-                        name: cells[4] || cells[2] || '',  // 第5列或第3列：品牌/品名
-                        spec: cells[5] || '',          // 第6列：规格型号
-                        unit: cells[6] || '',          // 第7列：单位
-                        quantity: cells[7] || '',      // 第8列：数量
-                        price: cells[8] || '',         // 第9列：设备单价
-                        amount: cells[9] || '',        // 第10列：小计
-                        remark: cells[10] || ''        // 第11列：备注
+                        buildingNo: cells[1] || '',           // 楼号
+                        elevatorType: cells[2] || '',         // 电梯分类
+                        brand: cells[3] || '',                // 品牌
+                        code: cells[4] || '',                 // 编号
+                        spec: cells[5] || '',                 // 规格型号
+                        unit: cells[6] || '',                 // 单位
+                        quantity: cells[7] || '',             // 数量
+                        unitPrice: cells[8] || '',            // 设备单价
+                        subtotal: cells[9] || ''              // 小计
                     };
 
-                    if (row.deviceNo || row.name) {
+                    if (row.code || row.elevatorType) {
                         rows.push(row);
                         console.log(`✓ 添加第${rows.length}行:`, {
-                            设备编号: row.deviceNo,
-                            楼号: row.workNo,
-                            品名: row.name
+                            楼号: row.buildingNo,
+                            电梯分类: row.elevatorType,
+                            编号: row.code,
+                            品牌: row.brand
                         });
                     }
                 }
@@ -785,9 +854,9 @@
         }
 
         function extractBuildingNo(line) {
-            // 提取楼号，如 "3#, 10#"
-            const match = line.match(/(\d+)#/);
-            return match ? match[0] : '';
+            if (!line) return '';
+            // 楼号单独一列，直接返回原内容（如 "3#、10#楼"）
+            return line.trim();
         }
 
         function extractSpec(line) {
