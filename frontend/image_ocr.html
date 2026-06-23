@@ -11,6 +11,16 @@
     <link rel="stylesheet" href="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.css">
     <script src="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .left-column .section-header {
+            display: block;
+        }
+        .left-column .section-header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -31,11 +41,7 @@
                         <div class="upload-section card">
                             <div class="section-header">
                                 <h2><i class="fas fa-cloud-upload-alt"></i> 图片上传</h2>
-                                <!--
-                                <div class="section-badge">
-                                    <i class="fas fa-info-circle"></i> 支持多种格式
-                                </div>
-                                -->
+                                <p>上传图片 · AI 智能识别分析</p>
                             </div>
                             
                             <div class="upload-area" id="uploadArea">
@@ -172,7 +178,10 @@
                     <div class="right-column">
                         <div class="results-section card">
                             <div class="section-header">
-                                <h2><i class="fas fa-comment-dots"></i> 智能场景</h2>
+                                <div>
+                                    <h2><i class="fas fa-comment-dots"></i> 智能场景</h2>
+                                    <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">AI 图像智能识别分析</p>
+                                </div>
                             </div>
                             
                             <div class="prompt-preset-buttons">

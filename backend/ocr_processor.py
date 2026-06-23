@@ -1,6 +1,6 @@
 """
 OCR处理器 - 支持多种OCR引擎的工业图片识别系统
-支持PaddleOCR PP-OCRv5和OpenAI VL（ModelScope API）
+支持PaddleOCR PP-OCRv6和OpenAI VL（ModelScope API）
 """
 
 import os

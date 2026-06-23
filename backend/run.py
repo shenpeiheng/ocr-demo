@@ -141,7 +141,7 @@ def start_server(host='0.0.0.0', port=5000, debug=True):
     
     print(f"服务器地址: http://{host}:{port}")
     print(f"上传目录: {Config.UPLOAD_FOLDER}")
-    print(f"OCR引擎: PaddleOCR PP-OCRv5")
+    print(f"OCR引擎: PaddleOCR PP-OCRv6")
     
     print("\nAPI端点:")
     print("  GET  /                    - API信息")

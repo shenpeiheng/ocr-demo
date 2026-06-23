@@ -10,6 +10,16 @@
     <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.css">
     <script src="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.js"></script>
+    <style>
+        .left-column .section-header {
+            display: block;
+        }
+        .left-column .section-header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -24,6 +34,7 @@
                         <div class="upload-section card">
                             <div class="section-header">
                                 <h2><i class="fas fa-project-diagram"></i> 流程图图片上传</h2>
+                                <p>上传流程图图片 · AI 智能识别分析</p>
                             </div>
 
                             <div class="upload-area" id="uploadArea">
@@ -116,7 +127,10 @@
                     <div class="right-column">
                         <div class="results-section card flowchart-results-section">
                             <div class="section-header">
-                                <h2><i class="fas fa-table"></i> 流程图识别结果</h2>
+                                <div>
+                                    <h2><i class="fas fa-table"></i> 流程图识别结果</h2>
+                                    <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">AI 流程图识别分析展示</p>
+                                </div>
                                 <div class="export-buttons flowchart-export-buttons">
                                     <button class="btn btn-export" id="exportExcelBtn" disabled>
                                         <i class="fas fa-file-excel"></i> 下载Excel

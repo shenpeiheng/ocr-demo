@@ -4,7 +4,7 @@
 提前下载所有需要的 AI 模型，避免运行时首次调用因网络问题下载超时
 
 包含以下模型:
-1. PaddleOCR PP-OCRv5 - 用于车牌识别
+1. PaddleOCR PP-OCRv6 - 用于车牌识别
 2. ModelScope DAMO-YOLO - 用于安全帽检测
 3. PyTorch Keypoint R-CNN - 用于全身关键点检测
 
@@ -18,9 +18,9 @@ import time
 
 
 def download_paddleocr_models():
-    """预下载 PaddleOCR PP-OCRv5 模型"""
+    """预下载 PaddleOCR PP-OCRv6 模型"""
     print("\n" + "=" * 60)
-    print("[1/3] 预下载 PaddleOCR PP-OCRv5 模型...")
+    print("[1/3] 预下载 PaddleOCR PP-OCRv6 模型...")
     print("=" * 60)
 
     model_dir = '/root/.paddleocr'
@@ -33,12 +33,12 @@ def download_paddleocr_models():
         from paddleocr import PaddleOCR
         import numpy as np
 
-        print("[ModelPreload] 正在初始化 PaddleOCR (PP-OCRv5)...")
+        print("[ModelPreload] 正在初始化 PaddleOCR (PP-OCRv6)...")
         print("[ModelPreload] 将自动下载检测(det)、识别(rec)和分类(cls)模型...")
 
         ocr = PaddleOCR(
             lang='ch',
-            ocr_version='PP-OCRv5',
+            ocr_version='PP-OCRv6',
             text_det_box_thresh=0.13,
             text_det_unclip_ratio=2.5,
             text_rec_score_thresh=0.1,
@@ -51,7 +51,7 @@ def download_paddleocr_models():
         result = ocr.predict(test_img)
 
         elapsed = time.time() - start_time
-        print(f"[ModelPreload] PaddleOCR PP-OCRv5 模型预下载完成! (耗时: {elapsed:.1f}秒)")
+        print(f"[ModelPreload] PaddleOCR PP-OCRv6 模型预下载完成! (耗时: {elapsed:.1f}秒)")
 
         # 列出下载的模型文件
         total_size = 0

@@ -32,39 +32,25 @@
             padding: 0;
         }
 
-        .plate-header {
+        .results-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 12px 20px;
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-            border: 1px solid #eaeaea;
-        }
-
-        .plate-header h2 {
-            color: #4a6572;
-            font-size: 1.3rem;
-            display: flex;
             align-items: center;
-            gap: 10px;
-            margin: 0;
-            border-bottom: none;
-            padding-bottom: 0;
         }
 
-        .plate-header h2 i {
-            color: #3498db;
-        }
-
-        .plate-header .header-hint {
-            font-size: 0.85rem;
+        .ai-panel-header p {
+            margin: 4px 0 0;
+            font-size: 12px;
             color: #7f8c8d;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        }
+
+        .ai-result-body {
+            overflow-y: auto;
+        }
+
+        .results-header .ai-result-actions {
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .plate-body {
@@ -79,38 +65,39 @@
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            overflow: hidden;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #eaeaea;
+            gap: 0 !important;
+        }
+
+        .plate-left-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .plate-right-panel {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 10px;
             min-width: 0;
+            overflow: hidden;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #eaeaea;
+            gap: 0 !important;
         }
 
         .plate-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-            border: 1px solid #eaeaea;
-        }
-
-        .plate-card h3 {
-            color: #4a6572;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
-        }
-
-        .plate-card h3 i {
-            color: #3498db;
+            background: var(--admin-surface);
+            border-radius: var(--admin-radius);
+            padding: 16px;
+            border: 1px solid var(--admin-border-soft);
         }
 
         /* 上传区域 */
@@ -547,10 +534,13 @@
                             <div class="plate-body">
                                 <!-- 左侧面板：上传和设置 -->
                                 <div class="plate-left-panel">
-                                    <!-- 上传区域 -->
-                                    <div class="plate-card">
-                                        <h3><i class="fas fa-cloud-upload-alt"></i> 上传图片</h3>
-                                        <div class="plate-upload-area" id="uploadArea">
+                                    <div class="ai-panel-header">
+                                        <h2><i class="fas fa-image"></i> 车牌检测</h2>
+                                        <p>上传图片 · AI 车牌识别分析</p>
+                                    </div>
+                                    <div class="plate-left-body">
+                                        <div class="plate-card">
+                                            <div class="plate-upload-area" id="uploadArea">
                                             <div class="upload-icon">
                                                 <i class="fas fa-image"></i>
                                             </div>
@@ -630,7 +620,6 @@
 
                                     <!-- 检测统计 -->
                                     <div class="plate-card" id="statsCard" style="display: none;">
-                                        <h3><i class="fas fa-chart-bar"></i> 检测统计</h3>
                                         <div class="plate-stats">
                                             <div class="plate-stat-card" style="background: linear-gradient(135deg, #3498db, #2471a3);">
                                                 <div class="stat-value" id="plateCount">0</div>
@@ -653,51 +642,52 @@
                                             <div id="plateResultsContainer"></div>
                                         </div>
                                     </div>
+                                    </div>
                                 </div>
 
                                 <!-- 右侧面板：结果展示 -->
-                                <div class="plate-right-panel">
-                                    <div class="plate-card ai-result-card">
-                                        <div class="ai-result-header">
-                                            <h3><i class="fas fa-eye"></i> 检测结果</h3>
-                                            <div class="ai-result-actions">
-                                                <div class="ai-result-tabs" data-ai-result-tabs>
-                                                    <button type="button" class="ai-result-tab active" data-target="image">
-                                                        <i class="fas fa-image"></i>
-                                                        <span>图片结果</span>
-                                                    </button>
-                                                    <button type="button" class="ai-result-tab" data-target="json">
-                                                        <i class="fas fa-file-code"></i>
-                                                        <span>JSON 信息</span>
-                                                    </button>
-                                                </div>
-                                                <button type="button" class="ai-result-copy" data-ai-copy-json title="复制 JSON" aria-label="复制 JSON">
-                                                    <i class="fas fa-copy"></i>
-                                                    <span>复制</span>
+                                <div class="plate-right-panel ai-result-card">
+                                    <div class="results-header">
+                                        <div>
+                                            <h2><i class="fas fa-eye"></i> 检测结果</h2>
+                                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">AI 车牌识别分析展示</p>
+                                        </div>
+                                        <div class="ai-result-actions">
+                                            <div class="ai-result-tabs" data-ai-result-tabs>
+                                                <button type="button" class="ai-result-tab active" data-target="image">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>图片结果</span>
+                                                </button>
+                                                <button type="button" class="ai-result-tab" data-target="json">
+                                                    <i class="fas fa-file-code"></i>
+                                                    <span>JSON 信息</span>
                                                 </button>
                                             </div>
+                                            <button type="button" class="ai-result-copy" data-ai-copy-json title="复制 JSON" aria-label="复制 JSON">
+                                                <i class="fas fa-copy"></i>
+                                                <span>复制</span>
+                                            </button>
                                         </div>
-                                        <div class="ai-result-body">
-                                            <div class="ai-result-pane active" data-pane="image">
-                                                <div class="plate-result-image-wrapper" id="resultImageWrapper">
-                                                    <div class="plate-result-placeholder" id="resultPlaceholder">
-                                                        <i class="fas fa-image"></i>
-                                                        <p>上传图片并点击"开始检测"查看结果</p>
-                                                    </div>
-                                                    <img id="resultImage" src="" alt="检测结果" style="display: none;">
-                                                </div>
                                             </div>
-                                            <div class="ai-result-pane" data-pane="json">
-                                                <div class="plate-json-container">
-                                                    <pre id="jsonOutput">{
+                                    <div class="ai-result-body">
+                                        <div class="ai-result-pane active" data-pane="image">
+                                            <div class="plate-result-image-wrapper" id="resultImageWrapper">
+                                                <div class="plate-result-placeholder" id="resultPlaceholder">
+                                                    <i class="fas fa-image"></i>
+                                                    <p>上传图片并点击"开始检测"查看结果</p>
+                                                </div>
+                                                <img id="resultImage" src="" alt="检测结果" style="display: none;">
+                                            </div>
+                                        </div>
+                                        <div class="ai-result-pane" data-pane="json">
+                                            <div class="plate-json-container">
+                                                <pre id="jsonOutput">{
     "message": "等待检测..."
 }</pre>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                         </div>
                     </div>
                 </div>

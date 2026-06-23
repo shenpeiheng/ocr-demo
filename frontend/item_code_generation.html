@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物料编码生成 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .itemcode-page {
+            overflow: hidden;
+        }
+
+        .itemcode-page .content-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 10px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .ai-config-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #eaeaea;
+        }
+
+        .ai-panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        .ai-panel-header h2 {
+            margin: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #303133;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .ai-panel-header h2 i {
+            color: #ad063e;
+        }
+
+        .ai-panel-header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .ai-config-body {
+            padding: 5px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #e8eaef;
+        }
+
+        .config-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #303133;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-section-title i {
+            color: #ad063e;
+            width: 18px;
+        }
+
+        .format-preview {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px dashed #dcdfe6;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1.1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .format-preview .segment-block {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .format-preview .segment-block.s1 { background: #e3f2fd; color: #1565c0; }
+        .format-preview .segment-block.s2 { background: #fce4ec; color: #c62828; }
+        .format-preview .segment-block.s3 { background: #e8f5e9; color: #2e7d32; }
+        .format-preview .segment-block.s4 { background: #fff3e0; color: #e65100; }
+        .format-preview .segment-block.s5 { background: #f3e5f5; color: #6a1b9a; }
+        .format-preview .separator { color: #909399; font-weight: bold; }
+
+        .format-labels {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #909399;
+            flex-wrap: wrap;
+        }
+
+        .format-labels span { text-align: center; }
+
+        .segment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .segment-row {
+            display: grid;
+            grid-template-columns: 80px 50px 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e8eaef;
+        }
+
+        .segment-row .seg-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #606266;
+        }
+
+        .segment-row .seg-length {
+            font-size: 12px;
+            color: #909399;
+            text-align: center;
+            background: #f0f0f0;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .segment-row .seg-input {
+            font-size: 12px;
+        }
+
+        .segment-row .seg-input input,
+        .segment-row .seg-input select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+
+        .segment-row .seg-input input:focus,
+        .segment-row .seg-input select:focus {
+            outline: none;
+            border-color: #ad063e;
+        }
+
+        .ai-options .form-group {
+            margin-bottom: 14px;
+        }
+
+        .ai-options .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-options label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #606266;
+            margin-bottom: 6px;
+        }
+
+        .ai-options select,
+        .ai-options input,
+        .ai-options textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .ai-options select:focus,
+        .ai-options input:focus,
+        .ai-options textarea:focus {
+            outline: none;
+            border-color: #ad063e;
+            box-shadow: 0 0 0 3px rgba(173,6,62,0.1);
+        }
+
+        .ai-options textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #ad063e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #920535;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(173,6,62,0.25);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #606266;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .results-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #eaeaea;
+        }
+
+        .results-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .results-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #303133;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .results-header h2 i {
+            color: #ad063e;
+        }
+
+        .results-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .stat-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ad063e;
+        }
+
+        .stat-item .stat-label {
+            font-size: 11px;
+            color: #909399;
+        }
+
+        .results-toolbar {
+            padding: 12px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .results-toolbar .btn {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .results-table-wrap {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+
+        .results-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .results-table th {
+            background: #f5f7fa;
+            color: #606266;
+            font-weight: 600;
+            padding: 10px 10px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+            vertical-align: middle;
+            line-height: 1.3;
+        }
+
+        .results-table td {
+            padding: 10px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #303133;
+            vertical-align: middle;
+        }
+
+        .results-table tr:hover td {
+            background: #f8f9fa;
+        }
+
+        .results-table .code-cell {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-weight: 600;
+            color: #ad063e;
+            letter-spacing: 0.5px;
+            word-break: break-all;
+        }
+
+        .results-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: #c0c4cc;
+            gap: 15px;
+        }
+
+        .results-empty i {
+            font-size: 4rem;
+        }
+
+        .results-empty p {
+            font-size: 1rem;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            z-index: 10;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-overlay i {
+            font-size: 2.5rem;
+            color: #ad063e;
+        }
+
+        .loading-overlay span {
+            font-size: 0.95rem;
+            color: #606266;
+        }
+
+        .results-panel {
+            position: relative;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag-blue { background: #e3f2fd; color: #1565c0; }
+        .tag-red { background: #fce4ec; color: #c62828; }
+        .tag-green { background: #e8f5e9; color: #2e7d32; }
+        .tag-orange { background: #fff3e0; color: #e65100; }
+        .tag-purple { background: #f3e5f5; color: #6a1b9a; }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            color: #606266;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .legend .l1,
+        .format-labels .l1 { color: #1565c0; flex: 1; }
+        .legend .l2,
+        .format-labels .l2 { color: #c62828; flex: 2; }
+        .legend .l3,
+        .format-labels .l3 { color: #2e7d32; flex: 3; }
+        .legend .l4,
+        .format-labels .l4 { color: #e65100; flex: 6; }
+        .legend .l5,
+        .format-labels .l5 { color: #6a1b9a; flex: 3; }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success { background: #27ae60; }
+        .toast-error { background: #e74c3c; }
+        .toast-info { background: #2a91d6; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .class-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .class-table th {
+            background: #e8eaef;
+            padding: 6px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #606266;
+            font-size: 0.75rem;
+        }
+
+        .class-table td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #e8eaef;
+            color: #606266;
+        }
+
+        @media (max-width: 1200px) {
+            .itemcode-page .content-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+
+            <main class="main-content-area itemcode-page">
+                <div class="content-grid">
+                    <!-- 左侧：AI 配置 -->
+                    <div class="ai-config-panel">
+                        <div class="ai-panel-header">
+                            <h2><i class="fas fa-robot"></i> AI 编码配置</h2>
+                            <p>Item Type: INDIRECT ITEM | 编码结构: X-XX-XXX-XXXXXX-XXX</p>
+                        </div>
+
+                        <div class="ai-config-body">
+                            <!-- 编码格式预览 -->
+                            <div class="config-section">
+                                <div class="config-section-title">
+                                    <i class="fas fa-eye"></i> 编码结构预览
+                                </div>
+                                <div class="format-preview" id="formatPreview">
+                                    <span class="segment-block s1">C</span>
+                                    <span class="separator">-</span>
+                                    <span class="segment-block s2">LG</span>
+                                    <span class="separator">-</span>
+                                    <span class="segment-block s3">AIR</span>
+                                    <span class="separator">-</span>
+                                    <span class="segment-block s4">000001</span>
+                                    <span class="separator">-</span>
+                                    <span class="segment-block s5">000</span>
+                                </div>
+                                <div class="format-labels">
+                                    <span class="l1">Class</span>
+                                    <span class="l2">Type</span>
+                                    <span class="l3">Sub-type</span>
+                                    <span class="l4">Sequence</span>
+                                    <span class="l5">Region/NPU</span>
+                                </div>
+                                <div class="legend">
+                                    <span class="legend-item l1"><span class="legend-dot" style="background:#1565c0"></span> 1</span>
+                                    <span class="legend-item l2"><span class="legend-dot" style="background:#c62828"></span> 2</span>
+                                    <span class="legend-item l3"><span class="legend-dot" style="background:#2e7d32"></span> 3</span>
+                                    <span class="legend-item l4"><span class="legend-dot" style="background:#e65100"></span> 6</span>
+                                    <span class="legend-item l5"><span class="legend-dot" style="background:#6a1b9a"></span> 3</span>
+                                </div>
+                            </div>
+
+                            <!-- 段配置 -->
+                            <div class="config-section">
+                                <div class="config-section-title">
+                                    <i class="fas fa-layer-group"></i> 编码段配置
+                                </div>
+                                <div class="segment-list" id="segmentList">
+                                    <div class="segment-row" data-seg="1">
+                                        <span class="seg-name">Class<br><span style="font-size:0.7rem;color:#909399;font-weight:400;">物料类别</span></span>
+                                        <span class="seg-length">1位</span>
+                                        <div class="seg-input">
+                                            <select class="seg-value">
+                                                <option value="C">C - Consumable (间接采购)</option>
+                                                <option value="S">S - Service (服务)</option>
+                                                <option value="RCM">RCM - Recycle (回收)</option>
+                                                <option value="SER">SER - C&S Subcontract (分包)</option>
+                                                <option value="M">M - C&S 模组(成品)</option>
+                                                <option value="AI-R">AI - AI 智能推荐</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="segment-row" data-seg="2">
+                                        <span class="seg-name">Type<br><span style="font-size:0.7rem;color:#909399;font-weight:400;">类型</span></span>
+                                        <span class="seg-length">2位</span>
+                                        <div class="seg-input">
+                                            <select class="seg-value">
+                                                <option value="LG">LG - Logistics (物流)</option>
+                                                <option value="ZZ">ZZ - NPP/Other (其他)</option>
+                                                <option value="EL">EL - Electrical (电气)</option>
+                                                <option value="ME">ME - Mechanical (机械)</option>
+                                                <option value="CH">CH - Chemical (化工)</option>
+                                                <option value="AI-T">AI - AI 智能推荐</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="segment-row" data-seg="3">
+                                        <span class="seg-name">Sub-type<br><span style="font-size:0.7rem;color:#909399;font-weight:400;">子类型</span></span>
+                                        <span class="seg-length">3位</span>
+                                        <div class="seg-input">
+                                            <select class="seg-value">
+                                                <option value="AIR">AIR - Air Transport (空运)</option>
+                                                <option value="LAN">LAN - Land Transport (陆运)</option>
+                                                <option value="SEA">SEA - Sea Transport (海运)</option>
+                                                <option value="REN">REN - NPP Category (NPP类别)</option>
+                                                <option value="RAW">RAW - Raw Material (原材料)</option>
+                                                <option value="AI-S">AI - AI 智能推荐</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="segment-row" data-seg="4">
+                                        <span class="seg-name">Sequence<br><span style="font-size:0.7rem;color:#909399;font-weight:400;">流水号</span></span>
+                                        <span class="seg-length">6位</span>
+                                        <div class="seg-input">
+                                            <input type="text" class="seg-value" value="000001" placeholder="起始序号">
+                                        </div>
+                                    </div>
+                                    <div class="segment-row" data-seg="5">
+                                        <span class="seg-name">Region/NPU<br><span style="font-size:0.7rem;color:#909399;font-weight:400;">区域/特殊标识</span></span>
+                                        <span class="seg-length">3位</span>
+                                        <div class="seg-input">
+                                            <select class="seg-value">
+                                                <option value="000">000 - 无特殊标识</option>
+                                                <option value="NPU">NPU - 化工品(非生产用途)</option>
+                                                <option value="ENV">ENV - 环保规格</option>
+                                                <option value="AI-R">AI - AI 智能推荐</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Class 含义说明 -->
+                            <div class="config-section">
+                                <div class="config-section-title">
+                                    <i class="fas fa-info-circle"></i> Class 含义说明
+                                </div>
+                                <table class="class-table">
+                                    <thead><tr><th>Class</th><th>含义</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><span class="tag tag-blue">C</span></td><td>Consumable / 间接采购消耗品</td></tr>
+                                        <tr><td><span class="tag tag-blue">S</span></td><td>Service / 服务</td></tr>
+                                        <tr><td><span class="tag tag-blue">RCM</span></td><td>Recycle / 回收</td></tr>
+                                        <tr><td><span class="tag tag-blue">SER</span></td><td>C&S Subcontract / C&S分包</td></tr>
+                                        <tr><td><span class="tag tag-blue">M</span></td><td>C&S 模组(成品) — 待Lisa确认</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- AI 参数配置 -->
+                            <div class="config-section ai-options">
+                                <div class="config-section-title">
+                                    <i class="fas fa-brain"></i> AI 生成参数
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-cube" style="color: #ad063e; width: 16px;"></i> 物料描述</label>
+                                    <textarea id="materialDesc" placeholder="输入物料描述，AI 将据此推荐编码&#10;例如：Logistics Air Transport&#10;例如：NPP category for Indirect team"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-microchip" style="color: #ad063e; width: 16px;"></i> AI 模型</label>
+                                    <select id="aiModel">
+                                        <option value="deepseek">DeepSeek-V4-Flash (推荐)</option>
+                                        <option value="openai">OpenAI VL</option>
+                                        <option value="qwen">通义千问</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-hashtag" style="color: #ad063e; width: 16px;"></i> 生成数量</label>
+                                    <input type="number" id="generateCount" value="5" min="1" max="50">
+                                </div>
+                            </div>
+
+                            <!-- 操作按钮 -->
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="generateCodes()">
+                                    <i class="fas fa-magic"></i> AI 生成编码
+                                </button>
+                                <button class="btn btn-secondary" onclick="resetConfig()">
+                                    <i class="fas fa-redo"></i> 重置
+                                </button>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                <button class="btn btn-secondary" onclick="loadSampleData()" style="flex: 1; padding: 8px 16px; border-radius: 6px; border: none; font-size: 0.85rem; cursor: pointer; background: #f0f0f0; color: #606266; font-family: inherit;">
+                                    <i class="fas fa-file-alt"></i> 加载示例
+                                </button>
+                                <button class="btn btn-secondary" onclick="clearResults()" style="flex: 1; padding: 8px 16px; border-radius: 6px; border: none; font-size: 0.85rem; cursor: pointer; background: #f0f0f0; color: #606266; font-family: inherit;">
+                                    <i class="fas fa-trash"></i> 清空结果
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：结果区域 -->
+                    <div class="results-panel" id="resultsPanel">
+                        <div class="loading-overlay" id="loadingOverlay">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>AI 正在生成编码中，请稍候...</span>
+                        </div>
+
+                        <div class="results-header">
+                            <div>
+                                <h2><i class="fas fa-list"></i> 物料编码列表</h2>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">AI 智能生成物料编码 · 支持导出</p>
+                            </div>
+                            <div class="results-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="totalCount">0</div>
+                                    <div class="stat-label">生成总数</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number" style="color: #27ae60;" id="exportCount">0</div>
+                                    <div class="stat-label">可导出</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="results-toolbar">
+                            <button class="btn btn-primary" onclick="exportCSV()">
+                                <i class="fas fa-file-csv"></i> 导出 CSV
+                            </button>
+                            <button class="btn btn-secondary" onclick="copyToClipboard()">
+                                <i class="fas fa-copy"></i> 复制全部
+                            </button>
+                            <span style="font-size: 0.8rem; color: #909399; margin-left: auto;">
+                                格式: <strong id="formatLabel">X-XX-XXX-XXXXXX-XXX</strong>
+                                <span id="totalChars" style="margin-left: 8px; color: #ad063e;">共15位</span>
+                            </span>
+                        </div>
+
+                        <div class="results-table-wrap" id="resultsTableWrap">
+                            <div class="results-empty" id="resultsEmpty">
+                                <i class="fas fa-inbox"></i>
+                                <p>暂无数据，请先在左侧配置编码规则并生成</p>
+                            </div>
+                                <table class="results-table" id="resultsTable" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th style="">#</th>
+                                        <th style="">物料编码</th>
+                                        <th style="">Class<br><span style="font-weight:400;">类别</span></th>
+                                        <th style="">Type<br><span style="font-weight:400;">类型</span></th>
+                                        <th style="">Sub-type<br><span style="font-weight:400;">子类型</span></th>
+                                        <th style="">Sequence<br><span style="font-weight:400;">流水号</span></th>
+                                        <th style="">Region/NPU<br><span style="font-weight:400;">区域标识</span></th>
+                                        <th>物料描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script>
+        let generatedCodes = [];
+        let currentSeq = 0;
+
+        const SEGMENTS = [
+            { name: 'Class', length: 1, field: 'seg1', color: 'tag-blue', bar: 'c1' },
+            { name: 'Type', length: 2, field: 'seg2', color: 'tag-red', bar: 'c2' },
+            { name: 'Sub-type', length: 3, field: 'seg3', color: 'tag-green', bar: 'c3' },
+            { name: 'Sequence', length: 6, field: 'seg4', color: 'tag-orange', bar: 'c4' },
+            { name: 'Region/NPU', length: 3, field: 'seg5', color: 'tag-purple', bar: 'c5' },
+        ];
+
+        function getSegmentValues() {
+            const rows = document.querySelectorAll('#segmentList .segment-row');
+            const values = [];
+            rows.forEach(row => {
+                const input = row.querySelector('.seg-value');
+                let val = input.value;
+                if (input.tagName === 'SELECT') {
+                    val = val.split(' - ')[0];
+                }
+                values.push(val.trim());
+            });
+            return values;
+        }
+
+        function buildCode(segValues) {
+            return segValues.join('-');
+        }
+
+        function aiRecommend(materialDesc, count) {
+            const samples = [
+                { desc: 'Logistics Air Transport / 物流空运服务', seg1: 'S', seg2: 'LG', seg3: 'AIR', seg5: '000' },
+                { desc: 'Logistics Land Transport / 物流陆运服务', seg1: 'S', seg2: 'LG', seg3: 'LAN', seg5: '000' },
+                { desc: 'Logistics Sea Transport / 物流海运服务', seg1: 'S', seg2: 'LG', seg3: 'SEA', seg5: '000' },
+                { desc: 'NPP category for Indirect team / NPP间接物料', seg1: 'S', seg2: 'ZZ', seg3: 'REN', seg5: 'NPU' },
+                { desc: 'Office Supplies / 办公消耗品', seg1: 'C', seg2: 'LG', seg3: 'RAW', seg5: '000' },
+                { desc: 'Waste Material Recycling / 废料回收', seg1: 'RCM', seg2: 'CH', seg3: 'RAW', seg5: 'NPU' },
+                { desc: 'C&S Subcontract Assembly / C&S分包组装', seg1: 'SER', seg2: 'ME', seg3: 'RAW', seg5: '000' },
+                { desc: 'C&S Module Finished Good / C&S模组成品', seg1: 'M', seg2: 'EL', seg3: 'RAW', seg5: '000' },
+                { desc: 'Chemical Item Non-Production / 化工品非生产用途', seg1: 'C', seg2: 'CH', seg3: 'RAW', seg5: 'NPU' },
+                { desc: 'Environment Spec Item / 环保规格物料', seg1: 'C', seg2: 'EL', seg3: 'RAW', seg5: 'ENV' },
+            ];
+
+            const results = [];
+            const matchedSamples = samples.filter(s =>
+                !materialDesc || materialDesc.toLowerCase().includes(s.seg3.toLowerCase()) ||
+                s.desc.toLowerCase().includes(materialDesc.slice(0, 10).toLowerCase())
+            );
+
+            const pool = matchedSamples.length > 0 ? matchedSamples : samples;
+
+            for (let i = 0; i < count; i++) {
+                const base = pool[i % pool.length];
+                const seq = String(currentSeq + i).padStart(6, '0');
+                results.push({
+                    seg1: base.seg1,
+                    seg2: base.seg2,
+                    seg3: base.seg3,
+                    seg4: seq,
+                    seg5: base.seg5,
+                    description: materialDesc ? `${materialDesc} (${i + 1})` : base.desc,
+                });
+            }
+
+            return results;
+        }
+
+        function generateCodes() {
+            const desc = document.getElementById('materialDesc').value.trim();
+            const count = parseInt(document.getElementById('generateCount').value) || 5;
+
+            const segValues = getSegmentValues();
+            const seg1Override = segValues[0] !== 'AI-R' ? segValues[0] : null;
+            const seg2Override = segValues[1] !== 'AI-T' ? segValues[1] : null;
+            const seg3Override = segValues[2] !== 'AI-S' ? segValues[2] : null;
+            const seg5Override = segValues[4] !== 'AI-R' ? segValues[4] : null;
+
+            document.getElementById('loadingOverlay').classList.add('active');
+
+            setTimeout(() => {
+                try {
+                    const aiResults = aiRecommend(desc, count);
+
+                    generatedCodes = [];
+                    currentSeq = getNextSeq();
+
+                    aiResults.forEach((item, index) => {
+                        const seg4 = String(currentSeq + index).padStart(6, '0');
+                        const code = buildCode([
+                            seg1Override || item.seg1,
+                            seg2Override || item.seg2,
+                            seg3Override || item.seg3,
+                            seg4,
+                            seg5Override || item.seg5,
+                        ]);
+                        generatedCodes.push({
+                            code,
+                            seg1: seg1Override || item.seg1,
+                            seg2: seg2Override || item.seg2,
+                            seg3: seg3Override || item.seg3,
+                            seg4,
+                            seg5: seg5Override || item.seg5,
+                            description: item.description,
+                        });
+                    });
+
+                    currentSeq = currentSeq + count;
+                    document.querySelector('#segmentList .segment-row[data-seg="4"] .seg-value').value =
+                        String(currentSeq).padStart(6, '0');
+
+                    renderResults();
+                    showToast(`成功生成 ${generatedCodes.length} 条物料编码`, 'success');
+                } catch (e) {
+                    showToast('生成失败：' + e.message, 'error');
+                } finally {
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                }
+            }, 1200);
+        }
+
+        function renderResults() {
+            const tbody = document.getElementById('resultsBody');
+            const empty = document.getElementById('resultsEmpty');
+            const table = document.getElementById('resultsTable');
+
+            tbody.innerHTML = '';
+
+            if (generatedCodes.length === 0) {
+                empty.style.display = 'flex';
+                table.style.display = 'none';
+                document.getElementById('totalCount').textContent = '0';
+                document.getElementById('exportCount').textContent = '0';
+                return;
+            }
+
+            empty.style.display = 'none';
+            table.style.display = '';
+
+            generatedCodes.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><span class="code-cell">${item.code}</span></td>
+                    <td><span class="tag ${SEGMENTS[0].color}">${item.seg1}</span></td>
+                    <td><span class="tag ${SEGMENTS[1].color}">${item.seg2}</span></td>
+                    <td><span class="tag ${SEGMENTS[2].color}">${item.seg3}</span></td>
+                    <td><span class="tag ${SEGMENTS[3].color}">${item.seg4}</span></td>
+                    <td><span class="tag ${SEGMENTS[4].color}">${item.seg5}</span></td>
+                    <td style="color: #909399; font-size: 0.8rem;">${item.description}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalCount').textContent = generatedCodes.length;
+            document.getElementById('exportCount').textContent = generatedCodes.length;
+        }
+
+        function exportCSV() {
+            if (generatedCodes.length === 0) {
+                showToast('没有可导出的数据', 'error');
+                return;
+            }
+
+            const BOM = '\uFEFF';
+            const headers = '序号,物料编码,Class(类别),Type(类型),Sub-type(子类型),Sequence(流水号),Region/NPU(区域标识),物料描述';
+            const rows = generatedCodes.map((item, index) =>
+                `${index + 1},${item.code},${item.seg1},${item.seg2},${item.seg3},${item.seg4},${item.seg5},${item.description}`
+            );
+            const csv = BOM + headers + '\n' + rows.join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = `物料编码_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            showToast(`已导出 ${generatedCodes.length} 条编码到 CSV 文件`, 'success');
+        }
+
+        function copyToClipboard() {
+            if (generatedCodes.length === 0) {
+                showToast('没有可复制的数据', 'error');
+                return;
+            }
+
+            const headers = '序号\t物料编码\tClass(类别)\tType(类型)\tSub-type(子类型)\tSequence(流水号)\tRegion/NPU(区域标识)\t物料描述';
+            const rows = generatedCodes.map((item, index) =>
+                `${index + 1}\t${item.code}\t${item.seg1}\t${item.seg2}\t${item.seg3}\t${item.seg4}\t${item.seg5}\t${item.description}`
+            );
+            const text = headers + '\n' + rows.join('\n');
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板', 'success');
+            }).catch(() => {
+                showToast('复制失败', 'error');
+            });
+        }
+
+        function loadSampleData() {
+            document.getElementById('materialDesc').value = 'Logistics Air Transport';
+            document.getElementById('generateCount').value = 5;
+            document.querySelector('#segmentList .segment-row[data-seg="1"] .seg-value').value = 'AI-R';
+            document.querySelector('#segmentList .segment-row[data-seg="2"] .seg-value').value = 'AI-T';
+            document.querySelector('#segmentList .segment-row[data-seg="3"] .seg-value').value = 'AI-S';
+            document.querySelector('#segmentList .segment-row[data-seg="4"] .seg-value').value = '000001';
+            currentSeq = 1;
+            document.querySelector('#segmentList .segment-row[data-seg="5"] .seg-value').value = 'AI-R';
+            showToast('示例数据已加载，点击"AI 生成编码"开始生成', 'info');
+        }
+
+        function resetConfig() {
+            if (generatedCodes.length > 0 && !confirm('重置将清空已生成的结果，确认？')) return;
+
+            document.getElementById('materialDesc').value = '';
+            document.getElementById('generateCount').value = 5;
+            document.querySelector('#segmentList .segment-row[data-seg="1"] .seg-value').value = 'S';
+            document.querySelector('#segmentList .segment-row[data-seg="2"] .seg-value').value = 'LG';
+            document.querySelector('#segmentList .segment-row[data-seg="3"] .seg-value').value = 'AIR';
+            document.querySelector('#segmentList .segment-row[data-seg="4"] .seg-value').value = '000001';
+            currentSeq = 1;
+            document.querySelector('#segmentList .segment-row[data-seg="5"] .seg-value').value = '000';
+            clearResults();
+            showToast('已重置', 'info');
+        }
+
+        function clearResults() {
+            generatedCodes = [];
+            renderResults();
+        }
+
+        function showToast(message, type) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type || 'info'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultSeq = '000001';
+            document.querySelector('#segmentList .segment-row[data-seg="4"] .seg-value').value = defaultSeq;
+            currentSeq = parseInt(defaultSeq);
+        });
+
+        function getNextSeq() {
+            const val = document.querySelector('#segmentList .segment-row[data-seg="4"] .seg-value').value;
+            return parseInt(val) || 0;
+        }
+    </script>
+</body>
+</html>

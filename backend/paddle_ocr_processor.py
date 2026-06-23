@@ -1,5 +1,5 @@
 """
-PaddleOCR处理器 - 使用PaddleOCR PP-OCRv5模型进行工业图片识别
+PaddleOCR处理器 - 使用PaddleOCR PP-OCRv6模型进行工业图片识别
 """
 
 import os
@@ -35,10 +35,10 @@ class PaddleOCRProcessor:
         
         # PaddleOCR配置 - 只使用PaddleOCR 3.3.2支持的参数
         # 参考: https://github.com/PaddlePaddle/PaddleOCR
-        # 使用PP-OCRv5模型以获得更好的识别效果
+        # 使用PP-OCRv6模型以获得更好的识别效果
         self.config = {
             'lang': lang,
-            'ocr_version': 'PP-OCRv5',  # 使用PP-OCRv5模型版本
+            'ocr_version': 'PP-OCRv6',  # 使用PP-OCRv6模型版本
             'text_det_box_thresh': 0.13,  # 进一步降低检测框阈值，检测更多小文本区域
             'text_det_unclip_ratio': 2.5,  # 增加检测框扩展比例，更好地包围文本
             'text_rec_score_thresh': 0.23,  # 降低识别置信度阈值，保留更多识别结果
@@ -57,7 +57,7 @@ class PaddleOCRProcessor:
         """初始化PaddleOCR"""
         try:
             from paddleocr import PaddleOCR
-            logger.info(f"初始化PaddleOCR (语言: {self.lang}, 版本: PP-OCRv5)...")
+            logger.info(f"初始化PaddleOCR (语言: {self.lang}, 版本: PP-OCRv6)...")
             
             # 检测GPU可用性
             try:
@@ -77,7 +77,7 @@ class PaddleOCRProcessor:
             # 更多参数参考 https://blog.csdn.net/qq_38614074/article/details/149041813
             ocr_kwargs = {
                 'lang': self.config['lang'],
-                'ocr_version': self.config.get('ocr_version', 'PP-OCRv5'),  # 使用PP-OCRv5版本
+                'ocr_version': self.config.get('ocr_version', 'PP-OCRv6'),  # 使用PP-OCRv6版本
                 #'device': 'gpu:0',  # 使用GPU或CPU
                 'text_det_box_thresh': self.config['text_det_box_thresh'],
                 'text_det_unclip_ratio': self.config['text_det_unclip_ratio'],
@@ -195,7 +195,7 @@ class PaddleOCRProcessor:
                     'size': os.path.getsize(image_path)
                 },
                 'processed_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'ocr_engine': 'PaddleOCR PP-OCRv5',
+                'ocr_engine': 'PaddleOCR PP-OCRv6',
                 'language': self.lang
             }
             
@@ -734,7 +734,7 @@ class PaddleOCRProcessor:
             'analysis': {},
             'image_info': {},
             'processed_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'ocr_engine': 'PaddleOCR PP-OCRv5'
+            'ocr_engine': 'PaddleOCR PP-OCRv6'
         }
     
     def batch_process(self, image_paths: List[str]) -> List[Dict[str, Any]]:

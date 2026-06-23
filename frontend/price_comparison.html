@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>价格比较 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .price-compare-page { overflow: hidden; }
+        .price-compare-page .content-grid {
+            display: grid; grid-template-columns: 380px 1fr; gap: 10px; height: 100%; overflow: hidden;
+        }
+        .ai-config-panel {
+            background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eaeaea;
+        }
+        .ai-panel-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; background: white; }
+        .ai-panel-header h2 {
+            margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px;
+            color: #303133; font-weight: 700; line-height: 1.4;
+        }
+        .ai-panel-header h2 i { color: #ad063e; }
+        .ai-panel-header p { margin: 4px 0 0; font-size: 12px; color: #7f8c8d; }
+        .ai-config-body { padding: 5px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .config-section { background: #f8f9fa; border-radius: 8px; padding: 16px; border: 1px solid #e8eaef; }
+        .config-section-title { font-size: 14px; font-weight: 700; color: #303133; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .config-section-title i { color: #ad063e; width: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #606266; margin-bottom: 6px; }
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 13px; font-family: inherit; transition: all 0.3s;
+        }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+            outline: none; border-color: #ad063e; box-shadow: 0 0 0 3px rgba(173,6,62,0.1);
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+        .checkbox-group label {
+            display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 400;
+            color: #606266; cursor: pointer; background: white; padding: 6px 12px;
+            border-radius: 6px; border: 1px solid #dcdfe6; transition: all 0.2s;
+        }
+        .checkbox-group label:hover { border-color: #ad063e; }
+        .checkbox-group label.checked { border-color: #ad063e; background: rgba(173,6,62,0.05); color: #ad063e; }
+        .checkbox-group label input[type="checkbox"] { width: auto; accent-color: #ad063e; }
+        .radio-group { display: flex; gap: 10px; }
+        .radio-group label {
+            display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 400;
+            color: #606266; cursor: pointer; background: white; padding: 6px 12px;
+            border-radius: 6px; border: 1px solid #dcdfe6; transition: all 0.2s;
+        }
+        .radio-group label:hover { border-color: #ad063e; }
+        .radio-group label.checked { border-color: #ad063e; background: rgba(173,6,62,0.05); color: #ad063e; }
+        .radio-group label input[type="radio"] { width: auto; accent-color: #ad063e; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 5px; }
+        .action-buttons .btn { flex: 1; padding: 10px 20px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit; }
+        .btn-primary { background: #ad063e; color: white; }
+        .btn-primary:hover { background: #920535; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(173,6,62,0.25); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #f0f0f0; color: #606266; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-outline { background: transparent; color: #ad063e; border: 1px solid #ad063e; }
+        .btn-outline:hover { background: #ad063e; color: white; }
+        .results-panel {
+            background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eaeaea; position: relative;
+        }
+        .results-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .results-header h2 { margin: 0; font-size: 18px; color: #303133; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .results-header h2 i { color: #ad063e; }
+        .results-stats { display: flex; gap: 20px; align-items: center; }
+        .stat-item { text-align: center; }
+        .stat-item .stat-number { font-size: 20px; font-weight: 700; color: #ad063e; }
+        .stat-item .stat-label { font-size: 11px; color: #909399; }
+        .results-toolbar { padding: 12px 24px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+        .results-toolbar .btn { padding: 7px 16px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+        .results-table-wrap { flex: 1; overflow: auto; padding: 0; }
+        .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .results-table thead { position: sticky; top: 0; z-index: 2; }
+        .results-table th { background: #f5f7fa; color: #606266; font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; vertical-align: middle; }
+        .results-table th.dim-col { min-width: 100px; }
+        .results-table th.supplier-col { min-width: 160px; }
+        .results-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; color: #303133; vertical-align: middle; }
+        .results-table tr:hover td { background: #f8f9fa; }
+        .results-table .dim-name { font-weight: 600; color: #606266; white-space: nowrap; }
+        .results-table .best-cell { background: #f0faf4; }
+        .results-table .dim-value { font-size: 13px; }
+        .results-table .dim-value .sub-text { font-size: 12px; color: #909399; display: block; }
+        .results-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: #c0c4cc; gap: 15px; }
+        .results-empty i { font-size: 4rem; }
+        .results-empty p { font-size: 14px; }
+        .loading-overlay { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 10; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
+        .loading-overlay.active { display: flex; }
+        .loading-overlay i { font-size: 2.5rem; color: #ad063e; }
+        .loading-overlay span { font-size: 14px; color: #606266; }
+        .rank-cards { display: flex; gap: 12px; padding: 16px 24px; background: #fafbfc; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+        .rank-card { flex: 1; min-width: 180px; background: white; border-radius: 8px; padding: 14px 16px; border: 1px solid #e8eaef; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+        .rank-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .rank-card .rank-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .rank-card .rank-icon.gold { background: #fff7e6; color: #faad14; }
+        .rank-card .rank-icon.silver { background: #f5f5f5; color: #8c8c8c; }
+        .rank-card .rank-icon.bronze { background: #fff3e8; color: #d46b08; }
+        .rank-card .rank-icon.normal { background: #f0f5ff; color: #2f54eb; }
+        .rank-card .rank-info { flex: 1; min-width: 0; }
+        .rank-card .rank-info .supplier-name { font-size: 13px; font-weight: 600; color: #303133; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rank-card .rank-info .score-bar-wrap { margin-top: 6px; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
+        .rank-card .rank-info .score-bar { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+        .rank-card .rank-info .score-text { font-size: 12px; color: #909399; margin-top: 4px; }
+        .ai-analysis-box { margin: 16px 24px; padding: 16px 20px; background: #fff8f0; border: 1px solid #ffe0b2; border-radius: 8px; display: none; }
+        .ai-analysis-box.visible { display: block; }
+        .ai-analysis-box .analysis-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #e65100; margin-bottom: 8px; }
+        .ai-analysis-box .analysis-content { font-size: 13px; color: #606266; line-height: 1.6; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; color: white; font-size: 13px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease; }
+        .toast-success { background: #27ae60; }
+        .toast-error { background: #e74c3c; }
+        .toast-info { background: #2a91d6; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toggle-switch { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #606266; }
+        .toggle-switch input[type="checkbox"] { width: 40px; height: 20px; -webkit-appearance: none; appearance: none; background: #dcdfe6; border-radius: 10px; position: relative; cursor: pointer; transition: background 0.3s; flex-shrink: 0; }
+        .toggle-switch input[type="checkbox"]::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .toggle-switch input[type="checkbox"]:checked { background: #ad063e; }
+        .toggle-switch input[type="checkbox"]:checked::before { transform: translateX(20px); }
+
+        .quote-ref-badge {
+            display: inline-block; font-size: 11px; background: #e8eaef; color: #606266;
+            padding: 1px 8px; border-radius: 3px; margin-top: 4px;
+        }
+
+        .response-completeness {
+            display: flex; gap: 3px; margin-top: 4px;
+        }
+        .response-completeness .dot {
+            width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+        }
+        .response-completeness .dot.full { background: #27ae60; }
+        .response-completeness .dot.partial { background: #faad14; }
+        .response-completeness .dot.missing { background: #e0e0e0; }
+
+        @media (max-width: 1200px) {
+            .price-compare-page .content-grid { grid-template-columns: 1fr; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+            <main class="main-content-area price-compare-page">
+                <div class="content-grid">
+                    <!-- 左侧：AI 配置 -->
+                    <div class="ai-config-panel">
+                        <div class="ai-panel-header">
+                            <h2><i class="fas fa-robot"></i> 价格比较配置</h2>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">供应商报价回复对比 · AI 智能推荐最优选择</p>
+                        </div>
+                        <div class="ai-config-body">
+                            <!-- 物料选择 -->
+                            <div class="config-section">
+                                <div class="config-section-title"><i class="fas fa-cube"></i> 物料 / 项目选择</div>
+                                <div class="form-group">
+                                    <label>选择物料</label>
+                                    <select id="itemSelect">
+                                        <option value="item1">工业控制主板 ASUS-X99</option>
+                                        <option value="item2">千兆网管交换机 H3C-S5120-48P</option>
+                                        <option value="item3">伺服电机 Delta ECMA-C20604RS</option>
+                                        <option value="item4">PLC控制器 Siemens S7-1200</option>
+                                        <option value="item5">工业相机 Basler ace acA2440-75um</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>物料规格</label>
+                                    <div id="itemSpecDisplay" style="font-size:13px;color:#909399;padding:8px 12px;background:white;border-radius:6px;border:1px solid #e8eaef;">
+                                        X99芯片组, LGA2011-3, DDR4 ECC, 双千兆网口
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 供应商选择 -->
+                            <div class="config-section">
+                                <div class="config-section-title"><i class="fas fa-truck"></i> 供应商选择</div>
+                                <div class="checkbox-group" id="supplierGroup">
+                                    <label class="checked"><input type="checkbox" value="s1" checked> 深圳华强供应链</label>
+                                    <label class="checked"><input type="checkbox" value="s2" checked> 广州迅捷工业品</label>
+                                    <label class="checked"><input type="checkbox" value="s3" checked> 上海通贸国际</label>
+                                    <label class="checked"><input type="checkbox" value="s4" checked> 北京中科创新</label>
+                                </div>
+                            </div>
+                            <!-- 对比维度 -->
+                            <div class="config-section">
+                                <div class="config-section-title"><i class="fas fa-chart-bar"></i> 对比维度（可多选）</div>
+                                <div class="checkbox-group" id="dimensionGroup">
+                                    <label class="checked"><input type="checkbox" value="price" checked> 价格</label>
+                                    <label class="checked"><input type="checkbox" value="spec" checked> 规格匹配</label>
+                                    <label class="checked"><input type="checkbox" value="qualification" checked> 资质认证</label>
+                                    <label class="checked"><input type="checkbox" value="delivery" checked> 交货条款</label>
+                                    <label class="checked"><input type="checkbox" value="payment" checked> 付款条件</label>
+                                    <label class="checked"><input type="checkbox" value="warranty" checked> 质保售后</label>
+                                    <label class="checked"><input type="checkbox" value="response" checked> 报价回复</label>
+                                    <label class="checked"><input type="checkbox" value="history" checked> 历史记录</label>
+                                </div>
+                            </div>
+                            <!-- 价格选项 -->
+                            <div class="config-section ai-options">
+                                <div class="config-section-title"><i class="fas fa-money-bill-wave"></i> 价格选项</div>
+                                <div class="form-group">
+                                    <label>价格类型</label>
+                                    <div class="radio-group" id="taxGroup">
+                                        <label class="checked"><input type="radio" name="taxType" value="withTax" checked> 含税价格</label>
+                                        <label><input type="radio" name="taxType" value="withoutTax"> 不含税价格</label>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>EBS 历史数据</label>
+                                    <div class="toggle-switch">
+                                        <input type="checkbox" id="historyToggle" checked>
+                                        <span>启用历史价格参考</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- AI 分析参数 -->
+                            <div class="config-section ai-options">
+                                <div class="config-section-title"><i class="fas fa-brain"></i> AI 分析参数</div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-microchip" style="color:#ad063e;width:16px;"></i> AI 模型</label>
+                                    <select id="aiModel">
+                                        <option value="deepseek">DeepSeek-V4-Flash (推荐)</option>
+                                        <option value="openai">OpenAI VL</option>
+                                        <option value="qwen">通义千问</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-file-alt" style="color:#ad063e;width:16px;"></i> 附加要求</label>
+                                    <textarea id="extraReq" placeholder="输入附加分析要求&#10;例如：重点考虑交期和付款条件&#10;例如：筛选有 ISO14001 环保认证的供应商&#10;例如：优先选择有 EBS 历史合作记录的供应商"></textarea>
+                                </div>
+                            </div>
+                            <!-- 操作按钮 -->
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="startComparison()"><i class="fas fa-balance-scale"></i> 开始对比</button>
+                                <button class="btn btn-secondary" onclick="resetAll()"><i class="fas fa-redo"></i> 重置</button>
+                            </div>
+                            <div style="display:flex;gap:10px;margin-top:5px;">
+                                <button class="btn btn-secondary" onclick="loadSampleData()" style="flex:1;padding:8px 16px;border-radius:6px;border:none;font-size:13px;cursor:pointer;background:#f0f0f0;color:#606266;font-family:inherit;"><i class="fas fa-file-alt"></i> 加载示例</button>
+                                <button class="btn btn-secondary" onclick="clearResults()" style="flex:1;padding:8px 16px;border-radius:6px;border:none;font-size:13px;cursor:pointer;background:#f0f0f0;color:#606266;font-family:inherit;"><i class="fas fa-trash"></i> 清空结果</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：结果区域 -->
+                    <div class="results-panel" id="resultsPanel">
+                        <div class="loading-overlay" id="loadingOverlay">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>AI 正在对比分析中，请稍候...</span>
+                        </div>
+                        <div class="results-header">
+                            <div>
+                                <h2><i class="fas fa-list"></i> 供应商报价对比</h2>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">多维对比 · AI 智能推荐最优报价方案</p>
+                            </div>
+                            <div class="results-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="supplierCount">0</div>
+                                    <div class="stat-label">供应商</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number" style="color:#27ae60;" id="bestSupplierName">-</div>
+                                    <div class="stat-label">最优推荐</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 排名卡片 -->
+                        <div class="rank-cards" id="rankCards" style="display:none;"></div>
+                        <!-- AI 分析结果 -->
+                        <div class="ai-analysis-box" id="aiAnalysisBox">
+                            <div class="analysis-header"><i class="fas fa-robot"></i> AI 智能分析建议</div>
+                            <div class="analysis-content" id="aiAnalysisContent"></div>
+                        </div>
+                        <div class="results-toolbar">
+                            <button class="btn btn-primary" onclick="exportComparison()"><i class="fas fa-file-excel"></i> 导出报告</button>
+                            <button class="btn btn-outline" onclick="runAIAnalysis()"><i class="fas fa-magic"></i> AI 分析建议</button>
+                            <button class="btn btn-secondary" onclick="clearResults()"><i class="fas fa-trash"></i> 清空</button>
+                            <span style="font-size:12px;color:#909399;margin-left:auto;">
+                                比较物料: <strong id="selectedItemName">工业控制主板 ASUS-X99</strong>
+                            </span>
+                        </div>
+                        <div class="results-table-wrap" id="resultsTableWrap">
+                            <div class="results-empty" id="resultsEmpty">
+                                <i class="fas fa-balance-scale"></i>
+                                <p>暂无对比数据，请先在左侧选择物料和供应商后点击"开始对比"</p>
+                            </div>
+                            <table class="results-table" id="resultsTable" style="display:none;">
+                                <thead id="comparisonHead"></thead>
+                                <tbody id="comparisonBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script>
+        // ======================== 演示数据 ========================
+
+        const DEMO_DATA = {
+            items: {
+                item1: { name: '工业控制主板 ASUS-X99', spec: 'X99芯片组, LGA2011-3, DDR4 ECC, 双千兆网口, 6xSATA3.0, M.2 NVMe', category: '电子元器件', unit: '块' },
+                item2: { name: '千兆网管交换机 H3C-S5120-48P', spec: '48口10/100/1000Base-T, 4口10G SFP+, 支持VLAN/STP/SNMP/RSTP', category: '网络设备', unit: '台' },
+                item3: { name: '伺服电机 Delta ECMA-C20604RS', spec: '400W, 3000rpm, 23-bit编码器, 带刹车, IP65, 法兰60mm', category: '运动控制', unit: '台' },
+                item4: { name: 'PLC控制器 Siemens S7-1200 1214C', spec: 'DC/DC/DC, 14DI/10DO, 2AI, 150KB工作存储, 以太网口', category: '自动化', unit: '台' },
+                item5: { name: '工业相机 Basler ace acA2440-75um', spec: '5MP, 75fps, USB3.0, CMOS全局快门, 2448x2048, 1/1.8"', category: '机器视觉', unit: '个' },
+            },
+            suppliers: {
+                s1: { name: '深圳华强供应链有限公司', short: '华强供应链', type: '综合供应链', region: '华南' },
+                s2: { name: '广州迅捷工业品有限公司', short: '广州迅捷', type: '专业分销', region: '华南' },
+                s3: { name: '上海通贸国际贸易有限公司', short: '上海通贸', type: '进出口贸易', region: '华东' },
+                s4: { name: '北京中科创新科技有限公司', short: '北京中科', type: '原厂代理', region: '华北' },
+            },
+            quotes: {
+                // ===== item1: 工业控制主板 ASUS-X99 =====
+                item1_s1: {
+                    quoteRef: 'RFQ-2026-001', quoteDate: '2026-06-10', validUntil: '2026-08-09',
+                    priceWithTax: 2850, priceWithoutTax: 2522.12, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 深圳', deliveryDays: 15, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助, 工作日4小时响应',
+                    penalty: '每日0.1% 延迟交货, 最高5%',
+                    qualification: ['ISO9001', 'ISO14001', 'OHSAS18001'],
+                    modelOffered: 'ASUS-X99-FULL (原厂正品)',
+                    specMatch: '完全匹配',
+                    responseDays: 2, completeness: 5,
+                    ebsHistory: { totalOrders: 12, avgPrice: 2880, lastPrice: 2850, rating: 'A', lastOrder: '2026-05-20' },
+                },
+                item1_s2: {
+                    quoteRef: 'RFQ-2026-002', quoteDate: '2026-06-11', validUntil: '2026-08-10',
+                    priceWithTax: 2720, priceWithoutTax: 2407.08, taxRate: 13, currency: 'CNY',
+                    incoterms: 'FOB 广州', deliveryDays: 10, minOrderQty: 2,
+                    payment: 'T/T 15天', warranty: '3年',
+                    afterSales: '电话支持, 远程协助, 现场支持(另计费)',
+                    penalty: '每日0.2% 延迟交货, 最高10%',
+                    qualification: ['ISO9001'],
+                    modelOffered: 'ASUS-X99-LITE (兼容替代)',
+                    specMatch: '基本匹配(DDR4非ECC)',
+                    responseDays: 1, completeness: 4,
+                    ebsHistory: { totalOrders: 5, avgPrice: 2700, lastPrice: 2720, rating: 'B+', lastOrder: '2026-04-15' },
+                },
+                item1_s3: {
+                    quoteRef: 'RFQ-2026-003', quoteDate: '2026-06-12', validUntil: '2026-08-11',
+                    priceWithTax: 2980, priceWithoutTax: 2637.17, taxRate: 13, currency: 'CNY',
+                    incoterms: 'CIF 上海', deliveryDays: 20, minOrderQty: 1,
+                    payment: 'L/C 60天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助',
+                    penalty: '每日0.05% 延迟交货, 最高3%',
+                    qualification: ['ISO9001', 'ISO14001', 'ISO45001', 'IATF16949'],
+                    modelOffered: 'ASUS-X99-IMPORT (进口原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 3, completeness: 5,
+                    ebsHistory: { totalOrders: 3, avgPrice: 2950, lastPrice: 2980, rating: 'A-', lastOrder: '2026-02-10' },
+                },
+                item1_s4: {
+                    quoteRef: 'RFQ-2026-004', quoteDate: '2026-06-09', validUntil: '2026-08-08',
+                    priceWithTax: 2780, priceWithoutTax: 2460.18, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 北京', deliveryDays: 12, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '3年',
+                    afterSales: '电话支持, 远程协助, 现场支持(免费), 备机服务',
+                    penalty: '每日0.15% 延迟交货, 最高8%',
+                    qualification: ['ISO9001', 'ISO14001'],
+                    modelOffered: 'ASUS-X99-FULL (原厂正品)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 5,
+                    ebsHistory: { totalOrders: 8, avgPrice: 2800, lastPrice: 2780, rating: 'A', lastOrder: '2026-06-01' },
+                },
+                // ===== item2: 千兆网管交换机 H3C-S5120-48P =====
+                item2_s1: {
+                    quoteRef: 'RFQ-2026-005', quoteDate: '2026-06-10', validUntil: '2026-08-09',
+                    priceWithTax: 5800, priceWithoutTax: 5132.74, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 深圳', deliveryDays: 20, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '3年',
+                    afterSales: '电话支持, 远程协助, 工作日8小时响应',
+                    penalty: '每日0.1% 延迟交货, 最高5%',
+                    qualification: ['ISO9001', 'ISO14001', 'ISO27001'],
+                    modelOffered: 'H3C-S5120-48P-EI (原厂)',
+                    specMatch: '完全匹配',
+                    responseDays: 2, completeness: 5,
+                    ebsHistory: { totalOrders: 6, avgPrice: 5750, lastPrice: 5800, rating: 'A', lastOrder: '2026-05-10' },
+                },
+                item2_s2: {
+                    quoteRef: 'RFQ-2026-006', quoteDate: '2026-06-11', validUntil: '2026-08-10',
+                    priceWithTax: 5500, priceWithoutTax: 4867.26, taxRate: 13, currency: 'CNY',
+                    incoterms: 'EXW 广州', deliveryDays: 15, minOrderQty: 2,
+                    payment: 'T/T 15天', warranty: '3年',
+                    afterSales: '电话支持',
+                    penalty: '每日0.2% 延迟交货, 最高10%',
+                    qualification: ['ISO9001'],
+                    modelOffered: 'H3C-S5120-48P-SI (简配版)',
+                    specMatch: '基本匹配(少2个万兆口)',
+                    responseDays: 1, completeness: 3,
+                    ebsHistory: { totalOrders: 2, avgPrice: 5450, lastPrice: 5500, rating: 'B', lastOrder: '2026-03-20' },
+                },
+                item2_s3: {
+                    quoteRef: 'RFQ-2026-007', quoteDate: '2026-06-12', validUntil: '2026-08-11',
+                    priceWithTax: 6200, priceWithoutTax: 5486.73, taxRate: 13, currency: 'CNY',
+                    incoterms: 'CIF 上海', deliveryDays: 25, minOrderQty: 1,
+                    payment: 'L/C 60天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助',
+                    penalty: '每日0.05% 延迟交货, 最高3%',
+                    qualification: ['ISO9001', 'ISO14001', 'ISO45001'],
+                    modelOffered: 'H3C-S5120-48P-EI (原厂)',
+                    specMatch: '完全匹配',
+                    responseDays: 3, completeness: 5,
+                    ebsHistory: { totalOrders: 1, avgPrice: 6200, lastPrice: 6200, rating: 'A-', lastOrder: '2026-01-05' },
+                },
+                item2_s4: {
+                    quoteRef: 'RFQ-2026-008', quoteDate: '2026-06-09', validUntil: '2026-08-08',
+                    priceWithTax: 5650, priceWithoutTax: 5000.00, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 北京', deliveryDays: 14, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '3年',
+                    afterSales: '电话支持, 远程协助, 现场支持(免费), 备机替换',
+                    penalty: '每日0.15% 延迟交货, 最高8%',
+                    qualification: ['ISO9001', 'ISO14001', 'ISO27001', 'ITSS'],
+                    modelOffered: 'H3C-S5120-48P-EI (原厂)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 5,
+                    ebsHistory: { totalOrders: 4, avgPrice: 5700, lastPrice: 5650, rating: 'A', lastOrder: '2026-05-28' },
+                },
+                // ===== item3: 伺服电机 Delta ECMA-C20604RS =====
+                item3_s1: {
+                    quoteRef: 'RFQ-2026-009', quoteDate: '2026-06-10', validUntil: '2026-08-09',
+                    priceWithTax: 1850, priceWithoutTax: 1637.17, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 深圳', deliveryDays: 12, minOrderQty: 2,
+                    payment: 'T/T 30天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助, 工作日4小时响应',
+                    penalty: '每日0.1% 延迟交货, 最高5%',
+                    qualification: ['ISO9001', 'ISO14001', 'CE'],
+                    modelOffered: 'ECMA-C20604RS (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 2, completeness: 5,
+                    ebsHistory: { totalOrders: 20, avgPrice: 1820, lastPrice: 1850, rating: 'A+', lastOrder: '2026-06-05' },
+                },
+                item3_s2: {
+                    quoteRef: 'RFQ-2026-010', quoteDate: '2026-06-11', validUntil: '2026-08-10',
+                    priceWithTax: 1720, priceWithoutTax: 1522.12, taxRate: 13, currency: 'CNY',
+                    incoterms: 'EXW 广州', deliveryDays: 8, minOrderQty: 3,
+                    payment: 'T/T 15天', warranty: '2年',
+                    afterSales: '电话支持',
+                    penalty: '每日0.2% 延迟交货, 最高10%',
+                    qualification: ['ISO9001'],
+                    modelOffered: 'ECMA-C20604RS (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 4,
+                    ebsHistory: { totalOrders: 8, avgPrice: 1700, lastPrice: 1720, rating: 'B+', lastOrder: '2026-04-10' },
+                },
+                item3_s3: {
+                    quoteRef: 'RFQ-2026-011', quoteDate: '2026-06-12', validUntil: '2026-08-11',
+                    priceWithTax: 1980, priceWithoutTax: 1752.21, taxRate: 13, currency: 'CNY',
+                    incoterms: 'CIF 上海', deliveryDays: 18, minOrderQty: 1,
+                    payment: 'L/C 60天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助',
+                    penalty: '每日0.05% 延迟交货, 最高3%',
+                    qualification: ['ISO9001', 'CE', 'UL'],
+                    modelOffered: 'ECMA-C20604RS (进口)',
+                    specMatch: '完全匹配',
+                    responseDays: 3, completeness: 5,
+                    ebsHistory: { totalOrders: 0, avgPrice: 0, lastPrice: 0, rating: 'N/A', lastOrder: '-' },
+                },
+                item3_s4: {
+                    quoteRef: 'RFQ-2026-012', quoteDate: '2026-06-09', validUntil: '2026-08-08',
+                    priceWithTax: 1790, priceWithoutTax: 1584.07, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 北京', deliveryDays: 10, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '3年',
+                    afterSales: '电话支持, 远程协助, 现场支持(免费), 备机服务',
+                    penalty: '每日0.15% 延迟交货, 最高8%',
+                    qualification: ['ISO9001', 'ISO14001', 'CE'],
+                    modelOffered: 'ECMA-C20604RS (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 5,
+                    ebsHistory: { totalOrders: 3, avgPrice: 1810, lastPrice: 1790, rating: 'A', lastOrder: '2026-05-15' },
+                },
+                // ===== item4: PLC控制器 Siemens S7-1200 1214C =====
+                item4_s1: {
+                    quoteRef: 'RFQ-2026-013', quoteDate: '2026-06-10', validUntil: '2026-08-09',
+                    priceWithTax: 4200, priceWithoutTax: 3716.81, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 深圳', deliveryDays: 14, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助, 工作日4小时响应',
+                    penalty: '每日0.1% 延迟交货, 最高5%',
+                    qualification: ['ISO9001', 'ISO14001', 'CE'],
+                    modelOffered: '6ES7214-1AG40-0XB0 (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 2, completeness: 5,
+                    ebsHistory: { totalOrders: 15, avgPrice: 4150, lastPrice: 4200, rating: 'A', lastOrder: '2026-05-25' },
+                },
+                item4_s2: {
+                    quoteRef: 'RFQ-2026-014', quoteDate: '2026-06-11', validUntil: '2026-08-10',
+                    priceWithTax: 3980, priceWithoutTax: 3522.12, taxRate: 13, currency: 'CNY',
+                    incoterms: 'FOB 广州', deliveryDays: 10, minOrderQty: 2,
+                    payment: 'T/T 15天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助',
+                    penalty: '每日0.2% 延迟交货, 最高10%',
+                    qualification: ['ISO9001'],
+                    modelOffered: '6ES7214-1AG40-0XB0 (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 4,
+                    ebsHistory: { totalOrders: 3, avgPrice: 4000, lastPrice: 3980, rating: 'B+', lastOrder: '2026-03-10' },
+                },
+                item4_s3: {
+                    quoteRef: 'RFQ-2026-015', quoteDate: '2026-06-12', validUntil: '2026-08-11',
+                    priceWithTax: 4450, priceWithoutTax: 3938.05, taxRate: 13, currency: 'CNY',
+                    incoterms: 'CIF 上海', deliveryDays: 22, minOrderQty: 1,
+                    payment: 'L/C 60天', warranty: '2年',
+                    afterSales: '电话支持',
+                    penalty: '每日0.05% 延迟交货, 最高3%',
+                    qualification: ['ISO9001', 'ISO14001', 'CE', 'UL'],
+                    modelOffered: '6ES7214-1AG40-0XB0 (欧洲进口)',
+                    specMatch: '完全匹配',
+                    responseDays: 3, completeness: 5,
+                    ebsHistory: { totalOrders: 0, avgPrice: 0, lastPrice: 0, rating: 'N/A', lastOrder: '-' },
+                },
+                item4_s4: {
+                    quoteRef: 'RFQ-2026-016', quoteDate: '2026-06-09', validUntil: '2026-08-08',
+                    priceWithTax: 4080, priceWithoutTax: 3610.62, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 北京', deliveryDays: 11, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '3年',
+                    afterSales: '电话支持, 远程协助, 现场支持(免费), 编程调试支持',
+                    penalty: '每日0.15% 延迟交货, 最高8%',
+                    qualification: ['ISO9001', 'ISO14001', 'CE', 'Siemens Solution Partner'],
+                    modelOffered: '6ES7214-1AG40-0XB0 (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 5,
+                    ebsHistory: { totalOrders: 7, avgPrice: 4100, lastPrice: 4080, rating: 'A', lastOrder: '2026-06-02' },
+                },
+                // ===== item5: 工业相机 Basler ace acA2440-75um =====
+                item5_s1: {
+                    quoteRef: 'RFQ-2026-017', quoteDate: '2026-06-10', validUntil: '2026-08-09',
+                    priceWithTax: 6800, priceWithoutTax: 6017.70, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 深圳', deliveryDays: 18, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助, 工作日4小时响应',
+                    penalty: '每日0.1% 延迟交货, 最高5%',
+                    qualification: ['ISO9001', 'ISO14001', 'CE', 'RoHS'],
+                    modelOffered: 'acA2440-75um (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 2, completeness: 5,
+                    ebsHistory: { totalOrders: 4, avgPrice: 6750, lastPrice: 6800, rating: 'A', lastOrder: '2026-05-05' },
+                },
+                item5_s2: {
+                    quoteRef: 'RFQ-2026-018', quoteDate: '2026-06-11', validUntil: '2026-08-10',
+                    priceWithTax: 6500, priceWithoutTax: 5752.21, taxRate: 13, currency: 'CNY',
+                    incoterms: 'EXW 广州', deliveryDays: 12, minOrderQty: 2,
+                    payment: 'T/T 15天', warranty: '2年',
+                    afterSales: '电话支持',
+                    penalty: '每日0.2% 延迟交货, 最高10%',
+                    qualification: ['ISO9001'],
+                    modelOffered: 'acA2440-75um (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 4,
+                    ebsHistory: { totalOrders: 2, avgPrice: 6480, lastPrice: 6500, rating: 'B', lastOrder: '2026-04-01' },
+                },
+                item5_s3: {
+                    quoteRef: 'RFQ-2026-019', quoteDate: '2026-06-12', validUntil: '2026-08-11',
+                    priceWithTax: 7200, priceWithoutTax: 6371.68, taxRate: 13, currency: 'CNY',
+                    incoterms: 'CIF 上海', deliveryDays: 28, minOrderQty: 1,
+                    payment: 'L/C 60天', warranty: '2年',
+                    afterSales: '电话支持, 远程协助',
+                    penalty: '每日0.05% 延迟交货, 最高3%',
+                    qualification: ['ISO9001', 'CE', 'RoHS'],
+                    modelOffered: 'acA2440-75um (德国进口)',
+                    specMatch: '完全匹配',
+                    responseDays: 3, completeness: 5,
+                    ebsHistory: { totalOrders: 0, avgPrice: 0, lastPrice: 0, rating: 'N/A', lastOrder: '-' },
+                },
+                item5_s4: {
+                    quoteRef: 'RFQ-2026-020', quoteDate: '2026-06-09', validUntil: '2026-08-08',
+                    priceWithTax: 6650, priceWithoutTax: 5884.96, taxRate: 13, currency: 'CNY',
+                    incoterms: 'DDP 北京', deliveryDays: 14, minOrderQty: 1,
+                    payment: 'T/T 30天', warranty: '3年',
+                    afterSales: '电话支持, 远程协助, 现场支持(免费), 镜头配适服务',
+                    penalty: '每日0.15% 延迟交货, 最高8%',
+                    qualification: ['ISO9001', 'ISO14001', 'CE', 'RoHS', 'Basler 认证代理'],
+                    modelOffered: 'acA2440-75um (原装)',
+                    specMatch: '完全匹配',
+                    responseDays: 1, completeness: 5,
+                    ebsHistory: { totalOrders: 6, avgPrice: 6700, lastPrice: 6650, rating: 'A', lastOrder: '2026-05-30' },
+                },
+            },
+        };
+
+        // ======================== 状态 ========================
+
+        let comparisonResults = [];
+        let supplierScores = [];
+
+        // ======================== 工具函数 ========================
+
+        function getSelectedSuppliers() {
+            return Array.from(document.querySelectorAll('#supplierGroup input[type="checkbox"]:checked')).map(function(cb) { return cb.value; });
+        }
+
+        function getSelectedDimensions() {
+            return Array.from(document.querySelectorAll('#dimensionGroup input[type="checkbox"]:checked')).map(function(cb) { return cb.value; });
+        }
+
+        function getTaxType() {
+            var checked = document.querySelector('#taxGroup input[type="radio"]:checked');
+            return checked ? checked.value : 'withTax';
+        }
+
+        function getSelectedItem() {
+            return document.getElementById('itemSelect').value;
+        }
+
+        function getExtraReq() {
+            return document.getElementById('extraReq').value.trim();
+        }
+
+        function isHistoryEnabled() {
+            return document.getElementById('historyToggle').checked;
+        }
+
+        // Init UI
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.checkbox-group label').forEach(function(label) {
+                var cb = label.querySelector('input[type="checkbox"]');
+                if (cb) {
+                    cb.addEventListener('change', function() { label.classList.toggle('checked', this.checked); });
+                }
+            });
+            document.querySelectorAll('.radio-group label').forEach(function(label) {
+                var rb = label.querySelector('input[type="radio"]');
+                if (rb) {
+                    rb.addEventListener('change', function() {
+                        document.querySelectorAll('.radio-group label').forEach(function(l) { l.classList.remove('checked'); });
+                        if (this.checked) { label.classList.add('checked'); }
+                    });
+                }
+            });
+            document.getElementById('itemSelect').addEventListener('change', function() {
+                var item = DEMO_DATA.items[this.value];
+                if (item) {
+                    document.getElementById('itemSpecDisplay').textContent = item.spec;
+                    document.getElementById('selectedItemName').textContent = item.name;
+                }
+            });
+        });
+
+        // ======================== 核心对比逻辑 ========================
+
+        function startComparison() {
+            var itemId = getSelectedItem();
+            var supplierIds = getSelectedSuppliers();
+            var dimensions = getSelectedDimensions();
+            var taxType = getTaxType();
+            var useHistory = isHistoryEnabled();
+
+            if (supplierIds.length < 2) { showToast('请至少选择两家供应商进行对比', 'error'); return; }
+            if (dimensions.length === 0) { showToast('请至少选择一个对比维度', 'error'); return; }
+
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('aiAnalysisBox').classList.remove('visible');
+
+            setTimeout(function() {
+                try {
+                    buildComparison(itemId, supplierIds, dimensions, taxType, useHistory);
+                    showToast('对比完成', 'success');
+                } catch (e) {
+                    showToast('对比失败：' + e.message, 'error');
+                } finally {
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                }
+            }, 800);
+        }
+
+        function buildComparison(itemId, supplierIds, dimensions, taxType, useHistory) {
+            var item = DEMO_DATA.items[itemId];
+            if (!item) { showToast('未找到物料信息', 'error'); return; }
+
+            var rows = [];
+            var supplierData = supplierIds.map(function(sid) {
+                var s = DEMO_DATA.suppliers[sid];
+                var q = DEMO_DATA.quotes[itemId + '_' + sid];
+                // Fill missing quote with placeholder
+                if (!q) {
+                    q = {
+                        quoteRef: '-', quoteDate: '-', validUntil: '-',
+                        priceWithTax: 0, priceWithoutTax: 0, taxRate: 13, currency: 'CNY',
+                        incoterms: '-', deliveryDays: 999, minOrderQty: '-',
+                        payment: '-', warranty: '-',
+                        afterSales: '-', penalty: '-',
+                        qualification: [], modelOffered: '-',
+                        specMatch: '未报价', responseDays: 99, completeness: 0,
+                        ebsHistory: { totalOrders: 0, avgPrice: 0, lastPrice: 0, rating: '-', lastOrder: '-' },
+                    };
+                }
+                return { id: sid, name: s ? s.name : sid, short: s ? s.short : sid, region: s ? s.region : '', quote: q };
+            });
+
+            var dimCount = 0;
+
+            // 1. 价格
+            if (dimensions.includes('price')) {
+                dimCount++;
+                var priceKey = taxType === 'withTax' ? 'priceWithTax' : 'priceWithoutTax';
+                var taxLabel = taxType === 'withTax' ? '含税' : '不含税';
+                var prices = supplierData.map(function(sd) { return sd.quote[priceKey] || 0; });
+                var bestPrice = Math.min.apply(null, prices.filter(function(p) { return p > 0; }));
+                rows.push({
+                    dim: 'price', dimLabel: '价格 (' + taxLabel + ')',
+                    values: supplierData.map(function(sd) {
+                        var val = sd.quote[priceKey] || 0;
+                        var currency = sd.quote.currency || 'CNY';
+                        return {
+                            display: val > 0 ? currency + ' ' + val.toFixed(2) : '未报价',
+                            sub: val > 0 ? '税率 ' + sd.quote.taxRate + '%' : '',
+                            raw: val > 0 ? -val : -999999, // lower price = better
+                            isBest: val > 0 && val === bestPrice,
+                        };
+                    }),
+                });
+            }
+
+            // 2. 规格匹配
+            if (dimensions.includes('spec')) {
+                dimCount++;
+                var specLevels = {
+                    '完全匹配': 3,
+                    '基本匹配': 2,
+                    '兼容替代': 1,
+                    '未报价': 0,
+                };
+                var specScores = supplierData.map(function(sd) {
+                    var match = sd.quote.specMatch || '未报价';
+                    return specLevels[match] !== undefined ? specLevels[match] : 0;
+                });
+                var bestSpec = Math.max.apply(null, specScores);
+                rows.push({
+                    dim: 'spec', dimLabel: '规格匹配',
+                    values: supplierData.map(function(sd, idx) {
+                        var match = sd.quote.specMatch || '未报价';
+                        var model = sd.quote.modelOffered || '-';
+                        return {
+                            display: match,
+                            sub: '型号: ' + model,
+                            raw: specScores[idx],
+                            isBest: specScores[idx] === bestSpec && specScores[idx] > 0,
+                        };
+                    }),
+                });
+            }
+
+            // 3. 资质认证
+            if (dimensions.includes('qualification')) {
+                dimCount++;
+                var quals = supplierData.map(function(sd) { return sd.quote.qualification || []; });
+                var maxCount = Math.max.apply(null, quals.map(function(q) { return q.length; }));
+                rows.push({
+                    dim: 'qualification', dimLabel: '资质认证',
+                    values: supplierData.map(function(sd, idx) {
+                        var qList = quals[idx];
+                        return {
+                            display: qList.length > 0 ? qList.join(', ') : '无',
+                            sub: qList.length + '项认证',
+                            raw: qList.length,
+                            isBest: qList.length === maxCount && qList.length > 0,
+                        };
+                    }),
+                });
+            }
+
+            // 4. 交货条款 (Incoterms + 交期)
+            if (dimensions.includes('delivery')) {
+                dimCount++;
+                var incotermsScore = { 'DDP': 5, 'CIF': 4, 'FOB': 3, 'EXW': 2 };
+                var deliveryScores = supplierData.map(function(sd) {
+                    var inc = sd.quote.incoterms || '-';
+                    var incScore = 0;
+                    for (var key in incotermsScore) {
+                        if (inc.indexOf(key) >= 0) { incScore = incotermsScore[key]; break; }
+                    }
+                    var days = sd.quote.deliveryDays || 999;
+                    var dayScore = days < 30 ? (30 - days) : 0;
+                    return incScore * 10 + dayScore;
+                });
+                var bestDelivery = Math.max.apply(null, deliveryScores);
+                rows.push({
+                    dim: 'delivery', dimLabel: '交货条款',
+                    values: supplierData.map(function(sd, idx) {
+                        var days = sd.quote.deliveryDays || '-';
+                        return {
+                            display: sd.quote.incoterms || '-',
+                            sub: '交期 ' + days + ' 天' + (sd.quote.minOrderQty > 1 ? ' (MOQ: ' + sd.quote.minOrderQty + ')' : ''),
+                            raw: deliveryScores[idx],
+                            isBest: deliveryScores[idx] === bestDelivery,
+                        };
+                    }),
+                });
+            }
+
+            // 5. 付款条件
+            if (dimensions.includes('payment')) {
+                dimCount++;
+                var paymentScores = supplierData.map(function(sd) {
+                    var p = sd.quote.payment || '';
+                    if (p.indexOf('15天') >= 0) return 30;
+                    if (p.indexOf('30天') >= 0) return 20;
+                    if (p.indexOf('60天') >= 0) return 10;
+                    return 5;
+                });
+                var bestPayment = Math.max.apply(null, paymentScores);
+                rows.push({
+                    dim: 'payment', dimLabel: '付款条件',
+                    values: supplierData.map(function(sd, idx) {
+                        var p = sd.quote.payment || '-';
+                        var penalty = sd.quote.penalty || '';
+                        return {
+                            display: p,
+                            sub: penalty ? '违约罚则: ' + penalty : '',
+                            raw: paymentScores[idx],
+                            isBest: paymentScores[idx] === bestPayment,
+                        };
+                    }),
+                });
+            }
+
+            // 6. 质保售后
+            if (dimensions.includes('warranty')) {
+                dimCount++;
+                var warrantyScores = supplierData.map(function(sd) {
+                    var w = sd.quote.warranty || '';
+                    var years = parseInt(w) || 0;
+                    var afterSales = sd.quote.afterSales || '';
+                    var asScore = 0;
+                    if (afterSales.indexOf('现场支持') >= 0) asScore += 5;
+                    if (afterSales.indexOf('远程协助') >= 0) asScore += 3;
+                    if (afterSales.indexOf('备机') >= 0) asScore += 4;
+                    if (afterSales.indexOf('编程') >= 0) asScore += 3;
+                    if (afterSales.indexOf('镜头配适') >= 0) asScore += 2;
+                    return years * 10 + asScore;
+                });
+                var bestWarranty = Math.max.apply(null, warrantyScores);
+                rows.push({
+                    dim: 'warranty', dimLabel: '质保售后',
+                    values: supplierData.map(function(sd, idx) {
+                        var w = sd.quote.warranty || '-';
+                        var as = sd.quote.afterSales || '-';
+                        return {
+                            display: '质保: ' + w,
+                            sub: '售后: ' + as,
+                            raw: warrantyScores[idx],
+                            isBest: warrantyScores[idx] === bestWarranty,
+                        };
+                    }),
+                });
+            }
+
+            // 7. 报价回复
+            if (dimensions.includes('response')) {
+                dimCount++;
+                var responseScores = supplierData.map(function(sd) {
+                    var rd = sd.quote.responseDays || 99;
+                    var comp = sd.quote.completeness || 0;
+                    return (rd <= 1 ? 20 : rd <= 2 ? 15 : rd <= 3 ? 10 : 0) + comp * 3;
+                });
+                var bestResponse = Math.max.apply(null, responseScores);
+                rows.push({
+                    dim: 'response', dimLabel: '报价回复',
+                    values: supplierData.map(function(sd, idx) {
+                        var rd = sd.quote.responseDays || '-';
+                        var ref = sd.quote.quoteRef || '-';
+                        var date = sd.quote.quoteDate || '-';
+                        var valid = sd.quote.validUntil || '-';
+                        var dots = '';
+                        var comp = sd.quote.completeness || 0;
+                        for (var i = 0; i < 5; i++) {
+                            var cls = i < comp ? 'full' : 'missing';
+                            dots += '<span class="dot ' + cls + '"></span>';
+                        }
+                        return {
+                            display: '响应: ' + rd + '天 | ' + ref,
+                            sub: '报价日: ' + date + ' 有效期至: ' + valid + '<br>完整度: ' + dots,
+                            raw: responseScores[idx],
+                            isBest: responseScores[idx] === bestResponse,
+                        };
+                    }),
+                });
+            }
+
+            // 8. 历史记录 (EBS)
+            if (dimensions.includes('history') && useHistory) {
+                dimCount++;
+                var histScores = supplierData.map(function(sd) {
+                    var h = sd.quote.ebsHistory || { totalOrders: 0, avgPrice: 0, lastPrice: 0, rating: '-', lastOrder: '-' };
+                    var ratingScore = { 'A+': 25, 'A': 20, 'A-': 15, 'B+': 10, 'B': 5, 'N/A': 0 };
+                    var rs = ratingScore[h.rating] !== undefined ? ratingScore[h.rating] : 0;
+                    var orderScore = Math.min(h.totalOrders, 20);
+                    return rs + orderScore;
+                });
+                var bestHist = Math.max.apply(null, histScores);
+                rows.push({
+                    dim: 'history', dimLabel: '历史记录 (EBS)',
+                    values: supplierData.map(function(sd, idx) {
+                        var h = sd.quote.ebsHistory || { totalOrders: 0, avgPrice: 0, lastPrice: 0, rating: '-', lastOrder: '-' };
+                        return {
+                            display: '历史评分: ' + h.rating + ' | 订单: ' + h.totalOrders + '次',
+                            sub: '均价: ' + (h.avgPrice ? '¥' + h.avgPrice.toFixed(2) : '-') + ' | 最近: ' + h.lastOrder,
+                            raw: histScores[idx],
+                            isBest: histScores[idx] === bestHist,
+                        };
+                    }),
+                });
+            } else if (dimensions.includes('history') && !useHistory) {
+                // Show disabled message
+                rows.push({
+                    dim: 'history', dimLabel: '历史记录 (EBS)',
+                    values: supplierData.map(function() {
+                        return { display: '未启用历史数据', sub: '请在左侧开启"启用历史价格参考"', raw: 0, isBest: false };
+                    }),
+                });
+            }
+
+            comparisonResults = rows;
+            var totalDims = dimCount;
+
+            // Calculate scores
+            var scoreMap = {};
+            supplierIds.forEach(function(sid) { scoreMap[sid] = 0; });
+
+            rows.forEach(function(row) {
+                row.values.forEach(function(v, idx) {
+                    if (v.isBest) {
+                        var sid = supplierIds[idx];
+                        scoreMap[sid] = (scoreMap[sid] || 0) + 1;
+                    }
+                });
+            });
+
+            supplierScores = supplierIds.map(function(sid) {
+                var s = DEMO_DATA.suppliers[sid];
+                var score = scoreMap[sid] || 0;
+                var pct = totalDims > 0 ? Math.round((score / totalDims) * 100) : 0;
+                return { id: sid, name: s ? s.name : sid, short: s ? s.short : sid, score: score, totalDims: totalDims, pct: pct };
+            });
+            supplierScores.sort(function(a, b) { return b.score - a.score; });
+
+            renderResults(supplierIds);
+            renderRankCards();
+        }
+
+        // ======================== 渲染 ========================
+
+        function renderResults(supplierIds) {
+            var empty = document.getElementById('resultsEmpty');
+            var table = document.getElementById('resultsTable');
+            var thead = document.getElementById('comparisonHead');
+            var tbody = document.getElementById('comparisonBody');
+
+            if (comparisonResults.length === 0) {
+                empty.style.display = 'flex'; table.style.display = 'none'; return;
+            }
+
+            empty.style.display = 'none'; table.style.display = '';
+
+            var headHtml = '<tr><th class="dim-col">对比项目</th>';
+            supplierIds.forEach(function(sid) {
+                var s = DEMO_DATA.suppliers[sid];
+                headHtml += '<th class="supplier-col">' + (s ? s.short : sid) + '<br><span style="font-weight:400;font-size:11px;color:#909399;">' + (s ? s.region : '') + '</span></th>';
+            });
+            headHtml += '</tr>';
+            thead.innerHTML = headHtml;
+
+            tbody.innerHTML = '';
+            comparisonResults.forEach(function(row) {
+                var tr = document.createElement('tr');
+                var tdHtml = '<td><span class="dim-name">' + row.dimLabel + '</span></td>';
+                row.values.forEach(function(v) {
+                    var bestClass = v.isBest ? 'best-cell' : '';
+                    tdHtml += '<td class="' + bestClass + '">';
+                    tdHtml += '<span class="dim-value">' + v.display + '</span>';
+                    if (v.sub) { tdHtml += '<span class="sub-text">' + v.sub + '</span>'; }
+                    tdHtml += '</td>';
+                });
+                tr.innerHTML = tdHtml;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('supplierCount').textContent = supplierIds.length;
+            if (supplierScores.length > 0) {
+                document.getElementById('bestSupplierName').textContent = supplierScores[0].short;
+            }
+            document.getElementById('selectedItemName').textContent = DEMO_DATA.items[getSelectedItem()].name;
+        }
+
+        function renderRankCards() {
+            var container = document.getElementById('rankCards');
+            container.style.display = 'flex';
+            container.innerHTML = '';
+
+            var icons = ['gold', 'silver', 'bronze'];
+            var iconClasses = ['fa-trophy', 'fa-medal', 'fa-medal'];
+            var barColors = ['#faad14', '#8c8c8c', '#d46b08'];
+
+            supplierScores.forEach(function(ss, idx) {
+                var card = document.createElement('div');
+                card.className = 'rank-card';
+                var iconType = idx < 3 ? icons[idx] : 'normal';
+                var iconClass = idx < 3 ? iconClasses[idx] : 'fa-certificate';
+                var barColor = idx < 3 ? barColors[idx] : '#2f54eb';
+
+                card.innerHTML =
+                    '<div class="rank-icon ' + iconType + '"><i class="fas ' + iconClass + '"></i></div>' +
+                    '<div class="rank-info">' +
+                        '<div class="supplier-name">' + ss.name + '</div>' +
+                        '<div class="score-bar-wrap"><div class="score-bar" style="width:' + ss.pct + '%;background:' + barColor + ';"></div></div>' +
+                        '<div class="score-text">' + ss.score + '/' + ss.totalDims + ' 维度优胜 · 综合评分 ' + ss.pct + '%</div>' +
+                    '</div>';
+                container.appendChild(card);
+            });
+        }
+
+        // ======================== AI 分析 ========================
+
+        function runAIAnalysis() {
+            if (comparisonResults.length === 0) { showToast('请先进行对比分析', 'error'); return; }
+
+            var item = DEMO_DATA.items[getSelectedItem()];
+            var extra = getExtraReq();
+
+            document.getElementById('loadingOverlay').classList.add('active');
+
+            setTimeout(function() {
+                try {
+                    var best = supplierScores[0];
+                    var second = supplierScores.length > 1 ? supplierScores[1] : null;
+
+                    var analysis = '基于对 <strong>' + item.name + '</strong> 的供应商报价对比分析，';
+
+                    if (best) {
+                        analysis += '综合推荐 <strong>' + best.name + '</strong> 为首选供应商。';
+                        analysis += ' 该供应商在 ' + best.score + '/' + best.totalDims + ' 个对比维度中表现领先，综合评分 ' + best.pct + '%。';
+
+                        // Detailed analysis by dimension
+                        var priceRow = null;
+                        var deliveryRow = null;
+                        var historyRow = null;
+                        comparisonResults.forEach(function(r) {
+                            if (r.dim === 'price') priceRow = r;
+                            if (r.dim === 'delivery') deliveryRow = r;
+                            if (r.dim === 'history') historyRow = r;
+                        });
+
+                        if (priceRow) {
+                            var bestIdx = supplierScores.indexOf(best);
+                            var bestPriceVal = priceRow.values[bestIdx] ? priceRow.values[bestIdx].display : '';
+                            var bestPriceBest = priceRow.values[bestIdx] ? priceRow.values[bestIdx].isBest : false;
+                            if (bestPriceVal && bestPriceBest) {
+                                analysis += ' 价格方面 ' + bestPriceVal + ' 为最低报价，具有价格优势。';
+                            } else {
+                                analysis += ' 价格方面虽非最低，但在其他维度弥补了价格差距。';
+                            }
+                        }
+
+                        if (deliveryRow) {
+                            var bestDIdx = supplierScores.indexOf(best);
+                            var bestDel = deliveryRow.values[bestDIdx] ? deliveryRow.values[bestDIdx].display : '';
+                            analysis += ' 交货条件: ' + bestDel + '。';
+                        }
+
+                        if (historyRow) {
+                            var bestHIdx = supplierScores.indexOf(best);
+                            var bestHist = historyRow.values[bestHIdx] ? historyRow.values[bestHIdx].display : '';
+                            analysis += ' EBS历史记录: ' + bestHist + '。';
+                        }
+                    }
+
+                    if (second && second.score === best.score) {
+                        analysis += ' 注意：<strong>' + second.name + '</strong> 与首选供应商评分持平，建议结合具体需求(如交期紧急程度、付款灵活性)综合评估。';
+                    }
+
+                    if (extra) {
+                        analysis += ' 根据您的附加要求"' + extra + '"，建议与供应商进一步沟通确认相关细节。';
+                    }
+
+                    analysis += ' 建议发起第二轮竞价或商务谈判，以争取更优价格和服务条款。';
+
+                    document.getElementById('aiAnalysisContent').innerHTML = analysis;
+                    document.getElementById('aiAnalysisBox').classList.add('visible');
+                    showToast('AI 分析完成', 'success');
+                } catch (e) {
+                    showToast('AI 分析失败：' + e.message, 'error');
+                } finally {
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                }
+            }, 1000);
+        }
+
+        // ======================== 导出 ========================
+
+        function exportComparison() {
+            if (comparisonResults.length === 0) { showToast('没有可导出的数据', 'error'); return; }
+
+            var BOM = '\uFEFF';
+            var item = DEMO_DATA.items[getSelectedItem()];
+            var supplierIds = getSelectedSuppliers();
+
+            var csv = BOM + '价格比较报告: ' + item.name + '\n';
+            csv += '导出时间: ' + new Date().toLocaleString() + '\n\n';
+            csv += '对比项目';
+
+            var sNames = supplierIds.map(function(sid) {
+                var s = DEMO_DATA.suppliers[sid];
+                return s ? s.name : sid;
+            });
+            sNames.forEach(function(n) { csv += ',' + n; });
+            csv += '\n';
+
+            comparisonResults.forEach(function(row) {
+                csv += row.dimLabel;
+                row.values.forEach(function(v) {
+                    var sub = v.sub ? v.sub.replace(/<br>/g, ' | ') : '';
+                    csv += ',' + v.display + (sub ? ' (' + sub + ')' : '');
+                });
+                csv += '\n';
+            });
+
+            csv += '\n综合评分排名\n';
+            csv += '排名,供应商,得分,综合评分\n';
+            supplierScores.forEach(function(ss, idx) {
+                csv += (idx + 1) + ',' + ss.name + ',' + ss.score + '/' + ss.totalDims + ',' + ss.pct + '%\n';
+            });
+
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            var url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = '价格比较_' + item.name.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+            link.click();
+            URL.revokeObjectURL(url);
+
+            showToast('报告已导出', 'success');
+        }
+
+        // ======================== 操作 ========================
+
+        function loadSampleData() {
+            document.getElementById('itemSelect').value = 'item1';
+            document.getElementById('itemSpecDisplay').textContent = DEMO_DATA.items.item1.spec;
+            document.getElementById('selectedItemName').textContent = DEMO_DATA.items.item1.name;
+
+            document.querySelectorAll('#supplierGroup input[type="checkbox"]').forEach(function(cb) {
+                cb.checked = true; cb.closest('label').classList.add('checked');
+            });
+
+            document.querySelectorAll('#dimensionGroup input[type="checkbox"]').forEach(function(cb) {
+                cb.checked = true; cb.closest('label').classList.add('checked');
+            });
+
+            document.querySelector('#taxGroup input[value="withTax"]').checked = true;
+            document.querySelectorAll('#taxGroup label').forEach(function(l) { l.classList.remove('checked'); });
+            document.querySelector('#taxGroup input[value="withTax"]').closest('label').classList.add('checked');
+
+            document.getElementById('historyToggle').checked = true;
+            document.getElementById('extraReq').value = '';
+
+            clearResults();
+            showToast('示例数据已加载，点击"开始对比"查看结果', 'info');
+        }
+
+        function resetAll() {
+            if (comparisonResults.length > 0 && !confirm('重置将清空对比结果，确认？')) return;
+
+            document.getElementById('itemSelect').value = 'item1';
+            document.getElementById('itemSpecDisplay').textContent = DEMO_DATA.items.item1.spec;
+            document.getElementById('selectedItemName').textContent = DEMO_DATA.items.item1.name;
+
+            document.querySelectorAll('#supplierGroup input[type="checkbox"]').forEach(function(cb) {
+                cb.checked = true; cb.closest('label').classList.add('checked');
+            });
+
+            document.querySelectorAll('#dimensionGroup input[type="checkbox"]').forEach(function(cb) {
+                cb.checked = true; cb.closest('label').classList.add('checked');
+            });
+
+            document.querySelector('#taxGroup input[value="withTax"]').checked = true;
+            document.querySelectorAll('#taxGroup label').forEach(function(l) { l.classList.remove('checked'); });
+            document.querySelector('#taxGroup input[value="withTax"]').closest('label').classList.add('checked');
+
+            document.getElementById('historyToggle').checked = true;
+            document.getElementById('extraReq').value = '';
+            document.getElementById('aiModel').value = 'deepseek';
+
+            clearResults();
+            showToast('已重置', 'info');
+        }
+
+        function clearResults() {
+            comparisonResults = [];
+            supplierScores = [];
+            document.getElementById('resultsEmpty').style.display = 'flex';
+            document.getElementById('resultsTable').style.display = 'none';
+            document.getElementById('rankCards').style.display = 'none';
+            document.getElementById('aiAnalysisBox').classList.remove('visible');
+            document.getElementById('supplierCount').textContent = '0';
+            document.getElementById('bestSupplierName').textContent = '-';
+        }
+
+        function showToast(message, type) {
+            var existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            var toast = document.createElement('div');
+            toast.className = 'toast toast-' + (type || 'info');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

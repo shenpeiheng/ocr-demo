@@ -185,6 +185,22 @@
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">合同识别</div>' +
                         '</a>' +
+                        '<a href="item_code_generation.html" class="menu-item menu-sub-item" data-page="item_code_generation">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">物料编码生成</div>' +
+                        '</a>' +
+                        '<a href="price_comparison.html" class="menu-item menu-sub-item" data-page="price_comparison">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">价格比较</div>' +
+                        '</a>' +
+                        '<a href="ai_agent_service_desk.html" class="menu-item menu-sub-item" data-page="ai_agent_service_desk">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">AI Agent 服务台</div>' +
+                        '</a>' +
+                        '<a href="procurement_matching.html" class="menu-item menu-sub-item" data-page="procurement_matching">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">采购需求匹配</div>' +
+                        '</a>' +
                     '</div>' +
                 '</div>' +
                 /* 其他 */

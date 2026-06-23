@@ -80,7 +80,7 @@ class PaddleOCRVLProcessor:
                         layout_results = page_result.get("layoutParsingResults", [])
                         logger.info(f"layoutParsingResults 数量: {len(layout_results)}")
 
-                        # PP-OCRv5：没有 layoutParsingResults，有 ocrResults
+                        # PP-OCRv6：没有 layoutParsingResults，有 ocrResults
                         if not layout_results and "ocrResults" in page_result:
                             ocr_results = page_result.get("ocrResults", [])
                             for ocr_page in ocr_results:
@@ -102,7 +102,7 @@ class PaddleOCRVLProcessor:
                                             "label": "text",
                                         })
                                 markdown_content += "\n".join(page_text) + "\n\n"
-                                logger.info(f"PP-OCRv5：页面 {page_idx} 提取 {len(page_text)} 个文本块")
+                                logger.info(f"PP-OCRv6：页面 {page_idx} 提取 {len(page_text)} 个文本块")
                             continue
 
                         # PaddleOCR-VL-1.6：有 layoutParsingResults

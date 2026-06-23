@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent 服务台 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .agent-page { overflow: hidden; }
+        .agent-page .content-grid {
+            display: grid; grid-template-columns: 400px 1fr; gap: 10px; height: 100%; overflow: hidden;
+        }
+        .ai-config-panel {
+            background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eaeaea;
+        }
+        .ai-panel-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; background: white; }
+        .ai-panel-header h2 {
+            margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px;
+            color: #303133; font-weight: 700; line-height: 1.4;
+        }
+        .ai-panel-header h2 i { color: #ad063e; }
+        .ai-panel-header p { margin: 8px 0 0 0; font-size: 12px; color: #7f8c8d; }
+        .ai-config-body { padding: 5px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .config-section { background: #f8f9fa; border-radius: 8px; padding: 16px; border: 1px solid #e8eaef; }
+        .config-section-title { font-size: 14px; font-weight: 700; color: #303133; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .config-section-title i { color: #ad063e; width: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #606266; margin-bottom: 6px; }
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 13px; font-family: inherit; transition: all 0.3s;
+        }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+            outline: none; border-color: #ad063e; box-shadow: 0 0 0 3px rgba(173,6,62,0.1);
+        }
+        .action-buttons { display: flex; gap: 10px; margin-top: 5px; }
+        .action-buttons .btn { flex: 1; padding: 10px 20px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-primary { background: #ad063e; color: white; }
+        .btn-primary:hover { background: #920535; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(173,6,62,0.25); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #f0f0f0; color: #606266; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #219a52; transform: translateY(-1px); }
+        .btn-outline { background: transparent; color: #ad063e; border: 1px solid #ad063e; }
+        .btn-outline:hover { background: #ad063e; color: white; }
+
+        .results-panel {
+            background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eaeaea; position: relative;
+        }
+        .results-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .results-header h2 { margin: 0; font-size: 18px; color: #303133; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .results-header h2 i { color: #ad063e; }
+        .results-header .header-actions { display: flex; gap: 10px; align-items: center; }
+        .results-header .header-actions .btn { padding: 7px 16px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+        .results-header .header-actions .btn-outline { background: transparent; color: #ad063e; border: 1px solid #ad063e; }
+        .results-header .header-actions .btn-outline:hover { background: #ad063e; color: white; }
+
+        .stat-cards { display: flex; gap: 10px; flex-wrap: wrap; }
+        .stat-card { flex: 1; min-width: 80px; background: #f8f9fa; border-radius: 8px; padding: 10px 12px; text-align: center; border: 1px solid #e8eaef; }
+        .stat-card .num { font-size: 24px; font-weight: 700; color: #ad063e; }
+        .stat-card .label { font-size: 12px; color: #909399; margin-top: 4px; }
+
+        .sample-list { display: flex; flex-direction: column; gap: 6px; }
+        .sample-btn {
+            padding: 8px 12px; border-radius: 6px; border: 1px solid #dcdfe6; background: white;
+            font-size: 13px; color: #606266; cursor: pointer; transition: all 0.2s; text-align: left; font-family: inherit; display: flex; align-items: center; gap: 8px;
+        }
+        .sample-btn:hover { border-color: #ad063e; color: #ad063e; }
+        .sample-btn .s-label { font-weight: 600; }
+        .sample-btn .s-desc { font-size: 11px; color: #909399; }
+
+        .email-preview {
+            background: white; border-radius: 6px; border: 1px solid #e8eaef; padding: 14px;
+            font-size: 13px; line-height: 1.6;
+        }
+        .email-preview .email-head { border-bottom: 1px solid #e8eaef; padding-bottom: 10px; margin-bottom: 10px; }
+        .email-preview .email-head .eh-row { display: flex; margin-bottom: 4px; }
+        .email-preview .email-head .eh-label { color: #909399; width: 60px; flex-shrink: 0; font-size: 12px; }
+        .email-preview .email-head .eh-value { color: #303133; font-size: 12px; word-break: break-all; }
+        .email-preview .email-body { font-size: 13px; color: #303133; white-space: pre-line; min-height: 80px; }
+
+        .po-detail-info { font-size: 13px; }
+        .po-detail-info .po-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f0f0f0; }
+        .po-detail-info .po-row:last-child { border-bottom: none; }
+        .po-detail-info .po-label { color: #909399; font-size: 12px; }
+        .po-detail-info .po-value { color: #303133; font-weight: 500; font-size: 13px; text-align: right; }
+        .tag { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+        .tag-green { background: #e8f5e9; color: #2e7d32; }
+        .tag-orange { background: #fff3e0; color: #e65100; }
+        .tag-red { background: #fce4ec; color: #c62828; }
+        .tag-blue { background: #e3f2fd; color: #1565c0; }
+        .code-badge { display: inline-block; font-size: 11px; background: #fce4ec; color: #c62828; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+        .status-dot.green { background: #27ae60; }
+        .status-dot.orange { background: #faad14; }
+        .status-dot.red { background: #e74c3c; }
+
+        .chat-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+        .chat-msg { display: flex; gap: 10px; max-width: 88%; }
+        .chat-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+        .chat-msg.ai { align-self: flex-start; }
+        .chat-msg .avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .chat-msg.user .avatar { background: #ad063e; color: white; }
+        .chat-msg.ai .avatar { background: #f0f0f0; color: #606266; }
+        .chat-msg .bubble { padding: 10px 14px; border-radius: 8px; font-size: 13px; line-height: 1.5; position: relative; }
+        .chat-msg.user .bubble { background: #ad063e; color: white; border-top-right-radius: 2px; }
+        .chat-msg.ai .bubble { background: #f5f5f5; color: #303133; border-top-left-radius: 2px; }
+        .chat-msg .bubble .msg-time { font-size: 10px; color: #999; margin-top: 4px; display: block; }
+        .chat-msg.user .bubble .msg-time { color: rgba(255,255,255,0.7); text-align: right; }
+        .chat-msg .bubble .step { display: block; padding: 4px 0; }
+        .chat-msg .bubble .step-icon { display: inline-block; width: 20px; text-align: center; }
+        .chat-msg .bubble .result-box { margin-top: 8px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e8eaef; font-size: 12px; }
+        .chat-msg .bubble .result-box table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .chat-msg .bubble .result-box td { padding: 4px 8px; border-bottom: 1px solid #f0f0f0; }
+        .chat-msg .bubble .result-box td:first-child { color: #909399; width: 90px; }
+
+        .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 10px 14px; background: #f5f5f5; border-radius: 8px; border-top-left-radius: 2px; align-self: flex-start; max-width: 80%; }
+        .typing-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background: #c0c4cc; animation: typingBounce 1.4s ease-in-out infinite; }
+        .typing-indicator .dot:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+
+        .chat-suggestions { padding: 0 24px 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .chat-suggestions .chip { padding: 6px 14px; border-radius: 16px; border: 1px solid #dcdfe6; font-size: 12px; color: #606266; cursor: pointer; transition: all 0.2s; background: white; font-family: inherit; }
+        .chat-suggestions .chip:hover { border-color: #ad063e; color: #ad063e; background: rgba(173,6,62,0.03); }
+
+        .chat-input-bar { padding: 12px 24px 16px; border-top: 1px solid #e5e7eb; display: flex; gap: 10px; align-items: flex-end; }
+        .chat-input-bar textarea { flex: 1; padding: 10px 14px; border: 1px solid #dcdfe6; border-radius: 8px; font-size: 13px; font-family: inherit; resize: none; min-height: 42px; max-height: 120px; transition: border-color 0.2s; }
+        .chat-input-bar textarea:focus { outline: none; border-color: #ad063e; }
+        .chat-input-bar .send-btn { width: 42px; height: 42px; border-radius: 8px; border: none; background: #ad063e; color: white; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .chat-input-bar .send-btn:hover { background: #920535; }
+        .chat-input-bar .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .chat-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: #c0c4cc; gap: 12px; padding: 40px 20px; }
+        .chat-welcome i { font-size: 3rem; color: #ad063e; }
+        .chat-welcome h3 { font-size: 16px; color: #303133; margin: 0; font-weight: 600; }
+        .chat-welcome p { font-size: 13px; margin: 0; text-align: center; max-width: 420px; }
+
+        .extracted-po { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 8px 12px; display: inline-block; font-size: 13px; font-weight: 600; color: #e65100; margin: 6px 0; }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; color: white; font-size: 13px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease; }
+        .toast-success { background: #27ae60; }
+        .toast-error { background: #e74c3c; }
+        .toast-info { background: #2a91d6; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @media (max-width: 1200px) { .agent-page .content-grid { grid-template-columns: 1fr; height: auto; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+            <main class="main-content-area agent-page">
+                <div class="content-grid">
+                    <!-- 左侧：EBS 查询控制台 -->
+                    <div class="ai-config-panel">
+                        <div class="ai-panel-header">
+                            <h2><i class="fas fa-database"></i> EBS 查询控制台</h2>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">客户邮件 → AI 提取 PO → 查询 EBS 数据库 → 返回交期</p>
+                        </div>
+                        <div class="ai-config-body">
+                            <!-- EBS 数据库概览 -->
+                            <div class="config-section">
+                                <div class="config-section-title"><i class="fas fa-chart-simple"></i> EBS 采购数据库</div>
+                                <div class="stat-cards" style="padding:0;">
+                                    <div class="stat-card" style="padding:10px 12px;">
+                                        <div class="num" id="ebsPoCount">15</div>
+                                        <div class="label">采购订单</div>
+                                    </div>
+                                    <div class="stat-card" style="padding:10px 12px;">
+                                        <div class="num" style="color:#27ae60;" id="ebsOnTime">10</div>
+                                        <div class="label">准时交付</div>
+                                    </div>
+                                    <div class="stat-card" style="padding:10px 12px;">
+                                        <div class="num" style="color:#e74c3c;" id="ebsDelayed">5</div>
+                                        <div class="label">延迟风险</div>
+                                    </div>
+                                    <div class="stat-card" style="padding:10px 12px;">
+                                        <div class="num" style="color:#2a91d6;" id="ebsSuppliers">5</div>
+                                        <div class="label">供应商</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 客户邮件输入 -->
+                            <div class="config-section">
+                                <div class="config-section-title"><i class="fas fa-envelope"></i> 客户邮件输入</div>
+                                <div class="form-group" style="margin-bottom:8px;">
+                                    <textarea id="emailInput" rows="6" placeholder="在此粘贴客户邮件内容...&#10;&#10;邮件内容不固定，AI 会自动提取其中的 PO 编号并查询 EBS 数据库。"></textarea>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary" onclick="submitEmailToAI()"><i class="fas fa-paper-plane"></i> 提交 AI 分析</button>
+                                    <button class="btn btn-secondary" onclick="clearEmailInput()"><i class="fas fa-eraser"></i> 清空</button>
+                                </div>
+                            </div>
+
+                            <!-- 示例客户邮件 -->
+                            <div class="config-section">
+                                <div class="config-section-title"><i class="fas fa-file-lines"></i> 示例客户邮件</div>
+                                <div class="sample-list" id="sampleList"></div>
+                            </div>
+
+                            <!-- EBS 查询结果 -->
+                            <div class="config-section" id="ebsResultSection" style="display:none;">
+                                <div class="config-section-title"><i class="fas fa-search"></i> EBS 查询结果</div>
+                                <div class="po-detail-info" id="ebsResultContent"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：AI 智能客服 -->
+                    <div class="results-panel" id="chatPanel">
+                        <div class="results-header">
+                            <div>
+                                <h2><i class="fas fa-comment-dots"></i> AI 采购助手</h2>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">智能解析邮件 → 提取 PO → 查询 EBS → 返回交期</p>
+                            </div>
+                            <div class="header-actions">
+                                <button class="btn btn-outline" onclick="clearChat()" style="font-size:12px;padding:6px 12px;"><i class="fas fa-trash"></i> 清空对话</button>
+                            </div>
+                        </div>
+                        <div class="chat-container">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="chat-welcome" id="chatWelcome">
+                                    <i class="fas fa-robot"></i>
+                                    <h3>您好！我是 AI 采购助手</h3>
+                                    <p>我的工作流程：<br>
+                                    <b>①</b> 接收客户邮件 → <b>②</b> 提取 PO 编号<br>
+                                    <b>③</b> 查询 EBS 数据库 → <b>④</b> 返回交期信息</p>
+                                    <p style="font-size:12px;color:#909399;margin-top:8px;">
+                                        请在左侧粘贴客户邮件，或选择一个示例邮件，然后点击"提交 AI 分析"。
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="chat-suggestions" id="chatSuggestions">
+                                <button class="chip" onclick="loadAndSubmit('sample1')">示例1: 中文简洁催交期</button>
+                                <button class="chip" onclick="loadAndSubmit('sample2')">示例2: 查物流信息</button>
+                                <button class="chip" onclick="loadAndSubmit('sample3')">示例3: 英文查询</button>
+                                <button class="chip" onclick="loadAndSubmit('sample4')">示例4: 紧急催办</button>
+                                <button class="chip" onclick="loadAndSubmit('sample5')">示例5: 多订单查询</button>
+                                <button class="chip" onclick="loadAndSubmit('sample6')">示例6: 邮件转发</button>
+                            </div>
+                            <div class="chat-input-bar">
+                                <textarea id="chatInput" rows="1" placeholder="也可以直接输入问题，例如：查一下 PO-2026-0042 的交期" onkeydown="handleKeyDown(event)"></textarea>
+                                <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script>
+        // ======================== EBS 数据库（模拟） ========================
+        // 数据参考自 data.md 物料编码体系: Class C (Consumable),
+        // Type: CE/CH/EM/MI/PK/MA/MP/EA/ML/CS/ST/SE
+
+        var EBS_DB = [
+            { po: 'PO-2026-0042', supplier: '深圳华强供应链有限公司', short: '华强供应链', region: '华南',
+              itemCode: 'C-CE-ADD', className: 'C', typeName: 'CE', subType: 'ADD', category: '电脑设备',
+              item: '工业主板 Add-in Board', qty: 50, unit: '块', price: 2850, amount: 142500,
+              expected: '2026-07-15', confirmed: '2026-07-15', status: 'on-time',
+              carrier: '顺丰速运', tracking: 'SF-1234567890', notes: '' },
+            { po: 'PO-2026-0043', supplier: '广州迅捷工业品有限公司', short: '广州迅捷', region: '华南',
+              itemCode: 'C-CE-MET', className: 'C', typeName: 'CE', subType: 'MET', category: '电脑设备',
+              item: '网络设备 Network Equipment', qty: 15, unit: '台', price: 3200, amount: 48000,
+              expected: '2026-07-05', confirmed: '2026-07-05', status: 'on-time',
+              carrier: '德邦物流', tracking: 'DB-1122334455', notes: '' },
+            { po: 'PO-2026-0044', supplier: '上海通贸国际贸易有限公司', short: '上海通贸', region: '华东',
+              itemCode: 'C-CH-Z00', className: 'C', typeName: 'CH', subType: 'Z00', category: '化学品',
+              item: '化工原料 Chemical Parts', qty: 200, unit: 'kg', price: 85, amount: 17000,
+              expected: '2026-07-10', confirmed: '2026-08-01', status: 'delayed',
+              carrier: '中远海运', tracking: 'COSCO-20260801', notes: '欧洲港口拥堵，延迟22天' },
+            { po: 'PO-2026-0045', supplier: '广州迅捷工业品有限公司', short: '广州迅捷', region: '华南',
+              itemCode: 'C-CE-MET', className: 'C', typeName: 'CE', subType: 'MET', category: '电脑设备',
+              item: '网管交换机 Network Switch', qty: 20, unit: '台', price: 5500, amount: 110000,
+              expected: '2026-07-01', confirmed: '2026-07-20', status: 'delayed',
+              carrier: '德邦物流', tracking: 'DB-9876543210', notes: '芯片供应紧张，延迟19天' },
+            { po: 'PO-2026-0046', supplier: '成都天府供应链管理有限公司', short: '成都天府', region: '西南',
+              itemCode: 'C-EM-OFF', className: 'C', typeName: 'EM', subType: 'OFF', category: '设备',
+              item: '办公设备 Office Equipment', qty: 30, unit: '台', price: 1250, amount: 37500,
+              expected: '2026-07-12', confirmed: '2026-07-10', status: 'on-time',
+              carrier: '顺丰速运', tracking: 'SF-9988776655', notes: '提前2天交付' },
+            { po: 'PO-2026-0047', supplier: '北京中科创新科技有限公司', short: '北京中科', region: '华北',
+              itemCode: 'C-MI-GAU', className: 'C', typeName: 'MI', subType: 'GAU', category: '测量仪器',
+              item: '测量仪表 Gauge', qty: 25, unit: '个', price: 680, amount: 17000,
+              expected: '2026-07-08', confirmed: '2026-07-08', status: 'on-time',
+              carrier: '京东物流', tracking: 'JD-4455667788', notes: '' },
+            { po: 'PO-2026-0048', supplier: '上海通贸国际贸易有限公司', short: '上海通贸', region: '华东',
+              itemCode: 'C-MA-ROB', className: 'C', typeName: 'MA', subType: 'ROB', category: '机器',
+              item: '工业机器人配件 Robot Parts', qty: 30, unit: '套', price: 1980, amount: 59400,
+              expected: '2026-07-25', confirmed: '2026-08-05', status: 'delayed',
+              carrier: '中远海运', tracking: 'COSCO-20260805', notes: '欧洲进口海运延迟，延迟10天' },
+            { po: 'PO-2026-0049', supplier: '深圳华强供应链有限公司', short: '华强供应链', region: '华南',
+              itemCode: 'C-PK-CTN', className: 'C', typeName: 'PK', subType: 'CTN', category: '包装材料',
+              item: '包装纸箱 Carton', qty: 5000, unit: '个', price: 3.5, amount: 17500,
+              expected: '2026-07-02', confirmed: '2026-07-02', status: 'on-time',
+              carrier: '顺丰速运', tracking: 'SF-5544332211', notes: '' },
+            { po: 'PO-2026-0050', supplier: '北京中科创新科技有限公司', short: '北京中科', region: '华北',
+              itemCode: 'C-EM-OFF', className: 'C', typeName: 'EM', subType: 'OFF', category: '设备',
+              item: 'PLC控制器 Programmable Controller', qty: 15, unit: '台', price: 4080, amount: 61200,
+              expected: '2026-07-10', confirmed: '2026-07-10', status: 'on-time',
+              carrier: '京东物流', tracking: 'JD-5566778899', notes: '' },
+            { po: 'PO-2026-0051', supplier: '成都天府供应链管理有限公司', short: '成都天府', region: '西南',
+              itemCode: 'C-MP-VAL', className: 'C', typeName: 'MP', subType: 'VAL', category: '机械零件',
+              item: '工业阀门 Valve', qty: 80, unit: '个', price: 260, amount: 20800,
+              expected: '2026-07-18', confirmed: '2026-07-30', status: 'delayed',
+              carrier: '德邦物流', tracking: 'DB-6677889900', notes: '原材料涨价，延迟12天' },
+            { po: 'PO-2026-0052', supplier: '广州迅捷工业品有限公司', short: '广州迅捷', region: '华南',
+              itemCode: 'C-SE-PPE', className: 'C', typeName: 'SE', subType: 'PPE', category: '安全設備',
+              item: '安全防护用品 Safety Equipment', qty: 200, unit: '套', price: 45, amount: 9000,
+              expected: '2026-07-06', confirmed: '2026-07-06', status: 'on-time',
+              carrier: '德邦物流', tracking: 'DB-3344556677', notes: '' },
+            { po: 'PO-2026-0053', supplier: '深圳华强供应链有限公司', short: '华强供应链', region: '华南',
+              itemCode: 'C-EA-CAM', className: 'C', typeName: 'EA', subType: 'CAM', category: '电气设备',
+              item: '工业摄像设备 Camera', qty: 10, unit: '台', price: 6800, amount: 68000,
+              expected: '2026-07-30', confirmed: '2026-07-28', status: 'on-time',
+              carrier: '顺丰速运', tracking: 'SF-1122334455', notes: '提前2天交付' },
+            { po: 'PO-2026-0054', supplier: '上海通贸国际贸易有限公司', short: '上海通贸', region: '华东',
+              itemCode: 'C-ML-APP', className: 'C', typeName: 'ML', subType: 'APP', category: '医疗',
+              item: '医疗器械 Medical Appliance', qty: 50, unit: '套', price: 350, amount: 17500,
+              expected: '2026-07-22', confirmed: '2026-08-10', status: 'delayed',
+              carrier: '中远海运', tracking: 'COSCO-20260810', notes: '海关查验延长，延迟19天' },
+            { po: 'PO-2026-0055', supplier: '北京中科创新科技有限公司', short: '北京中科', region: '华北',
+              itemCode: 'C-CS-OAS', className: 'C', typeName: 'CS', subType: 'OAS', category: '电脑软件',
+              item: '办公应用软件 Office Software License', qty: 10, unit: '套', price: 4500, amount: 45000,
+              expected: '2026-07-20', confirmed: '2026-07-18', status: 'on-time',
+              carrier: '电子邮件', tracking: 'LIC-20260718-001', notes: '提前2天交付' },
+            { po: 'PO-2026-0056', supplier: '成都天府供应链管理有限公司', short: '成都天府', region: '西南',
+              itemCode: 'C-ST-OFS', className: 'C', typeName: 'ST', subType: 'OFS', category: '文具',
+              item: '办公文具 Stationery', qty: 500, unit: '套', price: 28, amount: 14000,
+              expected: '2026-07-03', confirmed: '2026-07-03', status: 'on-time',
+              carrier: '京东物流', tracking: 'JD-2233445566', notes: '' },
+        ];
+
+        // ======================== 示例客户邮件（内容不固定） ========================
+
+        var SAMPLE_EMAILS = [
+            { id: 'sample1', label: '中文简洁催交期',
+              from: '李经理 <lim@customer-a.com>', to: '采购部 <procurement@sie.com>',
+              subject: '请查询订单交期', date: '2026-06-20 09:15',
+              body: '你好，\n\n请帮忙查一下 PO-2026-0042 的交期，我们生产线等着用，谢谢。\n\n李经理' },
+            { id: 'sample2', label: '中文详细查物流',
+              from: '王工 <wang@factory-b.com>', to: '采购部 <procurement@sie.com>',
+              subject: '关于物料到货时间', date: '2026-06-19 14:30',
+              body: '采购部您好，\n\n我们上周下的订单 PO-2026-0048，能不能帮忙确认一下什么时候能到？还有想问下物流信息，是哪家快递承运的，有没有单号？\n\n谢谢\n王工' },
+            { id: 'sample3', label: '英文查询 Delivery inquiry',
+              from: 'Tom <tom@global-supplier.com>', to: 'procurement@sie.com',
+              subject: 'Delivery inquiry for PO-2026-0045', date: '2026-06-18 10:00',
+              body: 'Hi,\n\nCould you please check the delivery status for PO-2026-0045? We need to arrange the logistics at our end.\n\nBest regards,\nTom' },
+            { id: 'sample4', label: '紧急催办',
+              from: '张先生 <zhang@partner-c.com>', to: '采购部 <procurement@sie.com>',
+              subject: '紧急：PO-2026-0050 交期确认', date: '2026-06-20 08:00',
+              body: '采购老师好，\n\n我们的订单 PO-2026-0050 比较急，麻烦帮忙看下最新的交期是几号？能否加急处理？\n\n谢谢！\n张先生' },
+            { id: 'sample5', label: '多订单查询',
+              from: '陈总 <chen@company-d.com>', to: '采购部 <procurement@sie.com>',
+              subject: '多个订单交期查询', date: '2026-06-17 16:45',
+              body: '采购部你好，\n\n能否帮忙查一下以下两个订单的交期：\n1. PO-2026-0053\n2. PO-2026-0042\n\n谢谢！\n陈总' },
+            { id: 'sample6', label: '邮件转发(供应商催货)',
+              from: '刘小姐 <liu@partner-e.com>', to: '采购部 <procurement@sie.com>',
+              subject: 'Fwd: 供应商催货通知', date: '2026-06-21 11:20',
+              body: '采购部，\n\n以下是供应商催货的邮件转发，请查收。\n我们的订单号是 PO-2026-0045。\n\n---------- Forwarded message ---------\nFrom: 广州迅捷 <sales@gz-fast.cn>\nDate: 2026-06-21\nSubject: 请尽快安排付款\n\n您好，PO-2026-0045 货物已备好，请安排付款以便发货。' },
+        ];
+
+        var currentEmailSource = null;
+
+        // ======================== 初始化 ========================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderSamples();
+            updateEbsStats();
+        });
+
+        function renderSamples() {
+            var container = document.getElementById('sampleList');
+            container.innerHTML = '';
+            SAMPLE_EMAILS.forEach(function(s) {
+                var btn = document.createElement('button');
+                btn.className = 'sample-btn';
+                btn.innerHTML = '<span class="s-label">' + s.label + '</span><span class="s-desc">' + s.subject + '</span>';
+                btn.addEventListener('click', function() { loadSample(s.id); });
+                container.appendChild(btn);
+            });
+        }
+
+        function loadSample(sampleId) {
+            var s = SAMPLE_EMAILS.find(function(e) { return e.id === sampleId; });
+            if (!s) return;
+            var fullEmail =
+                'From: ' + s.from + '\n' +
+                'To: ' + s.to + '\n' +
+                'Subject: ' + s.subject + '\n' +
+                'Date: ' + s.date + '\n\n' +
+                s.body;
+            document.getElementById('emailInput').value = fullEmail;
+            currentEmailSource = s;
+            showToast('已加载: ' + s.label, 'info');
+        }
+
+        function clearEmailInput() {
+            document.getElementById('emailInput').value = '';
+            currentEmailSource = null;
+        }
+
+        function updateEbsStats() {
+            var total = EBS_DB.length;
+            var onTime = EBS_DB.filter(function(e) { return e.status === 'on-time'; }).length;
+            var delayed = EBS_DB.filter(function(e) { return e.status === 'delayed'; }).length;
+            var suppliers = {}; EBS_DB.forEach(function(e) { suppliers[e.short] = true; });
+            document.getElementById('ebsPoCount').textContent = total;
+            document.getElementById('ebsOnTime').textContent = onTime;
+            document.getElementById('ebsDelayed').textContent = delayed;
+            document.getElementById('ebsSuppliers').textContent = Object.keys(suppliers).length;
+        }
+
+        // ======================== AI 聊天机器人 ========================
+
+        function addChatMessage(type, html) {
+            var welcome = document.getElementById('chatWelcome');
+            if (welcome) welcome.style.display = 'none';
+            var container = document.getElementById('chatMessages');
+            var msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg ' + type;
+            var avatar = type === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+            var now = new Date();
+            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            msgDiv.innerHTML = '<div class="avatar">' + avatar + '</div><div class="bubble">' + html + '<span class="msg-time">' + timeStr + '</span></div>';
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTyping() {
+            var container = document.getElementById('chatMessages');
+            var typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-msg ai';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = '<div class="avatar"><i class="fas fa-robot"></i></div><div class="typing-indicator"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function hideTyping() {
+            var typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        // ======================== 核心流程：提交邮件给 AI ========================
+
+        function submitEmailToAI() {
+            var emailText = document.getElementById('emailInput').value.trim();
+            if (!emailText) { showToast('请先输入或选择一封客户邮件', 'error'); return; }
+
+            // Show the email in chat
+            var emailPreview = emailText.replace(/\n/g, '<br>');
+            addChatMessage('user', '📧 收到一封客户邮件，请分析：<br><br><span style="font-size:12px;color:#666;background:#f5f5f5;display:block;padding:8px;border-radius:4px;border:1px solid #e0e0e0;">' + emailPreview + '</span>');
+
+            // Process with AI
+            var sendBtn = document.querySelector('.send-btn');
+            sendBtn.disabled = true;
+            showTyping();
+
+            setTimeout(function() {
+                hideTyping();
+                processEmailWithAI(emailText);
+                sendBtn.disabled = false;
+            }, 600 + Math.random() * 400);
+        }
+
+        function processEmailWithAI(emailText) {
+            // Step 1: Extract PO numbers from email
+            var poPattern = /PO[-‐—–]\d{4}[-‐—–]\d{3,}/gi;
+            var matches = emailText.match(poPattern);
+            if (!matches) {
+                // Try simpler pattern
+                var simplePattern = /PO[-‐—–]\d{4,}/gi;
+                matches = emailText.match(simplePattern);
+            }
+
+            if (!matches || matches.length === 0) {
+                // Also try "订单号" pattern
+                var orderPattern = /订单号[：:]\s*([A-Za-z0-9-]+)/;
+                var orderMatch = emailText.match(orderPattern);
+                if (orderMatch) {
+                    matches = [orderMatch[1]];
+                }
+            }
+
+            if (!matches || matches.length === 0) {
+                addChatMessage('ai', '⚠️ 未能从邮件中提取到有效的 PO 编号。<br><br>' +
+                    '请检查邮件中是否包含如 <strong>PO-2026-0042</strong> 格式的订单号。<br>' +
+                    '您也可以直接在聊天框中输入 PO 号查询，例如：<em>查一下 PO-2026-0042 的交期</em>');
+                return;
+            }
+
+            // Clean up PO numbers (uppercase, trim)
+            var poNumbers = matches.map(function(m) { return m.toUpperCase().trim(); });
+            // Remove duplicates
+            poNumbers = poNumbers.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+            // Step 2: Query EBS database
+            var foundPOs = [];
+            var notFoundPOs = [];
+
+            poNumbers.forEach(function(po) {
+                var record = EBS_DB.find(function(e) { return e.po === po; });
+                if (record) {
+                    foundPOs.push(record);
+                } else {
+                    notFoundPOs.push(po);
+                }
+            });
+
+            // Step 3: Build response
+            var response = '✅ <strong>邮件分析完成</strong><br><br>';
+
+            response += '<span class="step"><span class="step-icon">📋</span> <b>步骤1：提取 PO 编号</b></span>';
+            response += '<br>从邮件中识别到 ' + poNumbers.length + ' 个订单号：';
+            poNumbers.forEach(function(po) {
+                var found = EBS_DB.find(function(e) { return e.po === po; });
+                response += '<br><span class="extracted-po">' + po + '</span>';
+            });
+
+            response += '<br><br><span class="step"><span class="step-icon">🔍</span> <b>步骤2：查询 EBS 数据库</b></span>';
+
+            if (foundPOs.length > 0) {
+                response += '<br>共命中 <strong>' + foundPOs.length + '</strong> 条记录：';
+                foundPOs.forEach(function(r) {
+                    var diff = daysBetween(r.expected, r.confirmed);
+                    var statusIcon = r.status === 'on-time' ? '✅' : '⚠️';
+                    var diffText = diff > 0 ? '延迟 ' + diff + ' 天' : (diff < 0 ? '提前 ' + Math.abs(diff) + ' 天' : '准时');
+                    var statusColor = r.status === 'on-time' ? '#27ae60' : '#e74c3c';
+                    response += '<div class="result-box">';
+                    response += '<table>';
+                    response += '<tr><td>订单号</td><td><strong>' + r.po + '</strong></td></tr>';
+                    response += '<tr><td>供应商</td><td>' + r.supplier + '（' + r.region + '）</td></tr>';
+                    response += '<tr><td>物料编码</td><td><span class="code-badge">' + r.itemCode + '</span></td></tr>';
+                    response += '<tr><td>物料名称</td><td>' + r.item + '</td></tr>';
+                    response += '<tr><td>数量</td><td>' + r.qty.toLocaleString() + ' ' + r.unit + '</td></tr>';
+                    response += '<tr><td>金额</td><td>¥' + r.amount.toLocaleString() + '</td></tr>';
+                    response += '<tr><td>原定交期</td><td>' + r.expected + '</td></tr>';
+                    response += '<tr><td>确认交期</td><td><strong>' + r.confirmed + '</strong> <span style="color:' + statusColor + ';font-size:12px;">' + diffText + '</span></td></tr>';
+                    response += '<tr><td>承运商</td><td>' + r.carrier + '</td></tr>';
+                    response += '<tr><td>物流单号</td><td>' + r.tracking + '</td></tr>';
+                    response += '<tr><td>状态</td><td><span class="tag ' + (r.status === 'on-time' ? 'tag-green' : 'tag-red') + '">' + statusIcon + ' ' + (r.status === 'on-time' ? '准时交付' : '延迟风险') + '</span></td></tr>';
+                    if (r.notes) { response += '<tr><td>备注</td><td style="color:#e65100;">' + r.notes + '</td></tr>'; }
+                    response += '</table>';
+                    response += '</div>';
+                });
+            }
+
+            if (notFoundPOs.length > 0) {
+                response += '<br>⚠️ 以下 PO 编号在 EBS 数据库中未找到：<br>';
+                notFoundPOs.forEach(function(po) {
+                    response += '· ' + po + '<br>';
+                });
+            }
+
+            response += '<br><span class="step"><span class="step-icon">📬</span> <b>步骤3：生成回复</b></span>';
+            if (foundPOs.length === 1) {
+                var r = foundPOs[0];
+                var statusWord = r.status === 'on-time' ? '将按时交付' : '有延迟风险';
+                response += '<br>根据 EBS 数据，订单 <strong>' + r.po + '</strong> 的确认交期为 <strong>' + r.confirmed + '</strong>，' + statusWord + '。';
+                response += '<br>建议回复客户：<span style="color:#2a91d6;font-style:italic;">"您好，经查询 PO-' + r.po + ' 的最新交期为 ' + r.confirmed + '，由 ' + r.carrier + ' 承运，单号 ' + r.tracking + '。"</span>';
+            } else if (foundPOs.length > 1) {
+                response += '<br>共查询到 ' + foundPOs.length + ' 个订单信息，请参考上表分别回复客户。';
+            }
+
+            // Show EBS result in left panel
+            showEbsResult(foundPOs);
+
+            addChatMessage('ai', response);
+        }
+
+        // ======================== 聊天输入 ========================
+
+        function sendMessage() {
+            var input = document.getElementById('chatInput');
+            var text = input.value.trim();
+            if (!text) return;
+
+            addChatMessage('user', text);
+            input.value = '';
+            input.style.height = 'auto';
+
+            var sendBtn = document.querySelector('.send-btn');
+            sendBtn.disabled = true;
+            showTyping();
+
+            setTimeout(function() {
+                hideTyping();
+                handleDirectQuery(text);
+                sendBtn.disabled = false;
+            }, 600 + Math.random() * 400);
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }
+            var textarea = event.target;
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function loadAndSubmit(sampleId) {
+            loadSample(sampleId);
+            setTimeout(function() { submitEmailToAI(); }, 300);
+        }
+
+        function clearChat() {
+            document.getElementById('chatMessages').innerHTML =
+                '<div class="chat-welcome" id="chatWelcome">' +
+                    '<i class="fas fa-robot"></i>' +
+                    '<h3>您好！我是 AI 采购助手</h3>' +
+                    '<p>我的工作流程：<br><b>①</b> 接收客户邮件 → <b>②</b> 提取 PO 编号<br><b>③</b> 查询 EBS 数据库 → <b>④</b> 返回交期信息</p>' +
+                    '<p style="font-size:12px;color:#909399;margin-top:8px;">请在左侧粘贴客户邮件，或选择一个示例邮件，然后点击"提交 AI 分析"。</p>' +
+                '</div>';
+            document.getElementById('ebsResultSection').style.display = 'none';
+        }
+
+        // ======================== 直接查询 ========================
+
+        function handleDirectQuery(text) {
+            var poPattern = /PO[-‐—–]\d{4}[-‐—–]\d{3,}/gi;
+            var matches = text.match(poPattern);
+            if (!matches) { matches = text.match(/PO[-‐—–]\d{4,}/gi); }
+            if (!matches) { matches = text.match(/\b\d{4}[-‐—–]\d{3,}\b/g); }
+
+            if (matches && matches.length > 0) {
+                var poNumbers = matches.map(function(m) { return m.toUpperCase().trim(); }).filter(function(v, i, a) { return a.indexOf(v) === i; });
+                var foundPOs = [];
+                poNumbers.forEach(function(po) {
+                    var record = EBS_DB.find(function(e) { return e.po === po; });
+                    if (record) foundPOs.push(record);
+                });
+
+                if (foundPOs.length > 0) {
+                    var response = '🔍 <strong>EBS 数据库查询结果</strong><br><br>';
+                    foundPOs.forEach(function(r) {
+                        var diff = daysBetween(r.expected, r.confirmed);
+                        var statusIcon = r.status === 'on-time' ? '✅' : '⚠️';
+                        var diffText = diff > 0 ? '延迟 ' + diff + ' 天' : (diff < 0 ? '提前 ' + Math.abs(diff) + ' 天' : '准时');
+                        response += '<div class="result-box">';
+                        response += '<table>';
+                        response += '<tr><td>订单号</td><td><strong>' + r.po + '</strong></td></tr>';
+                        response += '<tr><td>供应商</td><td>' + r.supplier + '</td></tr>';
+                        response += '<tr><td>物料编码</td><td><span class="code-badge">' + r.itemCode + '</span></td></tr>';
+                        response += '<tr><td>物料</td><td>' + r.item + ' x ' + r.qty + r.unit + '</td></tr>';
+                        response += '<tr><td>原定交期</td><td>' + r.expected + '</td></tr>';
+                        response += '<tr><td>确认交期</td><td><strong>' + r.confirmed + '</strong></td></tr>';
+                        response += '<tr><td>差异</td><td style="color:' + (r.status === 'on-time' ? '#27ae60' : '#e74c3c') + ';">' + diffText + '</td></tr>';
+                        response += '<tr><td>承运商</td><td>' + r.carrier + ' / ' + r.tracking + '</td></tr>';
+                        response += '<tr><td>状态</td><td><span class="tag ' + (r.status === 'on-time' ? 'tag-green' : 'tag-red') + '">' + statusIcon + ' ' + (r.status === 'on-time' ? '准时交付' : '延迟风险') + '</span></td></tr>';
+                        response += '</table>';
+                        response += '</div>';
+                    });
+                    showEbsResult(foundPOs);
+                    addChatMessage('ai', response);
+                } else {
+                    var allPOs = poNumbers.join(', ');
+                    addChatMessage('ai', '⚠️ 在 EBS 数据库中未找到以下订单：<strong>' + allPOs + '</strong>。<br>请确认 PO 编号是否正确。');
+                }
+                return;
+            }
+
+            // Default: show help
+            addChatMessage('ai',
+                '您好！我可以帮您查询 EBS 采购订单信息。<br><br>' +
+                '📧 <b>方式一：提交客户邮件</b><br>' +
+                '在左侧粘贴客户邮件内容，AI 会自动提取 PO 编号并查询 EBS 数据库。<br><br>' +
+                '🔍 <b>方式二：直接输入 PO 号</b><br>' +
+                '直接在聊天框输入 PO 编号即可查询，例如：<br>' +
+                '· PO-2026-0042<br>' +
+                '· 查一下 PO-2026-0045 的交期<br><br>' +
+                '📋 <b>方式三：使用示例邮件</b><br>' +
+                '点击下方的示例邮件按钮，自动加载并分析。');
+        }
+
+        // ======================== EBS 查询结果展示（左侧面板） ========================
+
+        function showEbsResult(records) {
+            if (!records || records.length === 0) return;
+            var section = document.getElementById('ebsResultSection');
+            var content = document.getElementById('ebsResultContent');
+            section.style.display = 'block';
+            content.innerHTML = '';
+            records.forEach(function(r) {
+                var diff = daysBetween(r.expected, r.confirmed);
+                var diffText = diff > 0 ? '延迟 ' + diff + ' 天' : (diff < 0 ? '提前 ' + Math.abs(diff) + ' 天' : '准时');
+                var statusTag = r.status === 'on-time' ? 'tag-green' : 'tag-red';
+                var statusText = r.status === 'on-time' ? '✅ 准时交付' : '⚠️ 延迟风险';
+                content.innerHTML +=
+                    '<div class="po-row"><span class="po-label">订单号</span><span class="po-value"><strong>' + r.po + '</strong></span></div>' +
+                    '<div class="po-row"><span class="po-label">供应商</span><span class="po-value">' + r.supplier + '</span></div>' +
+                    '<div class="po-row"><span class="po-label">物料编码</span><span class="po-value"><span class="code-badge">' + r.itemCode + '</span></span></div>' +
+                    '<div class="po-row"><span class="po-label">物料</span><span class="po-value">' + r.item + '</span></div>' +
+                    '<div class="po-row"><span class="po-label">数量/金额</span><span class="po-value">' + r.qty + r.unit + ' / ¥' + r.amount.toLocaleString() + '</span></div>' +
+                    '<div class="po-row"><span class="po-label">确认交期</span><span class="po-value"><strong>' + r.confirmed + '</strong></span></div>' +
+                    '<div class="po-row"><span class="po-label">差异</span><span class="po-value" style="color:' + (r.status === 'on-time' ? '#27ae60' : '#e74c3c') + ';">' + diffText + '</span></div>' +
+                    '<div class="po-row"><span class="po-label">承运/单号</span><span class="po-value">' + r.carrier + ' / ' + r.tracking + '</span></div>' +
+                    '<div class="po-row"><span class="po-label">状态</span><span class="po-value"><span class="tag ' + statusTag + '">' + statusText + '</span></span></div>' +
+                    '<hr style="border:none;border-top:1px solid #e8eaef;margin:8px 0;">';
+            });
+        }
+
+        // ======================== 工具 ========================
+
+        function daysBetween(d1, d2) {
+            return Math.round((new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24));
+        }
+
+        function showToast(message, type) {
+            var existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            var toast = document.createElement('div');
+            toast.className = 'toast toast-' + (type || 'info');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
+        }
+    </script>
+
+    <!-- Dify 智能客服嵌入（可选后端AI引擎） -->
+    <script>
+        window.difyChatbotConfig = {
+            token: '2KScDqPKu0GjsC2S',
+            baseUrl: 'http://192.168.181.189',
+        };
+    </script>
+    <script src="http://192.168.181.189/embed.min.js" id="2KScDqPKu0GjsC2S" defer></script>
+    <style>
+        #dify-chatbot-bubble-button { background-color: #1C64F2 !important; }
+        #dify-chatbot-bubble-window { width: 24rem !important; height: 40rem !important; }
+    </style>
+
+</body>
+</html>

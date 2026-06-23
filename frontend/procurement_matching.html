@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>采购需求匹配 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .pm-page { overflow: hidden; }
+        .pm-page .content-grid { display: grid; grid-template-columns: 400px 1fr; gap: 10px; height: 100%; overflow: hidden; }
+        .pm-config-panel { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eaeaea; }
+        .pm-panel-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; background: white; }
+        .pm-panel-header h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; color: #303133; font-weight: 700; line-height: 1.4; }
+        .pm-panel-header h2 i { color: #ad063e; }
+        .pm-panel-header p { margin: 8px 0 0 0; font-size: 12px; color: #7f8c8d; }
+        .pm-config-body { padding: 5px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .config-section { background: #f8f9fa; border-radius: 8px; padding: 16px; border: 1px solid #e8eaef; }
+        .config-section-title { font-size: 14px; font-weight: 700; color: #303133; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .config-section-title i { color: #ad063e; width: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #606266; margin-bottom: 6px; }
+        .form-group select, .form-group input { width: 100%; padding: 8px 12px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 12px; font-family: inherit; transition: all 0.3s; box-sizing: border-box; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: #ad063e; box-shadow: 0 0 0 3px rgba(173,6,62,0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .threshold-group { display: flex; align-items: center; gap: 12px; }
+        .threshold-group input[type="range"] { flex: 1; accent-color: #ad063e; }
+        .threshold-group .threshold-value { font-size: 20px; font-weight: 700; color: #ad063e; min-width: 48px; text-align: center; }
+        .dimension-list { display: flex; flex-direction: column; gap: 6px; }
+        .dimension-item { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: white; border-radius: 6px; border: 1px solid #e8eaef; }
+        .dimension-item .dim-name { font-size: 12px; color: #606266; flex: 1; }
+        .dimension-item .dim-weight { font-size: 12px; color: #ad063e; font-weight: 600; min-width: 40px; text-align: right; }
+        .dimension-item input[type="range"] { flex: 0 0 100px; accent-color: #ad063e; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 5px; }
+        .action-buttons .btn { flex: 1; padding: 10px 20px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-primary { background: #ad063e; color: white; }
+        .btn-primary:hover { background: #920535; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(173,6,62,0.25); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #f0f0f0; color: #606266; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .results-panel { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eaeaea; }
+        .results-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .results-header h2 { margin: 0; font-size: 18px; color: #303133; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .results-header h2 i { color: #ad063e; }
+        .results-stats { display: flex; gap: 20px; align-items: center; }
+        .stat-item { text-align: center; }
+        .stat-item .stat-number { font-size: 20px; font-weight: 700; color: #ad063e; }
+        .stat-item .stat-label { font-size: 11px; color: #909399; }
+        .results-toolbar { padding: 12px 24px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+        .results-toolbar .btn { padding: 7px 16px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+        .results-body { flex: 1; overflow: auto; padding: 16px 24px; }
+        .toast-success { background: #ad063e; color: white; }
+        .badge-auto { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-auto.yes { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .badge-auto.no { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
+        .badge-rank { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 11px; font-weight: 700; }
+        .badge-rank.r1 { background: #ffd700; color: #333; }
+        .badge-rank.r2 { background: #c0c0c0; color: #333; }
+        .badge-rank.r3 { background: #cd7f32; color: white; }
+        .badge-rank.other { background: #e8eaef; color: #909399; }
+        .match-rate-bar { display: flex; align-items: center; gap: 8px; }
+        .match-rate-bar .bar-bg { flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+        .match-rate-bar .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+        .match-rate-bar .bar-fill.high { background: #2e7d32; }
+        .match-rate-bar .bar-fill.medium { background: #f57c00; }
+        .match-rate-bar .bar-fill.low { background: #c62828; }
+        .match-rate-bar .rate-text { font-weight: 700; font-size: 13px; min-width: 48px; text-align: right; }
+        .match-card { border: 1px solid #e8eaef; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; background: #fafafa; transition: all 0.3s; }
+        .match-card:hover { border-color: #ad063e; box-shadow: 0 2px 12px rgba(173,6,62,0.1); }
+        .match-card .mc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .match-card .mc-po { font-weight: 600; font-size: 13px; color: #303133; }
+        .match-card .mc-po span { color: #909399; font-weight: 400; }
+        .match-card .mc-dims { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; }
+        .match-card .mc-dim { font-size: 11px; color: #606266; display: flex; justify-content: space-between; }
+        .match-card .mc-dim .dim-val { font-weight: 600; }
+        .match-card .mc-dim .dim-val.match { color: #2e7d32; }
+        .match-card .mc-dim .dim-val.mismatch { color: #c62828; }
+        .auto-issue-banner { padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .auto-issue-banner.success { background: #e8f5e9; border: 1px solid #a5d6a7; color: #2e7d32; }
+        .auto-issue-banner.info { background: #e3f2fd; border: 1px solid #90caf9; color: #1565c0; }
+        .section-title-sm { font-size: 13px; font-weight: 600; color: #303133; margin: 12px 0 8px; display: flex; align-items: center; gap: 6px; }
+        .results-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+        .results-table thead, .results-table tbody, .results-table tbody tr { display: table; width: 100%; table-layout: fixed; }
+        .results-table tbody { display: table-row-group; max-height: none; overflow: visible; }
+        .results-table th { background: #f5f7fa; color: #606266; font-weight: 600; padding: 10px; text-align: left; border-bottom: 2px solid #e5e7eb; line-height: 1.3; }
+        .results-table td { padding: 10px; border-bottom: 1px solid #f0f0f0; color: #303133; }
+        .results-table tr:hover td { background: #f8f9fa; }
+        .sub-text { font-size: 11px; color: #909399; }
+        .results-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; }
+        .ai-analysis-box { margin: 0 0 16px 0; padding: 16px 20px; background: #fff8f0; border: 1px solid #ffe0b2; border-radius: 8px; display: none; }
+        .ai-analysis-box.visible { display: block; }
+        .ai-analysis-box .analysis-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #e65100; margin-bottom: 8px; }
+        .ai-analysis-box .analysis-content { font-size: 13px; color: #606266; line-height: 1.6; }
+        .btn-outline { background: transparent; color: #ad063e; border: 1px solid #ad063e; }
+        .btn-outline:hover { background: #ad063e; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+            <main class="main-content-area pm-page">
+                <div class="content-grid">
+            <div class="pm-config-panel">
+                <div class="pm-panel-header">
+                    <h2><i class="fas fa-handshake"></i> 采购需求匹配</h2>
+                    <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">输入采购需求，与历史PO匹配，按匹配率自动排序</p>
+                </div>
+                <div class="pm-config-body">
+                    <div class="config-section">
+                        <div class="config-section-title"><i class="fas fa-shopping-cart"></i> 需求信息</div>
+                        <div class="form-group">
+                            <label>物料编码</label>
+                            <select id="reqItemCode" onchange="onItemCodeChange()"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>物料名称</label>
+                            <input id="reqItemName" readonly placeholder="选择物料编码后自动填写">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>需求数量</label>
+                                <input id="reqQty" type="number" value="50" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>期望交期</label>
+                                <input id="reqDelivery" type="date">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>首选供应商</label>
+                            <select id="reqSupplier"></select>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <div class="config-section-title"><i class="fas fa-sliders-h"></i> 匹配设置</div>
+                        <div class="form-group">
+                            <label>匹配率阈值（高于此值自动下单）</label>
+                            <div class="threshold-group">
+                                <input type="range" id="thresholdSlider" min="0" max="100" value="75" oninput="document.getElementById('thresholdVal').textContent=this.value+'%'">
+                                <span class="threshold-value" id="thresholdVal">75%</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>历史PO时间范围</label>
+                            <input type="date" id="poDateFrom" value="2025-01-01">
+                            <span style="display:block;text-align:center;font-size:11px;color:#909399;padding:2px 0;">至</span>
+                            <input type="date" id="poDateTo">
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <div class="config-section-title"><i class="fas fa-weight-hanging"></i> 匹配维度权重</div>
+                        <div class="dimension-list" id="dimensionList"></div>
+                    </div>
+                    <div class="action-buttons" style="padding:0 5px 5px;">
+                        <button class="btn btn-primary" onclick="startMatching()"><i class="fas fa-search"></i> 开始匹配</button>
+                        <button class="btn btn-secondary" onclick="resetForm()"><i class="fas fa-undo"></i> 重置</button>
+                    </div>
+                </div>
+            </div>
+            <div class="results-panel">
+                <div class="results-header">
+                    <div>
+                        <h2><i class="fas fa-chart-bar"></i> 匹配结果</h2>
+                        <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">多维智能匹配，按匹配率排序并自动生成PO</p>
+                    </div>
+                    <div class="results-stats">
+                        <div class="stat-item"><div class="stat-number" id="totalCount">0</div><div class="stat-label">历史PO数</div></div>
+                        <div class="stat-item"><div class="stat-number" id="avgRate">-</div><div class="stat-label">平均匹配率</div></div>
+                        <div class="stat-item"><div class="stat-number" id="autoCount">0</div><div class="stat-label">自动下单</div></div>
+                    </div>
+                </div>
+                <div class="results-toolbar">
+                    <button class="btn btn-primary" onclick="exportMatchingResult()"><i class="fas fa-file-excel"></i> 导出结果</button>
+                    <button class="btn btn-outline" onclick="runAIAnalysis()"><i class="fas fa-magic"></i> AI 分析建议</button>
+                    <span style="font-size:12px;color:#909399;margin-left:auto;">匹配率 ≥ <strong id="thresholdDisplay">75%</strong> 自动生成PO</span>
+                </div>
+                <div class="results-body" id="resultsBody">
+                    <div class="ai-analysis-box" id="aiAnalysisBox">
+                        <div class="analysis-header"><i class="fas fa-robot"></i> AI 采购策略建议</div>
+                        <div class="analysis-content" id="aiAnalysisContent"></div>
+                    </div>
+                    <div class="results-empty" id="resultsEmpty">
+                        <i class="fas fa-inbox" style="font-size:48px;color:#dcdfe6;margin-bottom:12px;"></i>
+                        <div style="color:#909399;font-size:13px;">请在左侧输入采购需求，点击"开始匹配"</div>
+                    </div>
+                    <div id="resultsContent" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+        </main>
+        </div>
+        <div id="footer-placeholder"></div>
+    </div>
+    <script src="static/js/layout.js"></script>
+    <script src="static/js/main.js"></script>
+    <script>
+        // ============ Historical PO Data (based on data.md) ============
+        var HISTORICAL_PO = [
+            { po:'PO-2024-0001', supplier:'华强供应链', itemCode:'C-CE-CPU', itemName:'Intel Core i7 CPU', qty:20, unit:'PCS', price:2850, amount:57000, delivery:'2024-03-15', status:'已交付', class:'C', type:'CE', subType:'CPU' },
+            { po:'PO-2024-0002', supplier:'广州迅捷', itemCode:'C-CH-Z00', itemName:'工业清洗剂', qty:100, unit:'L', price:45, amount:4500, delivery:'2024-04-20', status:'已交付', class:'C', type:'CH', subType:'Z00' },
+            { po:'PO-2024-0003', supplier:'上海通贸', itemCode:'C-EM-OFF', itemName:'办公设备-投影仪', qty:5, unit:'PCS', price:3200, amount:16000, delivery:'2024-05-10', status:'已交付', class:'C', type:'EM', subType:'OFF' },
+            { po:'PO-2024-0004', supplier:'华强供应链', itemCode:'C-PK-CTN', itemName:'包装纸箱', qty:500, unit:'PCS', price:8, amount:4000, delivery:'2024-06-01', status:'已交付', class:'C', type:'PK', subType:'CTN' },
+            { po:'PO-2024-0005', supplier:'北京中科', itemCode:'C-MI-CTR', itemName:'电子计数器', qty:30, unit:'PCS', price:180, amount:5400, delivery:'2024-06-25', status:'已交付', class:'C', type:'MI', subType:'CTR' },
+            { po:'PO-2024-0006', supplier:'成都天府', itemCode:'C-CS-OAS', itemName:'Office办公软件授权', qty:10, unit:'套', price:4500, amount:45000, delivery:'2024-07-15', status:'已交付', class:'C', type:'CS', subType:'OAS' },
+            { po:'PO-2024-0007', supplier:'广州迅捷', itemCode:'C-ST-GEN', itemName:'办公文具套装', qty:200, unit:'套', price:25, amount:5000, delivery:'2024-08-01', status:'已交付', class:'C', type:'ST', subType:'GEN' },
+            { po:'PO-2024-0008', supplier:'上海通贸', itemCode:'C-SE-HEL', itemName:'安全头盔', qty:150, unit:'PCS', price:85, amount:12750, delivery:'2024-08-20', status:'已交付', class:'C', type:'SE', subType:'HEL' },
+            { po:'PO-2025-0001', supplier:'华强供应链', itemCode:'C-EA-LGT', itemName:'LED照明灯管', qty:300, unit:'PCS', price:32, amount:9600, delivery:'2025-01-20', status:'已交付', class:'C', type:'EA', subType:'LGT' },
+            { po:'PO-2025-0002', supplier:'北京中科', itemCode:'C-MP-BER', itemName:'精密轴承', qty:80, unit:'PCS', price:120, amount:9600, delivery:'2025-02-15', status:'已交付', class:'C', type:'MP', subType:'BER' },
+            { po:'PO-2025-0003', supplier:'广州迅捷', itemCode:'C-PK-PLB', itemName:'PE塑料袋', qty:1000, unit:'PCS', price:3, amount:3000, delivery:'2025-03-01', status:'已交付', class:'C', type:'PK', subType:'PLB' },
+            { po:'PO-2025-0004', supplier:'华强供应链', itemCode:'C-CE-ACC', itemName:'电脑配件-键盘鼠标', qty:60, unit:'套', price:180, amount:10800, delivery:'2025-03-25', status:'已交付', class:'C', type:'CE', subType:'ACC' },
+            { po:'PO-2025-0005', supplier:'成都天府', itemCode:'C-EA-AUD', itemName:'会议音响设备', qty:4, unit:'PCS', price:2800, amount:11200, delivery:'2025-04-10', status:'已交付', class:'C', type:'EA', subType:'AUD' },
+            { po:'PO-2025-0006', supplier:'上海通贸', itemCode:'C-EM-NOF', itemName:'非办公设备-空压机', qty:2, unit:'PCS', price:15000, amount:30000, delivery:'2025-05-05', status:'已交付', class:'C', type:'EM', subType:'NOF' },
+            { po:'PO-2025-0007', supplier:'北京中科', itemCode:'C-MI-GAU', itemName:'数显压力表', qty:25, unit:'PCS', price:350, amount:8750, delivery:'2025-05-28', status:'已交付', class:'C', type:'MI', subType:'GAU' },
+            { po:'PO-2025-0008', supplier:'广州迅捷', itemCode:'C-CH-LBA', itemName:'实验室玻璃器皿', qty:50, unit:'套', price:95, amount:4750, delivery:'2025-06-15', status:'已交付', class:'C', type:'CH', subType:'LBA' },
+            { po:'PO-2026-0001', supplier:'华强供应链', itemCode:'C-CE-CPU', itemName:'Intel Core i9 CPU', qty:15, unit:'PCS', price:4200, amount:63000, delivery:'2026-01-20', status:'进行中', class:'C', type:'CE', subType:'CPU' },
+            { po:'PO-2026-0002', supplier:'上海通贸', itemCode:'C-PK-PAL', itemName:'塑料托盘', qty:200, unit:'PCS', price:65, amount:13000, delivery:'2026-02-10', status:'进行中', class:'C', type:'PK', subType:'PAL' },
+            { po:'PO-2026-0003', supplier:'成都天府', itemCode:'C-MA-AAX', itemName:'自动装配线配件', qty:10, unit:'套', price:5800, amount:58000, delivery:'2026-03-01', status:'进行中', class:'C', type:'MA', subType:'AAX' },
+            { po:'PO-2026-0004', supplier:'北京中科', itemCode:'C-MD-STR', itemName:'剥离器备件', qty:40, unit:'PCS', price:220, amount:8800, delivery:'2026-03-20', status:'进行中', class:'C', type:'MD', subType:'STR' }
+        ];
+
+        var SUPPLIERS = ['华强供应链', '广州迅捷', '上海通贸', '北京中科', '成都天府'];
+
+        var MATCH_DIMENSIONS = [
+            { key:'class', name:'大类匹配', weight:15 },
+            { key:'type', name:'类型匹配', weight:20 },
+            { key:'subType', name:'子类匹配', weight:15 },
+            { key:'supplier', name:'供应商匹配', weight:20 },
+            { key:'price', name:'价格区间匹配', weight:15 },
+            { key:'qty', name:'数量匹配', weight:10 },
+            { key:'itemName', name:'物料名称语义', weight:5 }
+        ];
+
+        var ITEM_CODES = [];
+        var reqDates = { from: '2025-01-01', to: '2026-06-30' };
+
+        function init() {
+            var codeSet = new Set();
+            HISTORICAL_PO.forEach(function(p) {
+                if (!codeSet.has(p.itemCode)) {
+                    codeSet.add(p.itemCode);
+                    ITEM_CODES.push({ code:p.itemCode, name:p.itemName, cls:p.class, type:p.type, sub:p.subType });
+                }
+            });
+            var sel = document.getElementById('reqItemCode');
+            ITEM_CODES.forEach(function(c) {
+                var opt = document.createElement('option');
+                opt.value = c.code;
+                opt.textContent = c.code + ' - ' + c.name;
+                sel.appendChild(opt);
+            });
+            var supSel = document.getElementById('reqSupplier');
+            SUPPLIERS.forEach(function(s) {
+                var opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                supSel.appendChild(opt);
+            });
+            var now = new Date();
+            document.getElementById('reqDelivery').value = now.toISOString().split('T')[0];
+            document.getElementById('poDateTo').value = now.toISOString().split('T')[0];
+            renderDimensions();
+            if (ITEM_CODES.length > 0) onItemCodeChange();
+        }
+
+        function renderDimensions() {
+            var container = document.getElementById('dimensionList');
+            container.innerHTML = '';
+            MATCH_DIMENSIONS.forEach(function(d, i) {
+                var div = document.createElement('div');
+                div.className = 'dimension-item';
+                div.innerHTML =
+                    '<span class="dim-name">' + d.name + '</span>' +
+                    '<input type="range" min="0" max="50" value="' + d.weight + '" id="dw_' + i + '" oninput="updateDimWeight(' + i + ')">' +
+                    '<span class="dim-weight" id="dwv_' + i + '">' + d.weight + '%</span>';
+                container.appendChild(div);
+            });
+        }
+
+        function updateDimWeight(i) {
+            document.getElementById('dwv_' + i).textContent = document.getElementById('dw_' + i).value + '%';
+        }
+
+        function onItemCodeChange() {
+            var sel = document.getElementById('reqItemCode');
+            if (!sel.value) return;
+            var found = ITEM_CODES.find(function(c) { return c.code === sel.value; });
+            document.getElementById('reqItemName').value = found ? found.name : '';
+        }
+
+        function resetForm() {
+            document.getElementById('thresholdSlider').value = 75;
+            document.getElementById('thresholdVal').textContent = '75%';
+            if (ITEM_CODES.length > 0) {
+                document.getElementById('reqItemCode').selectedIndex = 0;
+                onItemCodeChange();
+            }
+            document.getElementById('reqQty').value = 50;
+            document.getElementById('reqSupplier').selectedIndex = 0;
+            document.getElementById('resultsEmpty').style.display = 'flex';
+            document.getElementById('resultsContent').style.display = 'none';
+            document.getElementById('totalCount').textContent = '0';
+            document.getElementById('avgRate').textContent = '-';
+            document.getElementById('autoCount').textContent = '0';
+        }
+
+        function startMatching() {
+            var itemCode = document.getElementById('reqItemCode').value;
+            if (!itemCode) { showToast('请选择物料编码'); return; }
+            var qty = parseInt(document.getElementById('reqQty').value) || 0;
+            if (qty <= 0) { showToast('请输入有效数量'); return; }
+            var supplier = document.getElementById('reqSupplier').value;
+            var threshold = parseInt(document.getElementById('thresholdSlider').value);
+            var dateFrom = document.getElementById('poDateFrom').value;
+            var dateTo = document.getElementById('poDateTo').value;
+
+            document.getElementById('thresholdDisplay').textContent = threshold + '%';
+            document.getElementById('resultsEmpty').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'block';
+
+            var weights = MATCH_DIMENSIONS.map(function(_, i) {
+                return parseInt(document.getElementById('dw_' + i).value) || 0;
+            });
+            var weightSum = weights.reduce(function(a, b) { return a + b; }, 0) || 1;
+
+            var req = ITEM_CODES.find(function(c) { return c.code === itemCode; });
+            if (!req) { showToast('物料编码数据异常'); return; }
+
+            var reqPriceEst = getEstimatedPrice(itemCode);
+
+            var filtered = HISTORICAL_PO.filter(function(p) {
+                return p.delivery >= dateFrom && p.delivery <= dateTo;
+            });
+
+            var results = filtered.map(function(p) {
+                var dimScores = [];
+                var total = 0;
+
+                var classScore = p.class === req.cls ? 100 : 0;
+                dimScores.push({ key:'class', score:classScore, match:classScore===100 });
+                total += classScore * weights[0];
+
+                var typeScore = p.type === req.type ? 100 : 0;
+                dimScores.push({ key:'type', score:typeScore, match:typeScore===100 });
+                total += typeScore * weights[1];
+
+                var subScore = p.subType === req.sub ? 100 : 0;
+                dimScores.push({ key:'subType', score:subScore, match:subScore===100 });
+                total += subScore * weights[2];
+
+                var supScore = p.supplier === supplier ? 100 : 50;
+                dimScores.push({ key:'supplier', score:supScore, match:supScore>=90 });
+                total += supScore * weights[3];
+
+                var priceDiff = reqPriceEst > 0 ? Math.abs(p.price - reqPriceEst) / reqPriceEst : 1;
+                var priceScore = priceDiff <= 0.1 ? 100 : priceDiff <= 0.2 ? 80 : priceDiff <= 0.3 ? 50 : 20;
+                dimScores.push({ key:'price', score:priceScore, match:priceScore>=80 });
+                total += priceScore * weights[4];
+
+                var qtyRatio = p.qty > 0 ? qty / p.qty : 0;
+                var qtyScore = qtyRatio >= 0.5 && qtyRatio <= 2 ? 100 : qtyRatio >= 0.25 && qtyRatio <= 3 ? 60 : 30;
+                dimScores.push({ key:'qty', score:qtyScore, match:qtyScore>=80 });
+                total += qtyScore * weights[5];
+
+                var nameMatch = p.itemName.indexOf(document.getElementById('reqItemName').value.substring(0, 4)) >= 0 || document.getElementById('reqItemName').value.indexOf(p.itemName.substring(0, 4)) >= 0;
+                var nameScore = nameMatch ? 80 : 30;
+                dimScores.push({ key:'itemName', score:nameScore, match:nameScore>=70 });
+                total += nameScore * weights[6];
+
+                var finalRate = Math.round(total / weightSum);
+                return { po:p, dimScores:dimScores, rate:finalRate };
+            });
+
+            results.sort(function(a, b) { return b.rate - a.rate; });
+            if (results.length > 0) window._lastDimScores = results[0].dimScores;
+            renderResults(results, threshold);
+        }
+
+        function getEstimatedPrice(itemCode) {
+            var matched = HISTORICAL_PO.filter(function(p) { return p.itemCode === itemCode; });
+            if (matched.length > 0) {
+                var sum = matched.reduce(function(s, p) { return s + p.price; }, 0);
+                return Math.round(sum / matched.length);
+            }
+            var sameType = HISTORICAL_PO.filter(function(p) { return p.itemCode.split('-')[1] === itemCode.split('-')[1]; });
+            if (sameType.length > 0) {
+                var sum2 = sameType.reduce(function(s, p) { return s + p.price; }, 0);
+                return Math.round(sum2 / sameType.length);
+            }
+            return 0;
+        }
+
+        function renderResults(results, threshold) {
+            var container = document.getElementById('resultsContent');
+            var total = results.length;
+            var avg = total > 0 ? Math.round(results.reduce(function(s, r) { return s + r.rate; }, 0) / total) : 0;
+            var autoCount = results.filter(function(r) { return r.rate >= threshold; }).length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('avgRate').textContent = avg + '%';
+            document.getElementById('autoCount').textContent = autoCount;
+
+            var html = '';
+            if (autoCount > 0) {
+                html += '<div class="auto-issue-banner success"><i class="fas fa-check-circle"></i> 匹配率 ≥ ' + threshold + '% 的记录共 <strong>' + autoCount + '</strong> 条，系统将自动生成采购订单</div>';
+            } else {
+                html += '<div class="auto-issue-banner info"><i class="fas fa-info-circle"></i> 暂无匹配率 ≥ ' + threshold + '% 的记录，建议调整匹配阈值或采购需求</div>';
+            }
+
+            html += '<table class="results-table"><thead><tr>' +
+                '<th>排名</th>' +
+                '<th>PO编号</th>' +
+                '<th>供应商</th>' +
+                '<th>物料编码</th>' +
+                '<th>数量</th>' +
+                '<th>单价</th>' +
+                '<th>交期</th>' +
+                '<th>匹配率</th>' +
+                '<th>自动下单</th>' +
+                '</tr></thead><tbody>';
+
+            results.forEach(function(r, i) {
+                var rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'other';
+                var autoFlag = r.rate >= threshold;
+                var barClass = r.rate >= 80 ? 'high' : r.rate >= 50 ? 'medium' : 'low';
+                html += '<tr onclick="showDetail(' + i + ')" style="cursor:pointer;">' +
+                    '<td><span class="badge-rank ' + rankClass + '">' + (i + 1) + '</span></td>' +
+                    '<td><strong>' + r.po.po + '</strong><br><span class="sub-text">' + r.po.delivery + '</span></td>' +
+                    '<td>' + r.po.supplier + '</td>' +
+                    '<td><span style="font-weight:600;">' + r.po.itemCode + '</span><br><span class="sub-text">' + r.po.itemName + '</span></td>' +
+                    '<td>' + r.po.qty + '</td>' +
+                    '<td>¥' + r.po.price.toFixed(2) + '</td>' +
+                    '<td>' + r.po.delivery + '</td>' +
+                    '<td><div class="match-rate-bar"><div class="bar-bg"><div class="bar-fill ' + barClass + '" style="width:' + r.rate + '%;"></div></div><span class="rate-text" style="color:' + (r.rate >= 80 ? '#2e7d32' : r.rate >= 50 ? '#f57c00' : '#c62828') + ';">' + r.rate + '%</span></div></td>' +
+                    '<td><span class="badge-auto ' + (autoFlag ? 'yes' : 'no') + '">' + (autoFlag ? '✓ 自动下单' : '未达标') + '</span></td>' +
+                    '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += '<div class="section-title-sm" style="margin-top:20px;"><i class="fas fa-list-alt"></i> 匹配详情</div>';
+            html += '<div id="matchDetails"></div>';
+            container.innerHTML = html;
+
+            if (results.length > 0) showDetail(0);
+            window._matchResults = results;
+        }
+
+        function showDetail(index) {
+            var results = window._matchResults || [];
+            if (index < 0 || index >= results.length) return;
+            var r = results[index];
+            var dimLabels = { class:'大类', type:'类型', subType:'子类', supplier:'供应商', price:'价格', qty:'数量', itemName:'名称匹配' };
+            var html = '<div class="match-card">' +
+                '<div class="mc-header"><div class="mc-po">' + r.po.po + ' <span>' + r.po.supplier + ' | ' + r.po.itemName + '</span></div>' +
+                '<span style="font-weight:700;font-size:15px;color:' + (r.rate >= 75 ? '#2e7d32' : r.rate >= 50 ? '#f57c00' : '#c62828') + ';">匹配率 ' + r.rate + '%</span></div>' +
+                '<div class="mc-dims">';
+            r.dimScores.forEach(function(d) {
+                var matchClass = d.match ? 'match' : 'mismatch';
+                html += '<div class="mc-dim"><span>' + (dimLabels[d.key] || d.key) + '</span><span class="dim-val ' + matchClass + '">' + d.score + '%</span></div>';
+            });
+            html += '</div></div>';
+
+            var allCards = '';
+            results.forEach(function(ri, i) {
+                var dimLabels2 = { class:'大类', type:'类型', subType:'子类', supplier:'供应商', price:'价格', qty:'数量', itemName:'名称匹配' };
+                var card = '<div class="match-card" ' + (i === index ? 'style="border-color:#ad063e;box-shadow:0 2px 12px rgba(173,6,62,0.1);"' : '') + ' onclick="showDetail(' + i + ')">' +
+                    '<div class="mc-header"><div class="mc-po">#' + (i+1) + ' ' + ri.po.po + ' <span>' + ri.po.supplier + '</span></div>' +
+                    '<span style="font-weight:700;font-size:14px;color:' + (ri.rate >= 75 ? '#2e7d32' : ri.rate >= 50 ? '#f57c00' : '#c62828') + ';">' + ri.rate + '%</span></div>' +
+                    '<div class="mc-dims">';
+                ri.dimScores.forEach(function(d) {
+                    var mc = d.match ? 'match' : 'mismatch';
+                    card += '<div class="mc-dim"><span>' + (dimLabels2[d.key] || d.key) + '</span><span class="dim-val ' + mc + '">' + d.score + '%</span></div>';
+                });
+                card += '</div></div>';
+                allCards += card;
+            });
+            document.getElementById('matchDetails').innerHTML = allCards;
+        }
+
+        function exportMatchingResult() {
+            var results = window._matchResults || [];
+            if (results.length === 0) { showToast('暂无匹配结果可导出'); return; }
+            var threshold = parseInt(document.getElementById('thresholdSlider').value);
+            var rows = [['排名','PO编号','供应商','物料编码','物料名称','数量','单价','金额','交期','匹配率','是否自动下单']];
+            results.forEach(function(r, i) {
+                rows.push([
+                    (i + 1).toString(),
+                    r.po.po,
+                    r.po.supplier,
+                    r.po.itemCode,
+                    r.po.itemName,
+                    r.po.qty.toString(),
+                    '¥' + r.po.price.toFixed(2),
+                    '¥' + (r.po.qty * r.po.price).toFixed(2),
+                    r.po.delivery,
+                    r.rate + '%',
+                    r.rate >= threshold ? '是' : '否'
+                ]);
+            });
+            var csv = rows.map(function(row) {
+                return row.map(function(cell) { return '"' + cell.replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\n');
+            var BOM = '\uFEFF';
+            var blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = '采购需求匹配结果_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('导出成功');
+        }
+
+        function runAIAnalysis() {
+            var results = window._matchResults || [];
+            if (results.length === 0) { showToast('请先执行匹配分析'); return; }
+            var box = document.getElementById('aiAnalysisBox');
+            var content = document.getElementById('aiAnalysisContent');
+            var threshold = parseInt(document.getElementById('thresholdSlider').value);
+            var reqCode = document.getElementById('reqItemCode').value;
+            var reqName = document.getElementById('reqItemName').value;
+            var reqQty = document.getElementById('reqQty').value;
+            var preferredSup = document.getElementById('reqSupplier').value;
+
+            box.classList.add('visible');
+            content.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> AI 正在分析匹配结果...';
+
+            setTimeout(function() {
+                var autoItems = results.filter(function(r) { return r.rate >= threshold; });
+                var top3 = results.slice(0, 3);
+                var avgRate = results.length > 0 ? Math.round(results.reduce(function(s, r) { return s + r.rate; }, 0) / results.length) : 0;
+
+                var analysis = '针对 <strong>' + reqName + '</strong>（编码: ' + reqCode + '，需求量: ' + reqQty + '）的采购需求，AI 分析如下：<br><br>';
+
+                analysis += '📊 <strong>匹配概况</strong><br>';
+                analysis += '共匹配 ' + results.length + ' 条历史PO，平均匹配率 ' + avgRate + '%，';
+                analysis += '其中匹配率 ≥ ' + threshold + '% 的有 <strong>' + autoItems.length + '</strong> 条，已标记为自动下单。<br><br>';
+
+                if (autoItems.length > 0) {
+                    analysis += '✅ <strong>推荐自动下单</strong><br>';
+                    analysis += '以下PO满足自动下单条件：<br>';
+                    autoItems.forEach(function(r) {
+                        analysis += '&nbsp;&nbsp;• ' + r.po.po + '（' + r.po.supplier + '）— 匹配率 ' + r.rate + '%<br>';
+                    });
+                    analysis += '<br>';
+                }
+
+                if (top3.length > 0) {
+                    var best = top3[0];
+                    analysis += '🏆 <strong>最优匹配建议</strong><br>';
+                    analysis += '首选 ' + best.po.supplier + ' 的 ' + best.po.po + '，匹配率 ' + best.rate + '%。';
+                    analysis += '该供应商此前供应 ' + best.po.itemName + '，单价 ¥' + best.po.price + '，交期 ' + best.po.delivery + '。';
+
+                    var supMatches = results.filter(function(r) { return r.po.supplier === preferredSup; });
+                    if (supMatches.length > 0) {
+                        var supAvg = Math.round(supMatches.reduce(function(s, r) { return s + r.rate; }, 0) / supMatches.length);
+                        analysis += ' 您指定的首选供应商「' + preferredSup + '」历史匹配率平均 ' + supAvg + '%。';
+                    }
+                    analysis += '<br><br>';
+                }
+
+                analysis += '💡 <strong>策略建议</strong><br>';
+                var weakDim = null, weakScore = 100;
+                if (window._lastDimScores) {
+                    window._lastDimScores.forEach(function(d) {
+                        if (d.score < weakScore) { weakScore = d.score; weakDim = d.key; }
+                    });
+                }
+                if (weakDim) {
+                    var dimNames = { class:'大类', type:'物料类型', subType:'子类', supplier:'供应商', price:'价格', qty:'数量', itemName:'物料名称' };
+                    analysis += '匹配维度中 <strong>' + (dimNames[weakDim] || weakDim) + '</strong> 得分较低（' + weakScore + '%），建议优化该维度的匹配条件。';
+                } else {
+                    analysis += '当前匹配结果整体良好，建议优先处理匹配率 ≥ ' + threshold + '% 的自动下单项目。';
+                }
+                analysis += ' 如需更精准的匹配，可调整左侧的匹配维度权重或扩大历史PO时间范围。';
+
+                content.innerHTML = analysis;
+            }, 800);
+        }
+
+        function showToast(msg) {
+            var t = document.getElementById('appToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'appToast';
+                t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:6px;font-size:13px;z-index:99999;background:#ad063e;color:white;box-shadow:0 4px 12px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.3s;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.opacity = '1';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(function(){ t.style.opacity = '0'; }, 2500);
+        }
+
+        init();
+    </script>
+    <script>
+        window.difyChatbotConfig = {
+            token: '2KScDqPKu0GjsC2S',
+            baseUrl: 'http://192.168.181.189',
+        };
+    </script>
+    <script src="http://192.168.181.189/embed.min.js" id="2KScDqPKu0GjsC2S" defer></script>
+    <style>
+        #dify-chatbot-bubble-button { background-color: #1C64F2 !important; }
+        #dify-chatbot-bubble-window { width: 24rem !important; height: 40rem !important; }
+    </style>
+</body>
+</html>

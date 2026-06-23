@@ -100,6 +100,21 @@ body {
     border-radius: 2px;
 }
 
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #d0d5dd;
+    border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #b0b5bd;
+}
+
 .menu-section {
     margin-bottom: 0;
 }
@@ -2952,30 +2967,113 @@ body {
    ============================================================ */
 
 /* Hero 视频区域 */
-.rpa-hero {
-    margin-bottom: 24px;
-    border-radius: 12px;
-    overflow: hidden;
+.rpa-page {
+    padding: 0;
 }
 
-/* Hero 视频区域 */
+.rpa-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin: -18px -18px 28px;
+    padding: 48px 60px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    overflow: hidden;
+    min-height: 280px;
+}
+
+.rpa-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(173, 6, 62, 0.3) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(37, 99, 235, 0.25) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 100%, rgba(22, 163, 74, 0.12) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.rpa-hero-content {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-width: 0;
+}
+
+.rpa-hero .rpa-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 18px;
+    background: rgba(173, 6, 62, 0.25);
+    border: 1px solid rgba(173, 6, 62, 0.4);
+    border-radius: 20px;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.rpa-hero .rpa-hero-title {
+    font-size: 42px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 12px;
+    line-height: 1.15;
+    letter-spacing: -1px;
+}
+
+.rpa-hero .rpa-hero-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0 0 24px;
+    line-height: 1.6;
+    max-width: 520px;
+}
+
+.rpa-hero-stats {
+    display: flex;
+    gap: 36px;
+}
+
+.rpa-hero-stat {
+    text-align: center;
+}
+
+.rpa-hero .rpa-hero-stat-num {
+    display: block;
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.rpa-hero .rpa-hero-stat-label {
+    display: block;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 4px;
+}
+
 .rpa-hero-video {
     position: relative;
-    width: 100%;
+    z-index: 1;
+    flex: 0 0 560px;
     border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .rpa-hero-video video {
     display: block;
     width: 100%;
     height: auto;
-    max-height: 520px;
-    object-fit: contain;
-    border-radius: 12px;
+    max-height: 360px;
+    object-fit: cover;
 }
 
-/* 网格布局 */
 .rpa-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2987,93 +3085,102 @@ body {
     grid-column: 1 / -1;
 }
 
-/* 卡片样式 */
 .rpa-card {
-    background: white;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid #eaeaea;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .rpa-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-color: #c7cfdb;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .rpa-card-header {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 28px 0;
+}
+
+.rpa-card-header-row {
+    display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 20px 24px 0;
+    gap: 14px;
 }
 
 .rpa-card-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 20px;
     color: white;
     flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
 }
 
 .rpa-card-primary .rpa-card-icon {
-    background: linear-gradient(135deg, #4299e1, #3182ce);
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
 }
 
 .rpa-card-success .rpa-card-icon {
-    background: linear-gradient(135deg, #48bb78, #38a169);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
 .rpa-card-info .rpa-card-icon {
-    background: linear-gradient(135deg, #63b3ed, #4299e1);
-}
-
-.rpa-card-links .rpa-card-icon {
-    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
 
 .rpa-card-header h2 {
     font-size: 18px;
-    font-weight: 600;
-    color: #1a202c;
+    font-weight: 700;
+    color: var(--admin-text);
     margin: 0;
     border: none;
     padding: 0;
 }
 
 .rpa-card-body {
-    padding: 16px 24px 24px;
+    padding: 16px 28px 28px;
+}
+
+.rpa-card .rpa-card-body {
+    padding-top: 4px;
 }
 
 .rpa-card-desc {
-    font-size: 14px;
-    color: #718096;
-    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--admin-text-secondary);
     line-height: 1.6;
+    margin: 0 0 0 58px;
 }
 
-/* 地址列表 */
 .rpa-address-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 20px;
 }
 
 .rpa-address-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: #f7fafc;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
     gap: 12px;
+    padding: 14px 16px;
+    background: var(--admin-surface-soft);
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rpa-address-item:hover {
+    border-color: #c7cfdb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .rpa-address-label {
@@ -3081,14 +3188,14 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: #4a5568;
-    font-weight: 500;
+    color: var(--admin-text-secondary);
+    font-weight: 600;
     white-space: nowrap;
-    min-width: 90px;
+    min-width: 88px;
 }
 
 .rpa-address-label i {
-    color: #4299e1;
+    color: var(--admin-primary);
     font-size: 14px;
 }
 
@@ -3100,39 +3207,43 @@ body {
     min-width: 0;
 }
 
-.rpa-address-value code {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 13px;
-    color: #2d3748;
-    background: #edf2f7;
-    padding: 4px 12px;
-    border-radius: 4px;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* 地址链接 - 点击可进入 */
 .rpa-address-link {
     text-decoration: none;
     flex: 1;
     min-width: 0;
-    display: block;
 }
 
 .rpa-address-link code {
     display: block;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    color: var(--admin-text);
+    background: var(--admin-surface);
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--admin-border-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, color 0.2s ease;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .rpa-address-link:hover code {
-    background: #bee3f8;
-    color: #2b6cb0;
+    border-color: var(--admin-primary);
+    color: var(--admin-primary);
 }
 
-/* 小号进入按钮 */
+.rpa-address-cred {
+    margin-top: 4px;
+    font-size: 11px !important;
+    color: var(--admin-muted) !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 2px 12px !important;
+    cursor: default !important;
+}
+
 .rpa-btn-sm {
     padding: 6px 12px;
     font-size: 12px;
@@ -3141,28 +3252,29 @@ body {
 }
 
 .rpa-btn-enter {
-    background: #ebf8ff;
-    color: #3182ce;
-    border: 1px solid #bee3f8;
+    background: var(--admin-primary-soft);
+    color: var(--admin-primary);
+    border: 1px solid rgba(173, 6, 62, 0.2);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-family: inherit;
 }
 
 .rpa-btn-enter:hover {
-    background: #3182ce;
-    color: white;
-    border-color: #3182ce;
+    background: var(--admin-primary);
+    color: #ffffff;
+    border-color: var(--admin-primary);
 }
 
 .rpa-copy-btn {
-    background: none;
-    border: 1px solid #e2e8f0;
-    color: #a0aec0;
+    background: transparent;
+    border: 1px solid var(--admin-border);
+    color: var(--admin-muted);
     width: 32px;
     height: 32px;
     border-radius: 6px;
@@ -3175,12 +3287,11 @@ body {
 }
 
 .rpa-copy-btn:hover {
-    background: #4299e1;
-    border-color: #4299e1;
-    color: white;
+    background: var(--admin-primary-soft);
+    border-color: var(--admin-primary);
+    color: var(--admin-primary);
 }
 
-/* 按钮样式 */
 .rpa-btn {
     display: inline-flex;
     align-items: center;
@@ -3193,68 +3304,57 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
-}
-
-.rpa-btn-primary {
-    background: linear-gradient(135deg, #4299e1, #3182ce);
-    color: white;
-    width: 100%;
-    justify-content: center;
-}
-
-.rpa-btn-primary:hover {
-    background: linear-gradient(135deg, #3182ce, #2b6cb0);
-    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+    font-family: inherit;
 }
 
 .rpa-btn-download {
-    background: #edf2f7;
-    color: #2d3748;
-    padding: 8px 16px;
+    background: var(--admin-green);
+    color: #ffffff;
+    padding: 8px 18px;
     font-size: 13px;
     flex-shrink: 0;
+    border-radius: 8px;
 }
 
 .rpa-btn-download:hover {
-    background: #4299e1;
-    color: white;
+    background: #12843d;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
 }
 
-/* 下载列表 */
 .rpa-download-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 16px;
 }
 
 .rpa-download-item {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 16px;
-    background: #f7fafc;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    transition: border-color 0.2s ease;
+    padding: 16px 18px;
+    background: var(--admin-surface-soft);
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .rpa-download-item:hover {
-    border-color: #4299e1;
+    border-color: #c7cfdb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .rpa-download-icon {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     border-radius: 10px;
-    background: white;
+    background: var(--admin-surface);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
-    color: #2d3748;
+    color: var(--admin-text);
     flex-shrink: 0;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--admin-border-soft);
 }
 
 .rpa-download-info {
@@ -3264,212 +3364,143 @@ body {
 
 .rpa-download-name {
     font-size: 15px;
-    font-weight: 600;
-    color: #1a202c;
+    font-weight: 700;
+    color: var(--admin-text);
     margin-bottom: 2px;
 }
 
 .rpa-download-meta {
     font-size: 12px;
-    color: #a0aec0;
+    color: var(--admin-muted);
+    line-height: 1.5;
 }
 
-/* 版本信息 */
-.rpa-version-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: #718096;
-    padding: 10px 16px;
-    background: #fffbeb;
-    border-radius: 8px;
-    border: 1px solid #fef3c7;
+.rpa-download-file {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    color: var(--admin-text-secondary);
+    font-size: 11px;
 }
 
-.rpa-version-info i {
-    color: #d69e2e;
-    font-size: 14px;
+.rpa-download-account {
+    color: var(--admin-warning);
+    font-size: 11px;
+    margin-top: 2px;
 }
 
-.rpa-version-info a {
-    color: #4299e1;
-    text-decoration: none;
-}
-
-.rpa-version-info a:hover {
-    text-decoration: underline;
-}
-
-/* 使用说明步骤 */
 .rpa-steps {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
 }
 
 .rpa-step {
     display: flex;
-    gap: 20px;
-    padding: 20px;
-    background: #f7fafc;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--admin-surface-soft);
+    border: 1px solid var(--admin-border);
     border-radius: 10px;
-    border: 1px solid #e2e8f0;
     transition: border-color 0.2s ease;
 }
 
 .rpa-step:hover {
-    border-color: #63b3ed;
+    border-color: #c7cfdb;
 }
 
-.rpa-step-number {
-    width: 40px;
-    height: 40px;
+.rpa-step-num {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4299e1, #3182ce);
-    color: white;
+    background: var(--admin-primary);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
     flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(173, 6, 62, 0.25);
 }
 
-.rpa-step-content {
+.rpa-step-body {
     flex: 1;
+    min-width: 0;
 }
 
-.rpa-step-content h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1a202c;
-    margin-bottom: 6px;
+.rpa-step-body h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--admin-text);
+    margin: 0 0 6px;
 }
 
-.rpa-step-content p {
-    font-size: 14px;
-    color: #4a5568;
-    line-height: 1.7;
-    margin-bottom: 10px;
-}
-
-.rpa-step-tip {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 10px 14px;
-    background: #ebf8ff;
-    border-radius: 6px;
-    border-left: 3px solid #4299e1;
+.rpa-step-body p {
     font-size: 13px;
-    color: #2b6cb0;
+    color: var(--admin-text-secondary);
+    line-height: 1.6;
+    margin: 0 0 12px;
 }
 
-.rpa-step-tip i {
-    font-size: 14px;
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-
-/* 相关资源链接 */
-.rpa-links-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-
-.rpa-link-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 20px 16px;
-    background: #f7fafc;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    gap: 6px;
-}
-
-.rpa-link-item:hover {
-    border-color: #a78bfa;
-    background: #f5f3ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(167, 139, 250, 0.15);
-}
-
-.rpa-link-item i {
-    font-size: 24px;
-    color: #a78bfa;
-    margin-bottom: 4px;
-}
-
-.rpa-link-item span {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1a202c;
-}
-
-.rpa-link-item small {
+.rpa-step-body p code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 12px;
-    color: #a0aec0;
+    background: var(--admin-surface);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--admin-border-soft);
+    color: var(--admin-primary);
 }
 
-/* 底部状态栏 */
-.rpa-status-bar {
-    display: flex;
-    gap: 16px;
-    padding: 16px 24px;
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #eaeaea;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+.rpa-step-code {
+    position: relative;
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 14px 44px 14px 16px;
+    overflow: hidden;
 }
 
-.rpa-status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: #4a5568;
+.rpa-step-code pre {
+    margin: 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #a5d6ff;
+    white-space: pre;
+    overflow-x: auto;
 }
 
-.rpa-status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
+.rpa-step-code .rpa-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.5);
 }
 
-.rpa-status-online {
-    background: #48bb78;
-    box-shadow: 0 0 6px rgba(72, 187, 120, 0.5);
+.rpa-step-code .rpa-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
-.rpa-status-text {
-    color: #718096;
-    font-weight: 500;
-}
-
-/* Toast 提示 */
 .rpa-toast {
     position: fixed;
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: #2d3748;
+    background: #1a1a2e;
     color: white;
     padding: 10px 24px;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
     z-index: 9999;
     opacity: 0;
     transition: all 0.3s ease;
     pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rpa-toast.rpa-toast-show {
@@ -3477,52 +3508,90 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
-/* 响应式 */
+@media (max-width: 1200px) {
+    .rpa-hero {
+        gap: 32px;
+        padding: 40px 36px;
+    }
+    .rpa-hero-video {
+        flex: 0 0 420px;
+    }
+    .rpa-hero-video video {
+        max-height: 280px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .rpa-hero {
+        flex-direction: column;
+        padding: 32px 28px;
+        gap: 28px;
+        min-height: auto;
+    }
+    .rpa-hero-video {
+        flex: none;
+        width: 100%;
+        max-width: 500px;
+    }
+    .rpa-hero-stats {
+        gap: 24px;
+    }
+}
+
 @media (max-width: 900px) {
     .rpa-grid {
         grid-template-columns: 1fr;
     }
-
-    .rpa-hero {
-        padding: 0;
+    .rpa-hero-title {
+        font-size: 30px;
     }
-
     .rpa-hero-video video {
-        max-height: 300px;
+        max-height: 200px;
     }
-
-    .rpa-links-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .rpa-card-header {
+        padding: 20px 20px 0;
     }
-
-    .rpa-status-bar {
-        flex-wrap: wrap;
-        gap: 12px;
+    .rpa-card-body {
+        padding: 14px 20px 24px;
     }
-
-    .rpa-address-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .rpa-address-value {
-        width: 100%;
-    }
-
-    .rpa-address-value code {
-        flex: 1;
+    .rpa-card-desc {
+        margin-left: 0;
     }
 }
 
 @media (max-width: 600px) {
-    .rpa-links-grid {
-        grid-template-columns: 1fr;
+    .rpa-hero {
+        margin: -18px -18px 20px;
+        padding: 24px 20px;
     }
-
+    .rpa-hero-title {
+        font-size: 24px;
+    }
+    .rpa-hero-subtitle {
+        font-size: 14px;
+    }
+    .rpa-hero-stats {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .rpa-hero-stat-num {
+        font-size: 20px;
+    }
+    .rpa-address-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .rpa-address-value {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .rpa-address-value code {
+        flex: 1;
+        min-width: 0;
+    }
     .rpa-download-item {
         flex-wrap: wrap;
     }
-
     .rpa-btn-download {
         width: 100%;
         justify-content: center;
@@ -3930,8 +3999,7 @@ body {
 }
 
 .card h2,
-.right-column .card h2,
-.rpa-card-header h2 {
+.right-column .card h2 {
     margin: 0;
     padding: 0;
     border-bottom: 0;
@@ -4290,7 +4358,11 @@ textarea:focus,
 .main-content-area .plate-header h2 i,
 .main-content-area .gauge-header h2 i,
 .main-content-area .keypoint-header h2 i,
-.main-content-area .paddleocr-header h2 i {
+.main-content-area .paddleocr-header h2 i,
+.main-content-area .ai-panel-header h2 i,
+.main-content-area .pm-panel-header h2 i,
+.main-content-area .panel-header h2 i,
+.main-content-area .results-header h2 i {
     color: var(--admin-primary);
 }
 
@@ -4367,41 +4439,19 @@ textarea:focus,
 }
 
 .rpa-hero {
-    padding: 0;
-    margin-bottom: 16px;
-}
-
-.rpa-hero-video {
-    background: var(--admin-surface);
-    border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius);
-    box-shadow: var(--admin-shadow);
-    overflow: hidden;
+    margin-bottom: 0;
+    border-radius: 0;
 }
 
 .rpa-grid {
-    gap: 16px;
-}
-
-.rpa-card {
-    border-radius: var(--admin-radius);
-    padding: 18px;
-}
-
-.rpa-card-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    gap: 20px;
 }
 
 .rpa-address-item,
 .rpa-download-item,
-.rpa-step,
-.rpa-link-item,
-.rpa-status-bar {
+.rpa-step {
     background: var(--admin-surface-soft);
     border-color: var(--admin-border);
-    border-radius: var(--admin-radius);
 }
 
 .openai-vl-container {
@@ -4558,6 +4608,10 @@ textarea:focus,
 .main-content-area .gauge-header h2,
 .main-content-area .keypoint-header h2,
 .main-content-area .paddleocr-header h2,
+.main-content-area .ai-panel-header h2,
+.main-content-area .pm-panel-header h2,
+.main-content-area .panel-header h2,
+.main-content-area .results-header h2,
 .openai-vl-container .section-title {
     font-size: 18px;
     font-weight: 700;
@@ -4570,7 +4624,6 @@ textarea:focus,
 .main-content-area .gauge-card h3,
 .main-content-area .keypoint-card h3,
 .openai-vl-container h2,
-.rpa-card-header h2,
 .paddleocr-card-title {
     margin: 0 0 12px;
     padding-bottom: 10px;
@@ -4603,8 +4656,7 @@ textarea:focus,
 .main-content-area .step-title,
 .openai-vl-container .upload-text,
 .openai-vl-container .detail-value,
-.openai-vl-container .prompt-name,
-.rpa-download-name {
+.openai-vl-container .prompt-name {
     color: var(--admin-text);
     font-size: 13px;
     font-weight: 600;
@@ -4707,6 +4759,10 @@ textarea:focus,
 .main-content-area .gauge-header,
 .main-content-area .keypoint-header,
 .main-content-area .paddleocr-header,
+.main-content-area .ai-panel-header,
+.main-content-area .pm-panel-header,
+.main-content-area .panel-header,
+.main-content-area .results-header,
 .openai-vl-container .section-title {
     margin-bottom: 16px;
     padding: 12px 16px;
@@ -5862,60 +5918,7 @@ textarea:focus,
     font-size: 13px;
 }
 
-.rpa-card {
-    overflow: hidden;
-}
 
-.rpa-card-header {
-    padding: 0;
-}
-
-.rpa-card-body {
-    padding: 14px 0 0;
-}
-
-.rpa-card-icon,
-.paddleocr-card-icon {
-    background: var(--admin-primary-soft);
-    border: 1px solid #f2b8c6;
-    color: var(--admin-primary);
-}
-
-.rpa-card-success .rpa-card-icon {
-    background: var(--admin-green-soft);
-    border-color: #bbf7d0;
-    color: var(--admin-green);
-}
-
-.rpa-card-info .rpa-card-icon {
-    background: var(--admin-blue-soft);
-    border-color: #dbeafe;
-    color: var(--admin-blue);
-}
-
-.rpa-address-item,
-.rpa-download-item,
-.rpa-step,
-.rpa-link-item,
-.rpa-status-bar {
-    padding: 12px;
-    background: var(--admin-surface-soft);
-    border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius);
-}
-
-.rpa-address-value code {
-    background: #ffffff;
-    border: 1px solid var(--admin-border-soft);
-    color: var(--admin-text-secondary);
-}
-
-.rpa-download-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    color: var(--admin-muted);
-}
 
 @media (max-width: 1200px) {
     .main-content-area .content-grid {
@@ -6028,7 +6031,7 @@ textarea:focus,
 
 /* 流程图识别 */
 .main-content-area .flowchart-content-grid {
-    grid-template-columns: minmax(360px, 0.86fr) minmax(0, 1.62fr);
+    grid-template-columns: 340px 1fr;
     gap: 16px;
     align-items: stretch;
 }
@@ -6044,19 +6047,19 @@ textarea:focus,
 }
 
 .main-content-area .flowchart-sample-images .sample-grid {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
 }
 
 .main-content-area .flowchart-sample-images .sample-item {
-    flex: 0 0 156px;
-    max-width: 156px;
+    flex: none;
+    max-width: none;
 }
 
 .main-content-area .flowchart-sample-images .sample-item img {
-    height: 74px;
-    object-fit: contain;
-    background: #ffffff;
+    height: 40px;
+    object-fit: cover;
 }
 
 .main-content-area .flowchart-file-panel {

@@ -11,6 +11,16 @@
     <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.css">
     <script src="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.js"></script>
+    <style>
+        .left-column .section-header {
+            display: block;
+        }
+        .left-column .section-header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -29,6 +39,7 @@
                         <div class="upload-section card">
                             <div class="section-header">
                                 <h2><i class="fas fa-file-upload"></i> PDF文件上传</h2>
+                                <p>上传 PDF 文件 · AI 智能识别分析</p>
                             </div>
                             
                             <div class="upload-area" id="uploadArea">
@@ -110,7 +121,7 @@
                                         <label for="paddleocrModel">PaddleOCR模型:</label>
                                         <select id="paddleocrModel" class="setting-select">
                                             <option value="PaddleOCR-VL-1.6" selected>PaddleOCR-VL-1.6</option>
-                                            <option value="PP-OCRv5">PP-OCRv5</option>
+                                            <option value="PP-OCRv6">PP-OCRv6</option>
                                             <option value="PP-StructureV3">PP-StructureV3</option>
                                         </select>
                                     </div>
@@ -223,7 +234,10 @@
                             </div>
 
                             <div class="section-header">
-                                <h2><i class="fas fa-chart-bar"></i> PDF识别结果</h2>
+                                <div>
+                                    <h2><i class="fas fa-chart-bar"></i> PDF识别结果</h2>
+                                    <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">AI PDF 文档识别分析展示</p>
+                                </div>
                                 <div class="export-buttons">
                                     <button class="btn btn-export" id="exportExcelBtn" disabled>
                                         <i class="fas fa-file-excel"></i> 下载Excel

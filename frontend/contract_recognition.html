@@ -8,32 +8,46 @@
     <link rel="stylesheet" href="static/css/all.min.css">
     <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
     <style>
+        .contract-page {
+            overflow: hidden;
+        }
+
         .contract-page .content-grid {
             display: grid;
-            grid-template-columns: 400px 1fr;
-            gap: 20px;
-            height: calc(100vh - 60px);
-            padding: 20px;
+            grid-template-columns: 380px 1fr;
+            gap: 10px;
+            height: 100%;
             overflow: hidden;
         }
         .upload-panel, .results-panel {
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #eaeaea;
         }
         .panel-header {
-            padding: 20px;
+            padding: 12px 16px;
             border-bottom: 1px solid #e5e7eb;
         }
         .panel-header h2 {
             margin: 0;
-            font-size: 1.1rem;
+            font-size: 18px;
             color: #303133;
-            font-weight: 600;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-header h2 i {
+            color: #ad063e;
+        }
+        .panel-header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #7f8c8d;
         }
         .upload-section {
             padding: 20px;
@@ -152,6 +166,28 @@
             padding: 8px;
             border-bottom: 1px solid #e5e7eb;
         }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            z-index: 99999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+        .toast-success { background: #27ae60; }
+        .toast-error { background: #e74c3c; }
+        .toast-info { background: #2a91d6; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -164,7 +200,8 @@
                     <!-- 左侧上传 -->
                     <div class="upload-panel">
                         <div class="panel-header">
-                            <h2><i class="fas fa-file-contract"></i> AI智能助手</h2>
+                            <h2><i class="fas fa-robot"></i> AI智能助手</h2>
+                            <p>上传合同文档 · AI 自动识别关键信息</p>
                         </div>
                         <div class="upload-section">
                             <div class="upload-area" onclick="document.getElementById('pdfInput').click()">
@@ -200,7 +237,8 @@
                     <!-- 右侧结果 -->
                     <div class="results-panel">
                         <div class="panel-header">
-                            <h2><i class="fas fa-file-alt"></i> 合同信息表单</h2>
+                            <h2><i class="fas fa-list"></i> 合同信息表单</h2>
+                            <p>AI 识别结果 · 支持批量导出</p>
                         </div>
                         <div class="tabs">
                             <button class="tab-btn active" onclick="switchTab('basic')">基本信息</button>
@@ -531,11 +569,9 @@
 
                 if (result.success) {
                     displayResults(result);
-                    alert('✅ PDF识别成功！请在表单中查看和编辑识别结果。');
+                    showToast('✅ PDF识别成功！请在表单中查看和编辑识别结果。', 'success');
                 } else {
-                    alert('⚠️ PDF识别失败（网络问题）\n\n' +
-                          '错误信息：' + (result.error || '未知错误') + '\n\n' +
-                          '提示：表单已准备好，您可以手动填写合同信息。');
+                    showToast('⚠️ PDF识别失败：' + (result.error || '未知错误') + '。表单已可手动填写。', 'error');
                     // 即使识别失败，也切换到基本信息Tab，让用户手动填写
                     switchTab('basic');
                 }
@@ -544,7 +580,7 @@
                 console.error('识别错误:', error);
                 document.getElementById('loading').classList.remove('active');
                 document.getElementById('recognizeBtn').disabled = false;
-                alert('❌ 识别失败：' + error.message + '\n\n您可以手动填写表单。');
+                showToast('识别失败：' + error.message + '，您可以手动填写表单。', 'error');
             }
         }
 
@@ -851,6 +887,20 @@
 
             console.log('HTML表格解析完成，总共:', rows.length, '行');
             return rows;
+        }
+
+        function showToast(message, type) {
+            var existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            var toast = document.createElement('div');
+            toast.className = 'toast toast-' + (type || 'info');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
         }
 
         function extractBuildingNo(line) {

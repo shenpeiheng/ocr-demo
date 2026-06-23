@@ -29,7 +29,7 @@ class PaddleOCROnlineClient:
             }
 
             data = {
-                "model": "PP-OCRv5",
+                "model": "PP-OCRv6",
                 "optionalPayload": json.dumps({
                     "useDocOrientationClassify": False,
                     "useDocUnwarping": False,
