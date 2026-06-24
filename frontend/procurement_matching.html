@@ -73,7 +73,7 @@
         .match-card .mc-po { font-weight: 600; font-size: 13px; color: #303133; }
         .match-card .mc-po span { color: #909399; font-weight: 400; }
         .match-card .mc-dims { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; }
-        .match-card .mc-dim { font-size: 11px; color: #606266; display: flex; justify-content: space-between; }
+        .match-card .mc-dim { font-size: 11px; color: #606266; }
         .match-card .mc-dim .dim-val { font-weight: 600; }
         .match-card .mc-dim .dim-val.match { color: #2e7d32; }
         .match-card .mc-dim .dim-val.mismatch { color: #c62828; }
@@ -429,6 +429,24 @@
             return 0;
         }
 
+        function switchTab(tab) {
+            var listEl = document.getElementById('tabList');
+            var detailEl = document.getElementById('tabDetail');
+            if (listEl) listEl.style.display = tab === 'list' ? 'block' : 'none';
+            if (detailEl) detailEl.style.display = tab === 'detail' ? 'block' : 'none';
+            var listBtn = document.getElementById('tabBtnList');
+            var detailBtn = document.getElementById('tabBtnDetail');
+            if (listBtn) { listBtn.style.borderBottom = tab === 'list' ? '2px solid #ad063e' : '2px solid transparent'; listBtn.style.color = tab === 'list' ? '#ad063e' : '#909399'; }
+            if (detailBtn) { detailBtn.style.borderBottom = tab === 'detail' ? '2px solid #ad063e' : '2px solid transparent'; detailBtn.style.color = tab === 'detail' ? '#ad063e' : '#909399'; }
+            // 切换到详情时，如果无内容则自动填充
+            if (tab === 'detail' && window._matchResults && window._matchResults.length > 0) {
+                var md = document.getElementById('matchDetails');
+                if (md && !md.innerHTML.trim()) {
+                    showDetail(0);
+                }
+            }
+        }
+
         function renderResults(results, threshold) {
             var container = document.getElementById('resultsContent');
             var total = results.length;
@@ -446,6 +464,13 @@
                 html += '<div class="auto-issue-banner info"><i class="fas fa-info-circle"></i> 暂无匹配率 ≥ ' + threshold + '% 的记录，建议调整匹配阈值或采购需求</div>';
             }
 
+            html += '<div style="display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid #e5e7eb;">' +
+                '<button id="tabBtnList" class="result-tab-btn active" onclick="switchTab(\'list\')" style="padding:8px 20px;border:none;background:none;font-size:13px;font-weight:600;color:#ad063e;cursor:pointer;border-bottom:2px solid #ad063e;margin-bottom:-2px;font-family:inherit;">' +
+                '<i class="fas fa-list"></i> 匹配列表</button>' +
+                '<button id="tabBtnDetail" class="result-tab-btn" onclick="switchTab(\'detail\')" style="padding:8px 20px;border:none;background:none;font-size:13px;font-weight:600;color:#909399;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit;">' +
+                '<i class="fas fa-list-alt"></i> 匹配详情</button></div>';
+
+            html += '<div id="tabList">';
             html += '<table class="results-table"><thead><tr>' +
                 '<th>排名</th>' +
                 '<th>PO编号</th>' +
@@ -462,7 +487,7 @@
                 var rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'other';
                 var autoFlag = r.rate >= threshold;
                 var barClass = r.rate >= 80 ? 'high' : r.rate >= 50 ? 'medium' : 'low';
-                html += '<tr onclick="showDetail(' + i + ')" style="cursor:pointer;">' +
+                html += '<tr onclick="showDetail(' + i + ');switchTab(\'detail\')" style="cursor:pointer;">' +
                     '<td><span class="badge-rank ' + rankClass + '">' + (i + 1) + '</span></td>' +
                     '<td><strong>' + r.po.po + '</strong><br><span class="sub-text">' + r.po.delivery + '</span></td>' +
                     '<td>' + r.po.supplier + '</td>' +
@@ -475,13 +500,11 @@
                     '</tr>';
             });
 
-            html += '</tbody></table>';
-            html += '<div class="section-title-sm" style="margin-top:20px;"><i class="fas fa-list-alt"></i> 匹配详情</div>';
-            html += '<div id="matchDetails"></div>';
+            html += '</tbody></table></div>';
+            html += '<div id="tabDetail" style="display:none;"><div id="matchDetails"></div></div>';
             container.innerHTML = html;
-
-            if (results.length > 0) showDetail(0);
             window._matchResults = results;
+            switchTab('list');
         }
 
         function showDetail(index) {
@@ -495,7 +518,7 @@
                 '<div class="mc-dims">';
             r.dimScores.forEach(function(d) {
                 var matchClass = d.match ? 'match' : 'mismatch';
-                html += '<div class="mc-dim"><span>' + (d.name || dimLabels[d.key] || d.key) + '</span><span class="dim-val ' + matchClass + '">' + d.score + '%</span></div>';
+                html += '<div class="mc-dim"><span>' + (d.name || dimLabels[d.key] || d.key) + ': </span><span class="dim-val ' + matchClass + '">' + d.score + '%</span></div>';
             });
             html += '</div></div>';
             if (r.analysis) {
@@ -511,7 +534,7 @@
                     '<div class="mc-dims">';
                 ri.dimScores.forEach(function(d) {
                     var mc = d.match ? 'match' : 'mismatch';
-                    card += '<div class="mc-dim"><span>' + (d.name || dimLabels2[d.key] || d.key) + '</span><span class="dim-val ' + mc + '">' + d.score + '%</span></div>';
+                    card += '<div class="mc-dim"><span>' + (d.name || dimLabels2[d.key] || d.key) + ': </span><span class="dim-val ' + mc + '">' + d.score + '%</span></div>';
                 });
                 card += '</div></div>';
                 allCards += card;
