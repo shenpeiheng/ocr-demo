@@ -19,6 +19,69 @@
             font-size: 12px;
             color: #7f8c8d;
         }
+
+        .content-grid {
+            height: 100%;
+        }
+
+        .left-column,
+        .right-column {
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .left-column .card {
+            min-height: 0;
+            height: auto;
+        }
+
+        .left-column .upload-section {
+            flex-shrink: 0;
+        }
+
+        .right-column .results-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .right-column .results-section .section-header {
+            flex-shrink: 0;
+        }
+
+        .right-column .results-section .filter-controls {
+            flex-shrink: 0;
+        }
+
+        .right-column .results-tabs {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .right-column .tab-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .right-column .tab-pane.active {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .right-column .table-container {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
     </style>
 </head>
 <body>
