@@ -261,6 +261,7 @@
             });
             var now = new Date();
             document.getElementById('reqDelivery').value = now.toISOString().split('T')[0];
+            document.getElementById('poDateFrom').value = '2024-01-01';
             document.getElementById('poDateTo').value = now.toISOString().split('T')[0];
             renderDimensions();
             if (ITEM_CODES.length > 0) onItemCodeChange();
@@ -274,7 +275,7 @@
                 div.className = 'dimension-item';
                 div.innerHTML =
                     '<span class="dim-name">' + d.name + '</span>' +
-                    '<input type="range" min="0" max="50" value="' + d.weight + '" id="dw_' + i + '" oninput="updateDimWeight(' + i + ')">' +
+                    '<input type="range" min="0" max="100" value="' + d.weight + '" id="dw_' + i + '" oninput="updateDimWeight(' + i + ')">' +
                     '<span class="dim-weight" id="dwv_' + i + '">' + d.weight + '%</span>';
                 container.appendChild(div);
             });
@@ -307,6 +308,16 @@
             document.getElementById('autoCount').textContent = '0';
         }
 
+        function charOverlap(a, b) {
+            if (!a || !b) return 0;
+            var setA = {}, setB = {}, count = 0;
+            for (var i = 0; i < a.length; i++) setA[a[i]] = true;
+            for (var i = 0; i < b.length; i++) setB[b[i]] = true;
+            for (var k in setA) if (setB[k]) count++;
+            var total = Object.keys(setA).length + Object.keys(setB).length - count;
+            return total === 0 ? 0 : count / total;
+        }
+
         function startMatching() {
             var itemCode = document.getElementById('reqItemCode').value;
             if (!itemCode) { showToast('请选择物料编码'); return; }
@@ -330,6 +341,7 @@
             if (!req) { showToast('物料编码数据异常'); return; }
 
             var reqPriceEst = getEstimatedPrice(itemCode);
+            var reqName = document.getElementById('reqItemName').value || '';
 
             var filtered = HISTORICAL_PO.filter(function(p) {
                 return p.delivery >= dateFrom && p.delivery <= dateTo;
@@ -339,44 +351,68 @@
                 var dimScores = [];
                 var total = 0;
 
+                // 1) 物料编码精确匹配 — 最高优先级
+                var codeScore = p.itemCode === itemCode ? 100 : 0;
+                dimScores.push({ key:'itemCode', name:'物料编码匹配', score:codeScore, match:codeScore===100 });
+                total += codeScore * 30;  // 硬权重 30
+
+                // 2) 大类
                 var classScore = p.class === req.cls ? 100 : 0;
-                dimScores.push({ key:'class', score:classScore, match:classScore===100 });
+                dimScores.push({ key:'class', name:'大类匹配', score:classScore, match:classScore===100 });
                 total += classScore * weights[0];
 
+                // 3) 类型
                 var typeScore = p.type === req.type ? 100 : 0;
-                dimScores.push({ key:'type', score:typeScore, match:typeScore===100 });
+                dimScores.push({ key:'type', name:'类型匹配', score:typeScore, match:typeScore===100 });
                 total += typeScore * weights[1];
 
+                // 4) 子类
                 var subScore = p.subType === req.sub ? 100 : 0;
-                dimScores.push({ key:'subType', score:subScore, match:subScore===100 });
+                dimScores.push({ key:'subType', name:'子类匹配', score:subScore, match:subScore===100 });
                 total += subScore * weights[2];
 
-                var supScore = p.supplier === supplier ? 100 : 50;
-                dimScores.push({ key:'supplier', score:supScore, match:supScore>=90 });
+                // 5) 供应商匹配
+                var supScore = p.supplier === supplier ? 100 : (codeScore === 100 ? 100 : 30);
+                dimScores.push({ key:'supplier', name:'供应商匹配', score:supScore, match:supScore>=90 });
                 total += supScore * weights[3];
 
+                // 6) 价格区间
                 var priceDiff = reqPriceEst > 0 ? Math.abs(p.price - reqPriceEst) / reqPriceEst : 1;
-                var priceScore = priceDiff <= 0.1 ? 100 : priceDiff <= 0.2 ? 80 : priceDiff <= 0.3 ? 50 : 20;
-                dimScores.push({ key:'price', score:priceScore, match:priceScore>=80 });
+                var priceScore = priceDiff <= 0.1 ? 100 : codeScore === 100 ? 100 : (priceDiff <= 0.2 ? 80 : priceDiff <= 0.3 ? 50 : 20);
+                dimScores.push({ key:'price', name:'价格区间匹配', score:priceScore, match:priceScore>=80 });
                 total += priceScore * weights[4];
 
+                // 7) 数量匹配
                 var qtyRatio = p.qty > 0 ? qty / p.qty : 0;
-                var qtyScore = qtyRatio >= 0.5 && qtyRatio <= 2 ? 100 : qtyRatio >= 0.25 && qtyRatio <= 3 ? 60 : 30;
-                dimScores.push({ key:'qty', score:qtyScore, match:qtyScore>=80 });
+                var qtyScore = qtyRatio >= 0.8 && qtyRatio <= 1.25 ? 100 : qtyRatio >= 0.5 && qtyRatio <= 2 ? 60 : qtyRatio >= 0.25 && qtyRatio <= 4 ? 30 : 10;
+                dimScores.push({ key:'qty', name:'数量匹配', score:qtyScore, match:qtyScore>=80 });
                 total += qtyScore * weights[5];
 
-                var nameMatch = p.itemName.indexOf(document.getElementById('reqItemName').value.substring(0, 4)) >= 0 || document.getElementById('reqItemName').value.indexOf(p.itemName.substring(0, 4)) >= 0;
-                var nameScore = nameMatch ? 80 : 30;
-                dimScores.push({ key:'itemName', score:nameScore, match:nameScore>=70 });
+                // 8) 物料名称语义（基于字符重叠度）
+                var overlap = charOverlap(reqName, p.itemName);
+                var nameScore = Math.round(overlap * 100);
+                dimScores.push({ key:'itemName', name:'物料名称语义', score:nameScore, match:nameScore>=50 });
                 total += nameScore * weights[6];
 
-                var finalRate = Math.round(total / weightSum);
-                return { po:p, dimScores:dimScores, rate:finalRate };
+                var effectiveWeightSum = weightSum + 30;
+                var finalRate = Math.round(total / effectiveWeightSum);
+                return { po:p, dimScores:dimScores, rate:finalRate, analysis:'' };
             });
 
             results.sort(function(a, b) { return b.rate - a.rate; });
+
+            // 确保完全匹配的排第一
+            results.sort(function(a, b) {
+                var aCode = a && a.p ? a.p.itemCode : '';
+                var bCode = b && b.p ? b.p.itemCode : '';
+                if (aCode === itemCode && bCode !== itemCode) return -1;
+                if (aCode !== itemCode && bCode === itemCode) return 1;
+                return b.rate - a.rate;
+            });
+
             if (results.length > 0) window._lastDimScores = results[0].dimScores;
             renderResults(results, threshold);
+            showToast('匹配完成，共 ' + results.length + ' 条结果');
         }
 
         function getEstimatedPrice(itemCode) {
@@ -459,9 +495,12 @@
                 '<div class="mc-dims">';
             r.dimScores.forEach(function(d) {
                 var matchClass = d.match ? 'match' : 'mismatch';
-                html += '<div class="mc-dim"><span>' + (dimLabels[d.key] || d.key) + '</span><span class="dim-val ' + matchClass + '">' + d.score + '%</span></div>';
+                html += '<div class="mc-dim"><span>' + (d.name || dimLabels[d.key] || d.key) + '</span><span class="dim-val ' + matchClass + '">' + d.score + '%</span></div>';
             });
             html += '</div></div>';
+            if (r.analysis) {
+                html += '<div style="font-size:12px;color:#606266;background:#f8f9fa;padding:10px 14px;border-radius:6px;margin-top:8px;"><i class="fas fa-robot" style="color:#ad063e;margin-right:6px;"></i>' + r.analysis + '</div>';
+            }
 
             var allCards = '';
             results.forEach(function(ri, i) {
@@ -472,7 +511,7 @@
                     '<div class="mc-dims">';
                 ri.dimScores.forEach(function(d) {
                     var mc = d.match ? 'match' : 'mismatch';
-                    card += '<div class="mc-dim"><span>' + (dimLabels2[d.key] || d.key) + '</span><span class="dim-val ' + mc + '">' + d.score + '%</span></div>';
+                    card += '<div class="mc-dim"><span>' + (d.name || dimLabels2[d.key] || d.key) + '</span><span class="dim-val ' + mc + '">' + d.score + '%</span></div>';
                 });
                 card += '</div></div>';
                 allCards += card;
@@ -518,29 +557,41 @@
             if (results.length === 0) { showToast('请先执行匹配分析'); return; }
             var box = document.getElementById('aiAnalysisBox');
             var content = document.getElementById('aiAnalysisContent');
-            var threshold = parseInt(document.getElementById('thresholdSlider').value);
-            var reqCode = document.getElementById('reqItemCode').value;
-            var reqName = document.getElementById('reqItemName').value;
-            var reqQty = document.getElementById('reqQty').value;
-            var preferredSup = document.getElementById('reqSupplier').value;
+            var summary = window._aiSummary;
 
             box.classList.add('visible');
+
+            if (summary && summary.strategyAdvice) {
+                var html = '📊 <strong>匹配概况</strong><br>';
+                html += '共匹配 ' + (summary.totalCount || results.length) + ' 条历史PO，平均匹配率 ' + (summary.avgRate || '-') + '%';
+                html += '，其中匹配率 ≥ ' + document.getElementById('thresholdSlider').value + '% 的有 <strong>' + (summary.autoCount || 0) + '</strong> 条。<br><br>';
+                if (summary.topRecommendation) {
+                    html += '🏆 <strong>最优匹配建议</strong><br>' + summary.topRecommendation + '<br><br>';
+                }
+                html += '💡 <strong>策略建议</strong><br>' + summary.strategyAdvice;
+                content.innerHTML = html;
+                return;
+            }
+
             content.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> AI 正在分析匹配结果...';
 
             setTimeout(function() {
+                var threshold = parseInt(document.getElementById('thresholdSlider').value);
+                var reqName = document.getElementById('reqItemName').value;
+                var reqCode = document.getElementById('reqItemCode').value;
+                var reqQty = document.getElementById('reqQty').value;
+                var preferredSup = document.getElementById('reqSupplier').value;
                 var autoItems = results.filter(function(r) { return r.rate >= threshold; });
                 var top3 = results.slice(0, 3);
                 var avgRate = results.length > 0 ? Math.round(results.reduce(function(s, r) { return s + r.rate; }, 0) / results.length) : 0;
 
                 var analysis = '针对 <strong>' + reqName + '</strong>（编码: ' + reqCode + '，需求量: ' + reqQty + '）的采购需求，AI 分析如下：<br><br>';
-
                 analysis += '📊 <strong>匹配概况</strong><br>';
                 analysis += '共匹配 ' + results.length + ' 条历史PO，平均匹配率 ' + avgRate + '%，';
                 analysis += '其中匹配率 ≥ ' + threshold + '% 的有 <strong>' + autoItems.length + '</strong> 条，已标记为自动下单。<br><br>';
 
                 if (autoItems.length > 0) {
                     analysis += '✅ <strong>推荐自动下单</strong><br>';
-                    analysis += '以下PO满足自动下单条件：<br>';
                     autoItems.forEach(function(r) {
                         analysis += '&nbsp;&nbsp;• ' + r.po.po + '（' + r.po.supplier + '）— 匹配率 ' + r.rate + '%<br>';
                     });
@@ -552,7 +603,6 @@
                     analysis += '🏆 <strong>最优匹配建议</strong><br>';
                     analysis += '首选 ' + best.po.supplier + ' 的 ' + best.po.po + '，匹配率 ' + best.rate + '%。';
                     analysis += '该供应商此前供应 ' + best.po.itemName + '，单价 ¥' + best.po.price + '，交期 ' + best.po.delivery + '。';
-
                     var supMatches = results.filter(function(r) { return r.po.supplier === preferredSup; });
                     if (supMatches.length > 0) {
                         var supAvg = Math.round(supMatches.reduce(function(s, r) { return s + r.rate; }, 0) / supMatches.length);
@@ -575,7 +625,6 @@
                     analysis += '当前匹配结果整体良好，建议优先处理匹配率 ≥ ' + threshold + '% 的自动下单项目。';
                 }
                 analysis += ' 如需更精准的匹配，可调整左侧的匹配维度权重或扩大历史PO时间范围。';
-
                 content.innerHTML = analysis;
             }, 800);
         }

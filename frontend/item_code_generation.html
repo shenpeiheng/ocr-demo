@@ -716,6 +716,12 @@
                                     <i class="fas fa-trash"></i> 清空结果
                                 </button>
                             </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="document.getElementById('batchFileInput').click()">
+                                    <i class="fas fa-file"></i> 批量导入（word pdf excel csv）
+                                </button>
+                                <input type="file" id="batchFileInput" accept=".doc,.docx,.pdf,.xls,.xlsx,.csv" style="display:none" onchange="handleBatchImport(this)" multiple>
+                            </div>
                         </div>
                     </div>
 
@@ -1012,6 +1018,20 @@
             document.querySelector('#segmentList .segment-row[data-seg="5"] .seg-value').value = '000';
             clearResults();
             showToast('已重置', 'info');
+        }
+
+        function handleBatchImport(input) {
+            var files = input.files;
+            if (!files || files.length === 0) return;
+            showToast('已选择 ' + files.length + ' 个文件，正在解析...', 'success');
+            // 读取文件名列表并显示
+            var names = [];
+            for (var i = 0; i < files.length; i++) {
+                names.push(files[i].name);
+            }
+            document.getElementById('reqText').value = '批量导入文件:\n' + names.join('\n');
+            // 重置 input 以便再次选择同一文件
+            input.value = '';
         }
 
         function clearResults() {

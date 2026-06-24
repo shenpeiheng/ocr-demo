@@ -164,13 +164,13 @@
                     <!-- 左侧：EBS 查询控制台 -->
                     <div class="ai-config-panel">
                         <div class="ai-panel-header">
-                            <h2><i class="fas fa-database"></i> EBS 查询控制台</h2>
-                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">客户邮件 → AI 提取 PO → 查询 EBS 数据库 → 返回交期</p>
+                            <h2><i class="fas fa-database"></i> 查询控制台</h2>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">客户邮件 → AI 提取 PO → 查询  数据库 → 返回交期</p>
                         </div>
                         <div class="ai-config-body">
                             <!-- EBS 数据库概览 -->
                             <div class="config-section">
-                                <div class="config-section-title"><i class="fas fa-chart-simple"></i> EBS 采购数据库</div>
+                                <div class="config-section-title"><i class="fas fa-chart-simple"></i> 采购数据库</div>
                                 <div class="stat-cards" style="padding:0;">
                                     <div class="stat-card" style="padding:10px 12px;">
                                         <div class="num" id="ebsPoCount">15</div>
@@ -211,7 +211,7 @@
 
                             <!-- EBS 查询结果 -->
                             <div class="config-section" id="ebsResultSection" style="display:none;">
-                                <div class="config-section-title"><i class="fas fa-search"></i> EBS 查询结果</div>
+                                <div class="config-section-title"><i class="fas fa-search"></i> 查询结果</div>
                                 <div class="po-detail-info" id="ebsResultContent"></div>
                             </div>
                         </div>
@@ -222,7 +222,7 @@
                         <div class="results-header">
                             <div>
                                 <h2><i class="fas fa-comment-dots"></i> AI 采购助手</h2>
-                                <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">智能解析邮件 → 提取 PO → 查询 EBS → 返回交期</p>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">智能解析邮件 → 提取 PO → 查询 → 返回交期</p>
                             </div>
                             <div class="header-actions">
                                 <button class="btn btn-outline" onclick="clearChat()" style="font-size:12px;padding:6px 12px;"><i class="fas fa-trash"></i> 清空对话</button>
@@ -235,7 +235,7 @@
                                     <h3>您好！我是 AI 采购助手</h3>
                                     <p>我的工作流程：<br>
                                     <b>①</b> 接收客户邮件 → <b>②</b> 提取 PO 编号<br>
-                                    <b>③</b> 查询 EBS 数据库 → <b>④</b> 返回交期信息</p>
+                                    <b>③</b> 查询 数据库 → <b>④</b> 返回交期信息</p>
                                     <p style="font-size:12px;color:#909399;margin-top:8px;">
                                         请在左侧粘贴客户邮件，或选择一个示例邮件，然后点击"提交 AI 分析"。
                                     </p>
@@ -301,7 +301,7 @@
             { po: 'PO-2026-0048', supplier: '上海通贸国际贸易有限公司', short: '上海通贸', region: '华东',
               itemCode: 'C-MA-ROB', className: 'C', typeName: 'MA', subType: 'ROB', category: '机器',
               item: '工业机器人配件 Robot Parts', qty: 30, unit: '套', price: 1980, amount: 59400,
-              expected: '2026-07-25', confirmed: '2026-08-05', status: 'delayed',
+              expected: '2026-07-25', confirmed: '2026-07-26', status: 'delayed',
               carrier: '中远海运', tracking: 'COSCO-20260805', notes: '欧洲进口海运延迟，延迟10天' },
             { po: 'PO-2026-0049', supplier: '深圳华强供应链有限公司', short: '华强供应链', region: '华南',
               itemCode: 'C-PK-CTN', className: 'C', typeName: 'PK', subType: 'CTN', category: '包装材料',
