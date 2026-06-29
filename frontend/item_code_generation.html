@@ -778,6 +778,7 @@
                                         <th style="">Sequence<br><span style="font-weight:400;">流水号</span></th>
                                         <th style="">Region/NPU<br><span style="font-weight:400;">区域标识</span></th>
                                         <th>物料描述</th>
+                                        <th>编码含义</th>
                                     </tr>
                                 </thead>
                                 <tbody id="resultsBody"></tbody>
@@ -803,6 +804,20 @@
             { name: 'Sequence', length: 6, field: 'seg4', color: 'tag-orange', bar: 'c4' },
             { name: 'Region/NPU', length: 3, field: 'seg5', color: 'tag-purple', bar: 'c5' },
         ];
+
+        function getChineseLabel(value) {
+            const map = {
+                'C': '消耗品', 'S': '服务', 'RCM': '回收', 'SER': '分包', 'M': '模组',
+                'LG': '物流', 'ZZ': '其他', 'EL': '电气', 'ME': '机械', 'CH': '化工',
+                'AIR': '空运', 'LAN': '陆运', 'SEA': '海运', 'REN': 'NPP类别', 'RAW': '原材料',
+                '000': '无标识', 'NPU': '化工品', 'ENV': '环保',
+            };
+            return map[value] || value;
+        }
+
+        function buildChineseDesc(item) {
+            return `${getChineseLabel(item.seg1)} - ${getChineseLabel(item.seg2)} - ${getChineseLabel(item.seg3)} - ${item.seg4} - ${getChineseLabel(item.seg5)}`;
+        }
 
         function getSegmentValues() {
             const rows = document.querySelectorAll('#segmentList .segment-row');
@@ -942,6 +957,7 @@
                     <td><span class="tag ${SEGMENTS[3].color}">${item.seg4}</span></td>
                     <td><span class="tag ${SEGMENTS[4].color}">${item.seg5}</span></td>
                     <td style="color: #909399; font-size: 0.8rem;">${item.description}</td>
+                    <td style="color: #606266; font-size: 0.8rem;">${buildChineseDesc(item)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -957,9 +973,9 @@
             }
 
             const BOM = '\uFEFF';
-            const headers = '序号,物料编码,Class(类别),Type(类型),Sub-type(子类型),Sequence(流水号),Region/NPU(区域标识),物料描述';
+            const headers = '序号,物料编码,Class(类别),Type(类型),Sub-type(子类型),Sequence(流水号),Region/NPU(区域标识),物料描述,编码含义';
             const rows = generatedCodes.map((item, index) =>
-                `${index + 1},${item.code},${item.seg1},${item.seg2},${item.seg3},${item.seg4},${item.seg5},${item.description}`
+                `${index + 1},${item.code},${item.seg1},${item.seg2},${item.seg3},${item.seg4},${item.seg5},${item.description},${buildChineseDesc(item)}`
             );
             const csv = BOM + headers + '\n' + rows.join('\n');
 
@@ -980,9 +996,9 @@
                 return;
             }
 
-            const headers = '序号\t物料编码\tClass(类别)\tType(类型)\tSub-type(子类型)\tSequence(流水号)\tRegion/NPU(区域标识)\t物料描述';
+            const headers = '序号\t物料编码\tClass(类别)\tType(类型)\tSub-type(子类型)\tSequence(流水号)\tRegion/NPU(区域标识)\t物料描述\t编码含义';
             const rows = generatedCodes.map((item, index) =>
-                `${index + 1}\t${item.code}\t${item.seg1}\t${item.seg2}\t${item.seg3}\t${item.seg4}\t${item.seg5}\t${item.description}`
+                `${index + 1}\t${item.code}\t${item.seg1}\t${item.seg2}\t${item.seg3}\t${item.seg4}\t${item.seg5}\t${item.description}\t${buildChineseDesc(item)}`
             );
             const text = headers + '\n' + rows.join('\n');
 
