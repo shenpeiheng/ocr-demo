@@ -316,14 +316,21 @@
         function textSimilarity(a, b) {
             if (!a || !b) return 0;
             var la = a.toLowerCase(), lb = b.toLowerCase();
-            var wordsA = la.split(/[\s,，、\/]+/).filter(function(w) { return w.length > 0; });
-            var wordsB = lb.split(/[\s,，、\/]+/).filter(function(w) { return w.length > 0; });
+            // 在中英文、中数边界插入空格辅助分词
+            la = la.replace(/([\u4e00-\u9fff])([a-z0-9])/g, '$1 $2').replace(/([a-z0-9])([\u4e00-\u9fff])/g, '$1 $2');
+            lb = lb.replace(/([\u4e00-\u9fff])([a-z0-9])/g, '$1 $2').replace(/([a-z0-9])([\u4e00-\u9fff])/g, '$1 $2');
+            var wordsA = la.split(/[\s,，、\/\-.]+/).filter(function(w) { return w.length > 0; });
+            var wordsB = lb.split(/[\s,，、\/\-.]+/).filter(function(w) { return w.length > 0; });
             var matchCount = 0;
             wordsA.forEach(function(wa) {
                 if (wordsB.some(function(wb) { return wb.indexOf(wa) >= 0 || wa.indexOf(wb) >= 0; })) matchCount++;
             });
             var maxLen = Math.max(wordsA.length, wordsB.length);
-            return maxLen === 0 ? 0 : matchCount / maxLen;
+            // 计算双向覆盖率：取用户文本和物料名称各自匹配率的平均值
+            var matchInB = wordsB.filter(function(wb) { return wordsA.some(function(wa) { return wb.indexOf(wa) >= 0 || wa.indexOf(wb) >= 0; }); }).length;
+            var scoreA = maxLen === 0 ? 0 : matchCount / maxLen;
+            var scoreB = wordsB.length === 0 ? 0 : matchInB / wordsB.length;
+            return Math.max(scoreA, scoreB);
         }
 
         function loadSampleCase() {
@@ -383,38 +390,44 @@
                     var dimScores = [];
                     var total = 0;
 
-                    // 基于 AI 模型的语义评分（内部使用，不展示）
+                    // 核心：物品名称匹配度（AI 模型增强）
                     var nameSim = textSimilarity(userText, p.itemName);
                     var codeSim = textSimilarity(userText, p.itemCode);
                     var combinedSim = Math.max(nameSim, codeSim * 0.5);
-                    var semanticScore = Math.min(100, Math.round(combinedSim * 100 * aiBoost));
+                    var relevanceScore = Math.min(100, Math.round(combinedSim * 100 * aiBoost));
+                    // 物品匹配作为核心维度，固定权重 30
+                    dimScores.push({ key:'relevance', name:'物品匹配', score:relevanceScore, match:relevanceScore>=50 });
+                    total += relevanceScore * 30;
 
                     // 1) 大类匹配
                     var classScore = 0;
-                    var classKeywords = { C:['消耗','间接','采购','办公','包装','文具','配件'], S:['服务','咨询'], RCM:['回收','废料'], SER:['分包'], M:['模组','成品'] };
+                    var classKeywords = { C:['消耗','间接','采购','办公','包装','文具','配件','头盔','清洗','照明','轴承','音响'], S:['服务','咨询'], RCM:['回收','废料'], SER:['分包'], M:['模组','成品'] };
                     for (var cls in classKeywords) {
                         if (classKeywords[cls].some(function(kw) { return userText.indexOf(kw) >= 0; })) {
                             classScore = p.class === cls ? 100 : 50;
                             break;
                         }
                     }
-                    if (classScore === 0) classScore = p.class === 'C' ? 60 : 30;
+                    if (classScore === 0) classScore = p.class === 'C' ? 70 : 30;
                     dimScores.push({ key:'class', name:'大类匹配', score:classScore, match:classScore>=80 });
                     total += classScore * weights[0];
 
-                    // 2) 供应商匹配
-                    var supScore = p.supplier === preferredSup ? 100 : (preferredSup ? 30 : 60);
+                    // 2) 供应商匹配（受物品匹配度调节）
+                    var supScore = p.supplier === preferredSup ? 100 : 40;
+                    if (relevanceScore < 30) supScore = Math.round(supScore * 0.3);
                     dimScores.push({ key:'supplier', name:'供应商匹配', score:supScore, match:supScore>=90 });
                     total += supScore * weights[1];
 
-                    // 3) 数量匹配
+                    // 3) 数量匹配（受物品匹配度调节）
                     var qtyRatio = p.qty > 0 ? qty / p.qty : 0;
                     var qtyScore = qtyRatio >= 0.5 && qtyRatio <= 2 ? 100 : qtyRatio >= 0.25 && qtyRatio <= 4 ? 60 : 30;
+                    if (relevanceScore < 30) qtyScore = Math.round(qtyScore * 0.3);
                     dimScores.push({ key:'qty', name:'数量匹配', score:qtyScore, match:qtyScore>=80 });
                     total += qtyScore * weights[2];
 
-                    // 4) 价格匹配
-                    var priceScore = semanticScore >= 50 ? 90 : 50;
+                    // 4) 价格匹配（受物品匹配度调节）
+                    var priceScore = relevanceScore >= 50 ? 90 : 50;
+                    if (relevanceScore < 30) priceScore = Math.round(priceScore * 0.3);
                     dimScores.push({ key:'price', name:'价格区间匹配', score:priceScore, match:priceScore>=80 });
                     total += priceScore * weights[3];
 
@@ -424,7 +437,7 @@
                     dimScores.push({ key:'delivery', name:'交期匹配', score:delScore, match:delScore>=80 });
                     total += delScore * weights[4];
 
-                    var effectiveWeightSum = weightSum;
+                    var effectiveWeightSum = weightSum + 30;
                     var finalRate = Math.round(total / effectiveWeightSum);
                     return { po:p, dimScores:dimScores, rate:finalRate, analysis:'' };
                 });
@@ -519,7 +532,7 @@
             var results = window._matchResults || [];
             if (index < 0 || index >= results.length) return;
             var r = results[index];
-            var dimLabels = { semantic:'语义匹配', class:'大类', supplier:'供应商', qty:'数量', price:'价格', delivery:'交期', itemName:'名称匹配' };
+            var dimLabels = { relevance:'物品匹配', class:'大类', supplier:'供应商', qty:'数量', price:'价格', delivery:'交期' };
             var html = '<div class="match-card">' +
                 '<div class="mc-header"><div class="mc-po">' + r.po.po + ' <span>' + r.po.supplier + ' | ' + r.po.itemName + '</span></div>' +
                 '<span style="font-weight:700;font-size:15px;color:' + (r.rate >= 75 ? '#2e7d32' : r.rate >= 50 ? '#f57c00' : '#c62828') + ';">匹配率 ' + r.rate + '%</span></div>' +
@@ -535,7 +548,7 @@
 
             var allCards = '';
             results.forEach(function(ri, i) {
-                var dimLabels2 = { semantic:'语义匹配', class:'大类', supplier:'供应商', qty:'数量', price:'价格', delivery:'交期', itemName:'名称匹配' };
+                var dimLabels2 = { relevance:'物品匹配', class:'大类', supplier:'供应商', qty:'数量', price:'价格', delivery:'交期' };
                 var card = '<div class="match-card" ' + (i === index ? 'style="border-color:#ad063e;box-shadow:0 2px 12px rgba(173,6,62,0.1);"' : '') + ' onclick="showDetail(' + i + ')">' +
                     '<div class="mc-header"><div class="mc-po">#' + (i+1) + ' ' + ri.po.po + ' <span>' + ri.po.supplier + '</span></div>' +
                     '<span style="font-weight:700;font-size:14px;color:' + (ri.rate >= 75 ? '#2e7d32' : ri.rate >= 50 ? '#f57c00' : '#c62828') + ';">' + ri.rate + '%</span></div>' +
