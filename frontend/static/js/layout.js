@@ -42,6 +42,9 @@
                     '<span class="admin-logo-text">赛意AI</span>' +
                 '</a>' +
                 '<nav class="admin-nav" style="display: flex;">' +
+                    '<a href="http://218.13.91.107:6203/web/" target="_blank" class="nav-item">' +
+                        '<i class="fas fa-cubes"></i><span>SIE 一体化</span>' +
+                    '</a>' +
                     '<a href="http://218.13.91.107:6200/mermaid" target="_blank" class="nav-item">' +
                         '<i class="fas fa-image"></i><span>AI Draw</span>' +
                     '</a>' +
