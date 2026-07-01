@@ -66,6 +66,8 @@ if __name__ == "__main__":
         print("[服务器] 使用 waitress 生产级 WSGI 服务器启动")
         serve(app, host="0.0.0.0", port=Config.PORT,
               channel_timeout=600,       # 请求超时 10 分钟
+              recv_bytes=8 * 1024 * 1024,  # 每次接收 8MB，减少大文件传输时的 recv 次数
+              send_bytes=65536,          # 发送缓冲区
               cleanup_interval=30,       # 清理间隔
               threads=4)                 # 4 个工作线程
     except ImportError:

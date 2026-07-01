@@ -192,6 +192,8 @@ def start_server(host='0.0.0.0', port=5000, debug=True):
             print("[服务器] 使用 waitress 生产级 WSGI 服务器启动")
             serve(app, host=host, port=port,
                   channel_timeout=600,
+                  recv_bytes=8 * 1024 * 1024,  # 每次接收 8MB
+                  send_bytes=65536,
                   cleanup_interval=30,
                   threads=4)
         except ImportError:
