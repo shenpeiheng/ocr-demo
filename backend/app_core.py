@@ -17,7 +17,8 @@ app = Flask(__name__, static_folder="../frontend", static_url_path="")
 if Config.ENABLE_CORS:
     CORS(app)
 
-app.config["MAX_CONTENT_LENGTH"] = Config.MAX_CONTENT_LENGTH
+# 分片上传模式，每个请求最多 20MB（分片 + 开销），不再需要 GB 级限制
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB 每请求
 app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
 app.config["ALLOWED_EXTENSIONS"] = Config.ALLOWED_EXTENSIONS
 app.config["SECRET_KEY"] = Config.SECRET_KEY

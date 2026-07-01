@@ -27,58 +27,163 @@ def get_whisper_status():
     return jsonify({"success": True, "status": status})
 
 
-@whisper_bp.route("/upload", methods=["POST"])
-def upload_video():
-    """上传视频文件"""
-    if "file" not in request.files:
-        return jsonify({"success": False, "error": "没有文件"}), 400
+@whisper_bp.route("/upload/init", methods=["POST"])
+def upload_init():
+    """初始化分片上传会话"""
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "缺少请求参数"}), 400
 
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"success": False, "error": "没有选择文件"}), 400
+    original_filename = data.get("filename", "")
+    total_chunks = data.get("totalChunks", 0)
 
+    if not original_filename:
+        return jsonify({"success": False, "error": "缺少文件名"}), 400
+    if total_chunks <= 0:
+        return jsonify({"success": False, "error": "分片数无效"}), 400
+
+    file_ext = original_filename.rsplit(".", 1)[-1].lower() if "." in original_filename else ""
     allowed_extensions = {"mp4", "avi", "mov", "mkv", "flv", "wmv", "mp3", "wav", "m4a"}
-    file_ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
 
     if file_ext not in allowed_extensions:
         return jsonify({"success": False, "error": f"不支持的文件格式"}), 400
 
+    task_id = uuid.uuid4().hex
+    safe_filename = f"whisper_{task_id}.{file_ext}"
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], safe_filename)
+
+    # 预创建空文件（分片写入用 r+b 模式，文件必须存在）
+    with open(filepath, "wb") as f:
+        f.truncate(0)  # 确保空文件
+
+    # 创建临时进度文件，记录总分片数
+    progress_path = filepath + ".chunks"
+    with open(progress_path, "w") as f:
+        json.dump({"total": total_chunks, "received": [], "original_filename": original_filename}, f)
+
+    return jsonify({
+        "success": True,
+        "task_id": task_id,
+        "chunkSize": 10 * 1024 * 1024,  # 每片 10MB
+        "totalChunks": total_chunks
+    })
+
+
+@whisper_bp.route("/upload/chunk", methods=["POST"])
+def upload_chunk():
+    """接收单个分片"""
+    chunk_index = request.args.get("index")
+    task_id = request.args.get("task_id")
+
+    if not chunk_index or not task_id:
+        return jsonify({"success": False, "error": "缺少分片参数"}), 400
+
     try:
-        task_id = uuid.uuid4().hex
-        original_filename = file.filename
-        safe_filename = f"whisper_{task_id}.{file_ext}"
-        filepath = os.path.join(app.config["UPLOAD_FOLDER"], safe_filename)
+        chunk_index = int(chunk_index)
+    except ValueError:
+        return jsonify({"success": False, "error": "分片索引无效"}), 400
 
-        # 分块写入，避免大文件一次性写入导致 I/O 超时
-        # Docker volume 挂载在 Windows 上 I/O 较慢，分块写入更稳定
-        CHUNK_SIZE = 8 * 1024 * 1024  # 8MB 每块
-        file.stream.seek(0)
-        with open(filepath, "wb") as f:
-            while True:
-                chunk = file.stream.read(CHUNK_SIZE)
-                if not chunk:
-                    break
-                f.write(chunk)
-                f.flush()  # 每块立即刷盘
+    if "chunk" not in request.files:
+        return jsonify({"success": False, "error": "没有分片数据"}), 400
 
-        task = {
-            "task_id": task_id,
-            "status": "uploaded",
-            "progress": 0,
-            "message": "文件已上传，等待处理",
-            "original_filename": original_filename,
-            "filename": safe_filename,
-            "filepath": filepath,
-            "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat(),
-        }
+    # 找到对应的文件
+    upload_dir = app.config["UPLOAD_FOLDER"]
+    existing_files = [f for f in os.listdir(upload_dir) if f.startswith(f"whisper_{task_id}.") and not f.endswith(".chunks")]
+    if not existing_files:
+        return jsonify({"success": False, "error": "上传会话不存在，请先调用 /upload/init"}), 404
 
-        with WHISPER_TASK_LOCK:
-            WHISPER_TASKS[task_id] = task
+    target_file = os.path.join(upload_dir, existing_files[0])
+    progress_path = target_file + ".chunks"
 
-        return jsonify({"success": True, "task_id": task_id, "filename": original_filename})
-    except Exception as e:
-        return jsonify({"success": False, "error": f"上传失败: {str(e)}"}), 500
+    if not os.path.exists(progress_path):
+        return jsonify({"success": False, "error": "上传会话已过期"}), 404
+
+    # 读取进度
+    with open(progress_path, "r") as f:
+        progress = json.load(f)
+
+    if chunk_index in progress["received"]:
+        # 已接收，幂等
+        return jsonify({"success": True, "index": chunk_index, "received": len(progress["received"])})
+
+    # 写入分片数据（追加模式）
+    chunk_file = request.files["chunk"]
+    CHUNK_SIZE = 10 * 1024 * 1024  # 10MB
+    chunk_data = chunk_file.stream.read(CHUNK_SIZE + 1024 * 1024)  # 多读一点以防万一
+
+    with open(target_file, "r+b") as f:
+        f.seek(chunk_index * 10 * 1024 * 1024)
+        f.write(chunk_data)
+
+    # 更新进度
+    progress["received"].append(chunk_index)
+    with open(progress_path, "w") as f:
+        json.dump(progress, f)
+
+    return jsonify({"success": True, "index": chunk_index, "received": len(progress["received"])})
+
+
+@whisper_bp.route("/upload/complete", methods=["POST"])
+def upload_complete():
+    """完成分片上传，合并并创建任务"""
+    data = request.json
+    if not data or "task_id" not in data:
+        return jsonify({"success": False, "error": "缺少 task_id"}), 400
+
+    task_id = data["task_id"]
+    upload_dir = app.config["UPLOAD_FOLDER"]
+
+    existing_files = [f for f in os.listdir(upload_dir) if f.startswith(f"whisper_{task_id}.") and not f.endswith(".chunks")]
+    if not existing_files:
+        return jsonify({"success": False, "error": "上传会话不存在"}), 404
+
+    target_file = os.path.join(upload_dir, existing_files[0])
+    progress_path = target_file + ".chunks"
+
+    if not os.path.exists(progress_path):
+        return jsonify({"success": False, "error": "上传会话已过期"}), 404
+
+    with open(progress_path, "r") as f:
+        progress = json.load(f)
+
+    total = progress["total"]
+    received = len(progress["received"])
+    original_filename = progress.get("original_filename", existing_files[0])
+
+    if received < total:
+        return jsonify({
+            "success": False,
+            "error": f"分片不完整: 已收到 {received}/{total}"
+        }), 400
+
+    # 截断文件到实际大小（去掉最后一块的填充）
+    file_size = data.get("fileSize", 0)
+    if file_size > 0:
+        with open(target_file, "r+b") as f:
+            f.truncate(file_size)
+
+    # 删除进度文件
+    try:
+        os.remove(progress_path)
+    except OSError:
+        pass
+
+    task = {
+        "task_id": task_id,
+        "status": "uploaded",
+        "progress": 0,
+        "message": "文件已上传，等待处理",
+        "original_filename": original_filename,
+        "filename": existing_files[0],
+        "filepath": target_file,
+        "created_at": datetime.now().isoformat(),
+        "updated_at": datetime.now().isoformat(),
+    }
+
+    with WHISPER_TASK_LOCK:
+        WHISPER_TASKS[task_id] = task
+
+    return jsonify({"success": True, "task_id": task_id, "filename": original_filename})
 
 
 @whisper_bp.route("/process", methods=["POST"])

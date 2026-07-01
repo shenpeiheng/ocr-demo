@@ -79,57 +79,118 @@ async function handleFile(file) {
     await uploadFileWithProgress(file);
 }
 
+// 分片大小：10MB
+const CHUNK_SIZE = 10 * 1024 * 1024;
+
 async function uploadFileWithProgress(file) {
-    const formData = new FormData();
-    formData.append('file', file);
+    const uploadArea = document.getElementById('uploadArea');
+    const progressBar = document.querySelector('.upload-progress-bar');
+    const progressHint = document.querySelector('.upload-hint');
+
+    // 计算分片数
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
     try {
-        const xhr = new XMLHttpRequest();
-
-        // 上传进度
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
-                document.querySelector('.upload-progress-bar').style.width = percent + '%';
-                document.querySelector('.upload-hint').textContent = percent + '%';
-            }
+        // 1. 初始化上传会话
+        const initResp = await fetch('/api/whisper/upload/init', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename: file.name,
+                totalChunks: totalChunks,
+                fileSize: file.size
+            })
         });
 
-        // 上传完成
-        xhr.addEventListener('load', async () => {
-            if (xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    currentTaskId = response.task_id;
+        if (!initResp.ok) {
+            const err = await initResp.json();
+            showUploadError(err.error || '初始化上传失败');
+            return;
+        }
 
-                    // 显示上传成功，等待用户点击按钮
-                    const uploadArea = document.getElementById('uploadArea');
-                    uploadArea.innerHTML = `
-                        <div class="upload-icon"><i class="fas fa-check-circle" style="color: #67C23A;"></i></div>
-                        <div class="upload-text">${file.name}</div>
-                        <div class="upload-hint">上传完成，点击"开始处理"按钮</div>
-                    `;
+        const initData = await initResp.json();
+        const taskId = initData.task_id;
+        currentTaskId = taskId;
 
-                    // 启用处理按钮
-                    document.getElementById('btnProcess').disabled = false;
-                } else {
-                    showUploadError(response.error || '上传失败');
+        // 2. 逐片上传
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const blob = file.slice(start, end);
+
+            // 创建分片 FormData
+            const chunkForm = new FormData();
+            chunkForm.append('chunk', blob, `chunk_${i}`);
+
+            let chunkSuccess = false;
+            for (let retry = 0; retry <= maxRetries; retry++) {
+                try {
+                    const chunkResp = await fetch(
+                        `/api/whisper/upload/chunk?index=${i}&task_id=${taskId}`,
+                        { method: 'POST', body: chunkForm }
+                    );
+
+                    if (chunkResp.ok) {
+                        chunkSuccess = true;
+                        break;
+                    }
+
+                    if (retry < maxRetries) {
+                        console.warn(`分片 ${i + 1}/${totalChunks} 上传失败，重试 ${retry + 1}/${maxRetries}`);
+                        await sleep(1000 * (retry + 1)); // 递增等待
+                    }
+                } catch (err) {
+                    if (retry < maxRetries) {
+                        console.warn(`分片 ${i + 1}/${totalChunks} 网络错误，重试 ${retry + 1}/${maxRetries}:`, err.message);
+                        await sleep(1000 * (retry + 1));
+                    }
                 }
-            } else {
-                showUploadError('上传失败: ' + xhr.status);
             }
+
+            if (!chunkSuccess) {
+                showUploadError(`分片 ${i + 1}/${totalChunks} 上传失败，已重试 ${maxRetries} 次`);
+                return;
+            }
+
+            // 更新进度
+            const percent = Math.round(((i + 1) / totalChunks) * 100);
+            if (progressBar) progressBar.style.width = percent + '%';
+            if (progressHint) progressHint.textContent = `${percent}% (${i + 1}/${totalChunks} 分片)`;
+        }
+
+        // 3. 完成上传
+        const completeResp = await fetch('/api/whisper/upload/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: taskId, fileSize: file.size })
         });
 
-        xhr.addEventListener('error', () => {
-            showUploadError('网络错误，上传失败');
-        });
+        if (!completeResp.ok) {
+            const err = await completeResp.json();
+            showUploadError(err.error || '完成上传失败');
+            return;
+        }
 
-        xhr.open('POST', '/api/whisper/upload');
-        xhr.send(formData);
+        // 上传成功
+        uploadArea.innerHTML = `
+            <div class="upload-icon"><i class="fas fa-check-circle" style="color: #67C23A;"></i></div>
+            <div class="upload-text">${file.name}</div>
+            <div class="upload-hint">上传完成，点击"开始处理"按钮</div>
+        `;
+
+        // 启用处理按钮
+        document.getElementById('btnProcess').disabled = false;
 
     } catch (error) {
         showUploadError('上传失败: ' + error.message);
     }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function showUploadError(message) {

@@ -191,8 +191,8 @@ def start_server(host='0.0.0.0', port=5000, debug=True):
             from waitress import serve
             print("[服务器] 使用 waitress 生产级 WSGI 服务器启动")
             serve(app, host=host, port=port,
-                  channel_timeout=600,
-                  recv_bytes=8 * 1024 * 1024,  # 每次接收 8MB
+                  channel_timeout=120,       # 请求超时 2 分钟（分片只有 10MB）
+                  recv_bytes=16 * 1024 * 1024,  # 每次接收 16MB，覆盖 10MB 分片 + 开销
                   send_bytes=65536,
                   cleanup_interval=30,
                   threads=4)
