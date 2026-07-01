@@ -185,7 +185,18 @@ def start_server(host='0.0.0.0', port=5000, debug=True):
         app.config['ENV'] = 'production' if not debug else 'development'
         
         print(f"\n启动Flask应用 (环境: {app.config['ENV']})...")
-        app.run(host=host, port=port, debug=debug, use_reloader=False, threaded=True)
+
+        # 使用 waitress 替代 Flask 开发服务器，避免大文件上传时 ERR_CONNECTION_RESET
+        try:
+            from waitress import serve
+            print("[服务器] 使用 waitress 生产级 WSGI 服务器启动")
+            serve(app, host=host, port=port,
+                  channel_timeout=600,
+                  cleanup_interval=30,
+                  threads=4)
+        except ImportError:
+            print("[服务器] waitress 未安装，回退到 Flask 开发服务器")
+            app.run(host=host, port=port, debug=debug, use_reloader=False, threaded=True)
     except ImportError as e:
         print(f"错误: 无法导入应用模块: {e}")
         print("请确保 app.py 文件存在且正确")

@@ -59,4 +59,16 @@ if __name__ == "__main__":
         for issue in config_issues:
             print(f"  - {issue}")
 
-    app.run(debug=Config.DEBUG, host="0.0.0.0", port=Config.PORT, threaded=True)
+    # 使用 waitress 替代 Flask 开发服务器，避免大文件上传时 ERR_CONNECTION_RESET
+    # Flask 开发服务器不适合生产环境，大文件上传时容易断开连接
+    try:
+        from waitress import serve
+        print("[服务器] 使用 waitress 生产级 WSGI 服务器启动")
+        serve(app, host="0.0.0.0", port=Config.PORT,
+              channel_timeout=600,       # 请求超时 10 分钟
+              cleanup_interval=30,       # 清理间隔
+              threads=4)                 # 4 个工作线程
+    except ImportError:
+        print("[服务器] waitress 未安装，回退到 Flask 开发服务器")
+        print("[服务器] 大文件上传可能出现 ERR_CONNECTION_RESET")
+        app.run(debug=Config.DEBUG, host="0.0.0.0", port=Config.PORT, threaded=True)

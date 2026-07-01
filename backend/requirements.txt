@@ -18,3 +18,5 @@ addict==2.4.0
 # Whisper 语音转字幕依赖
 openai-whisper
 ffmpeg-python
+# 生产级 WSGI 服务器，解决大文件上传 ERR_CONNECTION_RESET
+waitress==3.0.2
