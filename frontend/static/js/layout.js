@@ -251,9 +251,11 @@
      * 高亮当前页面在侧边栏中对应的菜单项
      */
     function highlightCurrentPage() {
-        var currentPage = window.location.pathname.split('/').pop().split('?')[0].split('#')[0];
-        if (!currentPage) {
-            currentPage = 'index.html';
+        var pathname = window.location.pathname;
+        // 去掉末尾的 .html 后缀，统一路径格式
+        var currentPath = pathname.replace(/\.html$/, '');
+        if (!currentPath || currentPath === '/') {
+            currentPath = '/';
         }
 
         // 先清除所有 has-active
@@ -264,7 +266,7 @@
         var menuItems = document.querySelectorAll('.sidebar-menu .menu-item');
         menuItems.forEach(function(item) {
             var href = item.getAttribute('href');
-            if (href === currentPage) {
+            if (href === currentPath) {
                 item.classList.add('active');
                 // 如果当前项在折叠菜单中，自动展开父级并高亮父级
                 var subItems = item.closest('.menu-sub-items');
