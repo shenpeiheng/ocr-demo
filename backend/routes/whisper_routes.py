@@ -48,7 +48,18 @@ def upload_video():
         original_filename = file.filename
         safe_filename = f"whisper_{task_id}.{file_ext}"
         filepath = os.path.join(app.config["UPLOAD_FOLDER"], safe_filename)
-        file.save(filepath)
+
+        # 分块写入，避免大文件一次性写入导致 I/O 超时
+        # Docker volume 挂载在 Windows 上 I/O 较慢，分块写入更稳定
+        CHUNK_SIZE = 8 * 1024 * 1024  # 8MB 每块
+        file.stream.seek(0)
+        with open(filepath, "wb") as f:
+            while True:
+                chunk = file.stream.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                f.write(chunk)
+                f.flush()  # 每块立即刷盘
 
         task = {
             "task_id": task_id,

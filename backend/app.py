@@ -59,4 +59,4 @@ if __name__ == "__main__":
         for issue in config_issues:
             print(f"  - {issue}")
 
-    app.run(debug=Config.DEBUG, host="0.0.0.0", port=Config.PORT)
+    app.run(debug=Config.DEBUG, host="0.0.0.0", port=Config.PORT, threaded=True)

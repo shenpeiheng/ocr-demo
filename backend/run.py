@@ -185,7 +185,7 @@ def start_server(host='0.0.0.0', port=5000, debug=True):
         app.config['ENV'] = 'production' if not debug else 'development'
         
         print(f"\n启动Flask应用 (环境: {app.config['ENV']})...")
-        app.run(host=host, port=port, debug=debug, use_reloader=False)
+        app.run(host=host, port=port, debug=debug, use_reloader=False, threaded=True)
     except ImportError as e:
         print(f"错误: 无法导入应用模块: {e}")
         print("请确保 app.py 文件存在且正确")

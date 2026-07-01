@@ -83,95 +83,52 @@ async function uploadFileWithProgress(file) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const MAX_RETRIES = 2;
-    let retryCount = 0;
+    try {
+        const xhr = new XMLHttpRequest();
 
-    async function doUpload() {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-
-            // 设置超时（30分钟，适应大文件）
-            xhr.timeout = 30 * 60 * 1000;
-
-            // 上传进度
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    document.querySelector('.upload-progress-bar').style.width = percent + '%';
-                    document.querySelector('.upload-hint').textContent = percent + '%';
-                }
-            });
-
-            // 上传完成
-            xhr.addEventListener('load', () => {
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    resolve({ success: true, response, file });
-                } else {
-                    reject(new Error('上传失败: HTTP ' + xhr.status));
-                }
-            });
-
-            xhr.addEventListener('error', () => {
-                reject(new Error('网络连接断开，上传失败'));
-            });
-
-            xhr.addEventListener('timeout', () => {
-                reject(new Error('上传超时，请检查网络连接'));
-            });
-
-            xhr.addEventListener('abort', () => {
-                reject(new Error('上传已取消'));
-            });
-
-            xhr.open('POST', '/api/whisper/upload');
-            xhr.send(formData);
+        // 上传进度
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                document.querySelector('.upload-progress-bar').style.width = percent + '%';
+                document.querySelector('.upload-hint').textContent = percent + '%';
+            }
         });
-    }
 
-    while (retryCount <= MAX_RETRIES) {
-        try {
-            if (retryCount > 0) {
-                // 更新 UI 显示重试状态
-                const uploadArea = document.getElementById('uploadArea');
-                uploadArea.innerHTML = `
-                    <div class="upload-icon"><i class="fas fa-redo fa-spin"></i></div>
-                    <div class="upload-text">正在重试上传... (${retryCount}/${MAX_RETRIES})</div>
-                    <div class="upload-progress">
-                        <div class="upload-progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div class="upload-hint">0%</div>
-                `;
-            }
+        // 上传完成
+        xhr.addEventListener('load', async () => {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    currentTaskId = response.task_id;
 
-            const result = await doUpload();
-            const { response, file: uploadedFile } = result;
+                    // 显示上传成功，等待用户点击按钮
+                    const uploadArea = document.getElementById('uploadArea');
+                    uploadArea.innerHTML = `
+                        <div class="upload-icon"><i class="fas fa-check-circle" style="color: #67C23A;"></i></div>
+                        <div class="upload-text">${file.name}</div>
+                        <div class="upload-hint">上传完成，点击"开始处理"按钮</div>
+                    `;
 
-            if (response.success) {
-                currentTaskId = response.task_id;
-                const uploadArea = document.getElementById('uploadArea');
-                uploadArea.innerHTML = `
-                    <div class="upload-icon"><i class="fas fa-check-circle" style="color: #67C23A;"></i></div>
-                    <div class="upload-text">${uploadedFile.name}</div>
-                    <div class="upload-hint">上传完成，点击"开始处理"按钮</div>
-                `;
-                document.getElementById('btnProcess').disabled = false;
-                return; // 成功，退出重试循环
+                    // 启用处理按钮
+                    document.getElementById('btnProcess').disabled = false;
+                } else {
+                    showUploadError(response.error || '上传失败');
+                }
             } else {
-                showUploadError(response.error || '上传失败');
-                return;
+                showUploadError('上传失败: ' + xhr.status);
             }
-        } catch (error) {
-            if (retryCount < MAX_RETRIES) {
-                console.warn(`上传失败，准备重试 (${retryCount + 1}/${MAX_RETRIES}):`, error.message);
-                retryCount++;
-                // 等待 2 秒后重试
-                await new Promise(r => setTimeout(r, 2000));
-            } else {
-                showUploadError(error.message);
-                return;
-            }
-        }
+        });
+
+        xhr.addEventListener('error', () => {
+            showUploadError('网络错误，上传失败');
+        });
+
+        xhr.open('POST', '/api/whisper/upload');
+        xhr.send(formData);
+
+    } catch (error) {
+        showUploadError('上传失败: ' + error.message);
     }
 }
 

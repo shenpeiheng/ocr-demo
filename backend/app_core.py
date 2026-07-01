@@ -3,6 +3,7 @@
 """
 
 import os
+import socket
 
 from flask import Flask
 from flask_cors import CORS
@@ -21,6 +22,10 @@ app.config["MAX_CONTENT_LENGTH"] = Config.MAX_CONTENT_LENGTH
 app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
 app.config["ALLOWED_EXTENSIONS"] = Config.ALLOWED_EXTENSIONS
 app.config["SECRET_KEY"] = Config.SECRET_KEY
+
+# 配置 Werkzeug 底层 socket 超时，防止大文件上传时连接被重置
+# 默认 socket 超时很短，大文件上传时间长会导致 ERR_CONNECTION_RESET
+socket.setdefaulttimeout(600)  # 10 分钟
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
