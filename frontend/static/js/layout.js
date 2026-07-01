@@ -37,7 +37,7 @@
     var headerHtml =
         '<header class="admin-header">' +
             '<div class="admin-header-content">' +
-                '<a href="' + baseUrl + '/index.html" class="admin-logo" style="cursor: pointer; text-decoration: none;">' +
+                '<a href="' + baseUrl + '/" class="admin-logo" style="cursor: pointer; text-decoration: none;">' +
                     '<img src="' + baseUrl + '/static/images/logo.png" alt="赛意AI" class="logo-image">' +
                     '<span class="admin-logo-text">赛意AI</span>' +
                 '</a>' +
@@ -93,7 +93,7 @@
             '<nav class="sidebar-menu">' +
                 /* 首页 */
                 '<div class="menu-section">' +
-                    '<a href="index.html" class="menu-item" data-page="index">' +
+                    '<a href="/" class="menu-item" data-page="index">' +
                         '<div class="menu-icon"><i class="fas fa-home"></i></div>' +
                         '<div class="menu-text">首页</div>' +
                     '</a>' +
@@ -106,7 +106,7 @@
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="rpa.html" class="menu-item  menu-sub-item" data-page="rpa">' +
+                        '<a href="/rpa" class="menu-item  menu-sub-item" data-page="rpa">' +
                                 '<div class="menu-sub-dot"></div>' +
                                 '<div class="menu-text">星辰RPA</div>' +
                             '</a>' +
@@ -120,23 +120,23 @@
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="mechanical_drawing_ocr.html" class="menu-item menu-sub-item" data-page="mechanical_drawing_ocr">' +
+                        '<a href="/mechanical-drawing-ocr" class="menu-item menu-sub-item" data-page="mechanical_drawing_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">工业图纸识别</div>' +
                         '</a>' +
-                        '<a href="image_ocr.html" class="menu-item menu-sub-item" data-page="image_ocr">' +
+                        '<a href="/image-ocr" class="menu-item menu-sub-item" data-page="image_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">图片识别多场景</div>' +
                         '</a>' +
-                        '<a href="pdf_ocr.html" class="menu-item menu-sub-item" data-page="pdf_ocr">' +
+                        '<a href="/pdf-ocr" class="menu-item menu-sub-item" data-page="pdf_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">PDF 识别</div>' +
                         '</a>' +
-                        '<a href="flowchart_ocr.html" class="menu-item menu-sub-item" data-page="flowchart_ocr">' +
+                        '<a href="/flowchart-ocr" class="menu-item menu-sub-item" data-page="flowchart_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">流程图识别</div>' +
                         '</a>' +
-                        '<a href="word_flowchart_ocr.html" class="menu-item menu-sub-item" data-page="word_flowchart_ocr">' +
+                        '<a href="/word-flowchart-ocr" class="menu-item menu-sub-item" data-page="word_flowchart_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">Word流程图识别</div>' +
                         '</a>' +
@@ -150,23 +150,23 @@
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="safety_helmet_detection.html" class="menu-item menu-sub-item" data-page="safety_helmet_detection">' +
+                        '<a href="/safety-helmet-detection" class="menu-item menu-sub-item" data-page="safety_helmet_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">实时安全帽检测</div>' +
                         '</a>' +
-                        '<a href="license_plate_detection.html" class="menu-item menu-sub-item" data-page="license_plate_detection">' +
+                        '<a href="/license-plate-detection" class="menu-item menu-sub-item" data-page="license_plate_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">车牌识别</div>' +
                         '</a>' +
-                        '<a href="face_detection.html" class="menu-item menu-sub-item" data-page="face_detection">' +
+                        '<a href="/face-detection" class="menu-item menu-sub-item" data-page="face_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">人脸检测</div>' +
                         '</a>' +
-                        '<a href="keypoint_detection.html" class="menu-item menu-sub-item" data-page="keypoint_detection">' +
+                        '<a href="/keypoint-detection" class="menu-item menu-sub-item" data-page="keypoint_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">全身关键点检测</div>' +
                         '</a>' +
-                        '<a href="gauge_detection.html" class="menu-item menu-sub-item" data-page="gauge_detection">' +
+                        '<a href="/gauge-detection" class="menu-item menu-sub-item" data-page="gauge_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">精密压力表检测</div>' +
                         '</a>' +
@@ -180,27 +180,27 @@
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="opportunity_entry.html" class="menu-item menu-sub-item" data-page="opportunity_entry">' +
+                        '<a href="/opportunity-entry" class="menu-item menu-sub-item" data-page="opportunity_entry">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">商机快速录入</div>' +
                         '</a>' +
-                        '<a href="contract_recognition.html" class="menu-item menu-sub-item" data-page="contract_recognition">' +
+                        '<a href="/contract-recognition" class="menu-item menu-sub-item" data-page="contract_recognition">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">合同识别</div>' +
                         '</a>' +
-                        '<a href="item_code_generation.html" class="menu-item menu-sub-item" data-page="item_code_generation">' +
+                        '<a href="/item-code-generation" class="menu-item menu-sub-item" data-page="item_code_generation">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">物料编码生成</div>' +
                         '</a>' +
-                        '<a href="price_comparison.html" class="menu-item menu-sub-item" data-page="price_comparison">' +
+                        '<a href="/price-comparison" class="menu-item menu-sub-item" data-page="price_comparison">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">价格比较</div>' +
                         '</a>' +
-                        '<a href="ai_agent_service_desk.html" class="menu-item menu-sub-item" data-page="ai_agent_service_desk">' +
+                        '<a href="/ai-agent-service-desk" class="menu-item menu-sub-item" data-page="ai_agent_service_desk">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">AI Agent 服务台</div>' +
                         '</a>' +
-                        '<a href="procurement_matching.html" class="menu-item menu-sub-item" data-page="procurement_matching">' +
+                        '<a href="/procurement-matching" class="menu-item menu-sub-item" data-page="procurement_matching">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">采购需求匹配</div>' +
                         '</a>' +
@@ -214,7 +214,7 @@
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="paddle_ocr.html" class="menu-item menu-sub-item" data-page="paddle_ocr">' +
+                        '<a href="/paddle-ocr" class="menu-item menu-sub-item" data-page="paddle_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">在线官方案例</div>' +
                         '</a>' +
