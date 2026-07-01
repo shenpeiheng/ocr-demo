@@ -42,7 +42,10 @@ PAGE_ROUTES = {
     "/procurement-matching": "procurement_matching.html",
 
     # 测试页面
-    "/voice-test": "voice-test.html",
+    "/voice-test": "voice_test.html",
+
+    # Whisper 语音转字幕
+    "/whisper": "whisper.html",
 }
 
 

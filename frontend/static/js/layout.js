@@ -150,6 +150,10 @@
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
+                        '<a href="/whisper" class="menu-item menu-sub-item" data-page="whisper">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">语音转字幕</div>' +
+                        '</a>' +
                         '<a href="/safety-helmet-detection" class="menu-item menu-sub-item" data-page="safety_helmet_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">实时安全帽检测</div>' +

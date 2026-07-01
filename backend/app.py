@@ -10,13 +10,15 @@ from routes.pdf_routes import pdf_bp
 from routes.vision_routes import preload_keypoint, preload_license_ocr, preload_safety_helmet, vision_bp
 from routes.opportunity_routes import opportunity_bp
 from routes.page_routes import page_bp
+from routes.whisper_routes import whisper_bp
 
 
-app.register_blueprint(page_bp)
 app.register_blueprint(ocr_bp)
 app.register_blueprint(pdf_bp)
 app.register_blueprint(vision_bp)
 app.register_blueprint(opportunity_bp)
+app.register_blueprint(whisper_bp)
+app.register_blueprint(page_bp)
 
 
 @app.route('/mineru_results/<path:filename>')
