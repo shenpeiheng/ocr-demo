@@ -31,6 +31,14 @@
     var baseUrl = getStaticBaseUrl();
     var SIDEBAR_COLLAPSED_KEY = 'sie_admin_sidebar_collapsed';
 
+    function isIframeMode() {
+        try {
+            return new URLSearchParams(window.location.search).has('_iframe');
+        } catch (error) {
+            return false;
+        }
+    }
+
     // ==================== 内联 HTML 模板 ====================
 
     /** 头部 HTML */
@@ -245,6 +253,12 @@
         if (placeholder) {
             placeholder.outerHTML = html;
         }
+    }
+
+    function setIframeMode() {
+        var iframeMode = isIframeMode();
+        document.body.classList.toggle('iframe-mode', iframeMode);
+        return iframeMode;
     }
 
     /**
@@ -474,9 +488,12 @@
     // ==================== 立即执行 ====================
 
     // 同步插入 HTML，避免异步加载导致的闪烁
-    insertHtml('header-placeholder', headerHtml);
-    insertHtml('sidebar-placeholder', sidebarHtml);
-    insertHtml('footer-placeholder', footerHtml);
+    var iframeMode = setIframeMode();
+    if (!iframeMode) {
+        insertHtml('header-placeholder', headerHtml);
+        insertHtml('sidebar-placeholder', sidebarHtml);
+        insertHtml('footer-placeholder', footerHtml);
+    }
 
     // 高亮当前页面菜单项
     highlightCurrentPage();

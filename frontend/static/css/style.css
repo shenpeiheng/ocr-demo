@@ -3951,6 +3951,26 @@ body {
     background: var(--admin-bg);
 }
 
+body.iframe-mode {
+    overflow: auto;
+}
+
+body.iframe-mode .container {
+    height: auto;
+    min-height: 100vh;
+}
+
+body.iframe-mode .main-layout {
+    min-height: 100vh;
+}
+
+body.iframe-mode .main-content-area.home-page::before,
+body.iframe-mode .tech-grid,
+body.iframe-mode .scan-line {
+    top: 0 !important;
+    left: 0 !important;
+}
+
 .content-grid,
 .content-wrapper {
     grid-template-columns: minmax(320px, 0.78fr) minmax(0, 1.65fr);
