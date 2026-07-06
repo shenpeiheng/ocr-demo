@@ -33,7 +33,7 @@
 
     function isIframeMode() {
         try {
-            return new URLSearchParams(window.location.search).has('_iframe');
+            return new URLSearchParams(window.location.search).has('_no_sidebar');
         } catch (error) {
             return false;
         }
