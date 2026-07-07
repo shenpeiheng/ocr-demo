@@ -2,10 +2,10 @@
 AI 会议纪要生成器 - 使用 OpenAI 兼容 API
 """
 
-import os
 import logging
 import requests
 from typing import Dict, Any
+from config import Config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,20 +16,10 @@ class AISummaryProcessor:
 
     def __init__(self, api_key=None, base_url=None):
         """
-        初始化 AI 纪要处理器
-
-        Args:
-            api_key: API密钥（默认为环境变量 MODELSCOPE_API_KEY）
-            base_url: API基础URL（默认为环境变量 MODELSCOPE_BASE_URL）
+        初始化 AI 纪要处理器（api_key 和 base_url 现由调用方根据模型动态传入）
         """
-        self.api_key = api_key or os.getenv('MODELSCOPE_API_KEY', "ms-83c39231-b66e-4ed8-8a2b-52c9ded22a51")
-        self.base_url = base_url or os.getenv('MODELSCOPE_BASE_URL', "https://api-inference.modelscope.cn/v1")
-
-        if not self.api_key:
-            logger.warning("未设置API密钥，请设置 MODELSCOPE_API_KEY 环境变量")
-            self.initialized = False
-            return
-
+        self.api_key = api_key or ''
+        self.base_url = base_url or ''
         self.initialized = True
         logger.info(f"AI 纪要处理器初始化成功 (base_url: {self.base_url})")
 
@@ -47,23 +37,18 @@ class AISummaryProcessor:
         if not self.initialized:
             return {"success": False, "error": "AI 处理器未初始化"}
 
-        # 模型映射
-        model_map = {
-            "deepseek": "deepseek-ai/DeepSeek-V4-Flash",
-            "qwen": "Qwen/Qwen2.5-72B-Instruct",
-            "qwen-vl": "Qwen/Qwen3-VL-235B-A22B-Instruct"
-        }
-
-        actual_model = model_map.get(model, model_map["deepseek"])
+        actual_model = Config.resolve_llm_model(model)
+        actual_url = Config.resolve_llm_url(model)
+        actual_key = Config.resolve_llm_key(model) or self.api_key
 
         # 构建提示词
         prompt = self._build_meeting_summary_prompt(transcript)
 
         try:
             response = requests.post(
-                f"{self.base_url}/chat/completions",
+                f"{actual_url}/chat/completions",
                 headers={
-                    "Authorization": f"Bearer {self.api_key}",
+                    "Authorization": f"Bearer {actual_key}",
                     "Content-Type": "application/json"
                 },
                 json={

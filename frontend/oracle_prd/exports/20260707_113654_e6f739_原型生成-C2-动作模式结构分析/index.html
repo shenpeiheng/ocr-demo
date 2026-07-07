@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>采购需求管理系统 - 功能原型 - 功能原型</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: '宋体', SimSun, 'SimSun-ExtB', serif;
+  font-size: 12pt;
+  background: #D0D0D0;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+.window {
+  width: 1300px;
+  max-width: 100%;
+  background: #E8E8E8;
+  border: 1px solid #A0A0A0;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 95vh;
+  min-height: 500px;
+}
+.title-bar {
+  background: #2D82C3; color: #fff; font-weight: bold; font-size: 10pt;
+  padding: 4px 12px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #1A6AAB; letter-spacing: 1px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3); min-height: 26px; flex-shrink: 0;
+}
+.title-bar-left { display: flex; align-items: center; gap: 8px; }
+.title-bar-icon { width: 16px; height: 16px; background: url('https://www.oracle.com/favicon.ico') no-repeat center; background-size: contain; }
+.window-controls { display: flex; gap: 4px; }
+.window-controls button {
+  width: 18px; height: 16px; line-height: 16px;
+  background: #CFE3F5; color: #2D82C3; border: 1px solid #2D82C3; border-radius: 0;
+  font-size: 11px; cursor: pointer; text-align: center; padding: 0;
+}
+.window-controls button:hover { background: #E6F2FF; }
+.main-container { display: flex; flex: 1; overflow: hidden; }
+.nav-panel { width: 210px; background: #EAEEF2; border-right: 1px solid #9A9A9A; display: flex; flex-direction: column; flex-shrink: 0; }
+.nav-title { background: #2D6EB0; color: #fff; font-weight: bold; font-size: 14px; padding: 6px 10px; flex-shrink: 0; }
+.tree-folder-toggle { width: 14px; text-align: center; font-size: 14px; color: #666; flex-shrink: 0; font-weight: bold; }
+.tree-folder-header { padding: 4px 8px 4px 6px; font-size: 14px; display: flex; align-items: center; gap: 2px; }
+.tree-folder-header:hover { background: #D2E4F3; }
+.tree-root-item { padding: 5px 8px 5px 6px; font-weight: bold; cursor: pointer; border-left: 3px solid transparent; font-size: 14px; user-select: none; }
+.tree-root-item:hover { background: #D2E4F3; }
+.tree-root-item.active { background: #2D82C3; color: #fff; border-left-color: #1A6AAB; }
+.tree-leaf { padding: 4px 8px 4px 22px; border-left: 3px solid transparent; cursor: pointer; font-size: 14px; user-select: none; }
+.tree-leaf:hover { background: #D2E4F3; }
+.tree-leaf.active { background: #2D82C3; color: #fff; border-left-color: #1A6AAB; }
+.tree-folder-children { display: none; }
+.tree-folder.open > .tree-folder-children { display: block; }
+.view-panel { flex: 1; margin: 0 6px; background: #F0F0F0; border: 1px solid #A0A0A0; box-shadow: 1px 1px 4px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; }
+.view-title-bar {
+  background: #2D82C3; color: #fff; font-weight: bold; font-size: 10pt;
+  padding: 4px 10px 4px 12px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #1A6AAB; min-height: 28px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3); flex-shrink: 0;
+}
+.view-title-left { display: flex; align-items: center; gap: 6px; }
+.view-title-icon {
+  width: 14px; height: 14px;
+  background: url('data:image/png;base64,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') no-repeat center;
+  background-size: contain;
+  flex-shrink: 0;
+}
+.view-controls { display: flex; gap: 4px; }
+.view-controls button { width: 16px; height: 15px; line-height: 15px; background: #CFE3F5; color: #2D82C3; border: 1px solid #2D82C3; font-size: 10px; cursor: pointer; text-align: center; padding: 0; }
+.view-controls button:hover { background: #E6F2FF; }
+.view-content { flex: 1; overflow-y: auto; padding: 12px 16px; background: #EAEEF2; }
+.view-status-bar { background: #F0F0F0; border-top: 1px solid #A0A0A0; padding: 2px 10px; display: flex; justify-content: space-between; font-size: 8pt; flex-shrink: 0; }
+.view-status-left { color: #444; }
+.view-status-right { color: #666; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 20px; margin-bottom: 12px; background: #F0F0F0; padding: 10px 12px; border: 1px solid #A0A0A0; border-radius: 2px; }
+.form-item { display: flex; align-items: center; gap: 4px; }
+.form-item label { min-width: 52px; text-align: right; flex-shrink: 0; font-size: 10pt; color: #333; }
+.form-item label.required::after { content: '*'; color: #FF4444; margin-left: 2px; }
+.form-item input, .form-item select { flex: 1; padding: 3px 6px; font-size: 10pt; font-family: '宋体', SimSun, 'SimSun-ExtB', serif; border: 1px solid #A0A0A0; border-radius: 2px; background: #fff; outline: none; min-height: 26px; line-height: 20px; vertical-align: middle; box-sizing: border-box; }
+.form-item input:focus, .form-item select:focus { border-color: #2D6EB0; box-shadow: 0 0 2px rgba(45,110,176,0.3); }
+.form-item input.required-bg { background: #FFFFCC; }
+.form-item input[readonly] { background: #EAEEF2; color: #000; }
+.toolbar { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid #B0C4DE; margin-bottom: 10px; }
+.btn {
+  padding: 3px 12px; min-height: 26px; background: #D2E4F3; color: #000;
+  border: 1px solid #2D6EB0; border-radius: 2px;
+  font-family: '宋体', SimSun, 'SimSun-ExtB', serif; font-size: 10pt; cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset; display: inline-flex; align-items: center; gap: 4px;
+}
+.btn:hover { background: #E6F2FF; }
+.btn:active { background: #C4D8E8; box-shadow: 0 1px 2px rgba(0,0,0,0.1) inset; }
+.btn:disabled { background: #EEE; color: #CCC; border-color: #DDD; cursor: not-allowed; }
+.btn-sm { padding: 2px 10px; min-height: 26px; }
+.btn-primary { background: #D2E4F3; }
+.btn-primary:hover { background: #E6F2FF; }
+.status-tag { display: inline-block; padding: 1px 8px; font-size: 9pt; border-radius: 2px; }
+.status-pending { background: #FFF3CD; color: #856404; }
+.status-done { background: #D4EDDA; color: #155724; }
+.status-exception { background: #F8D7DA; color: #721C24; }
+.status-running { background: #CCE5FF; color: #004085; }
+.scroll-table {
+  max-height: 260px; overflow-y: auto; margin-top: 8px;
+  border: 2px outset #DCDFE4;
+  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.08);
+  border-radius: 1px;
+}
+.scroll-table table { width: 100%; font-size: 10pt; border-collapse: separate; border-spacing: 0; }
+.scroll-table thead { position: sticky; top: 0; z-index: 1; }
+.scroll-table th {
+  font-weight: bold; text-align: center; padding: 4px 6px; height: 28px;
+  background: linear-gradient(180deg, #E4E9EF 0%, #D2D8E0 100%);
+  color: #333; font-size: 9pt;
+  border: 1.5px outset #D6DBE2;
+  border-bottom: 2px outset #C4CAD2;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.scroll-table td {
+  padding: 1px 4px; text-align: center; height: 28px; vertical-align: middle;
+  background: #EAEEF2;
+  border-color: #ECEEF0 #CDD1D6 #CDD1D6 #ECEEF0;
+  border-style: inset;
+  border-width: 1.5px;
+}
+.scroll-table td.editable {
+  background: #FFFFFF;
+}
+.scroll-table tr:hover td { background: #E6F2FF; }
+.scroll-table tr.selected td { background: #D6E8FF; }
+.scroll-table td.num { text-align: right; padding-right: 8px; }
+.scroll-table td.left { text-align: left; }
+
+/* 3D engraved inline tables — each cell has individual outset/inset bevel */
+.data-table {
+  width: 100%; border-collapse: collapse; font-size: 10pt;
+}
+.data-table th {
+  font-weight: bold; text-align: center; padding: 3px 8px; height: 28px;
+  background: linear-gradient(180deg, #E4E9EF 0%, #D2D8E0 100%);
+  color: #333; font-size: 9pt;
+  border: 1.5px outset #D6DBE2;
+  border-bottom: 2px outset #C4CAD2;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.data-table td {
+  padding: 2px 8px; height: 28px; vertical-align: middle;
+  background: #EAEEF2;
+  border-color: #ECEEF0 #CDD1D6 #CDD1D6 #ECEEF0;
+  border-style: inset;
+  border-width: 1.5px;
+}
+.data-table td.editable {
+  background: #FFFFFF;
+}
+.data-table tr:hover td { background: #E6F2FF; }
+.data-table td.num { text-align: right; }
+.data-table td.left { text-align: left; }
+.section-title { font-weight: bold; font-size: 10pt; color: #000; border-bottom: 1px solid #B0C4DE; padding-bottom: 4px; margin-bottom: 8px; margin-top: 4px; }
+.overview-card { background: #F0F0F0; border: 1px solid #A0A0A0; border-radius: 2px; padding: 12px; margin-bottom: 12px; }
+.overview-card h3 { font-size: 10pt; color: #2D6EB0; border-bottom: 1px solid #B0C4DE; padding-bottom: 4px; margin-bottom: 8px; }
+.overview-card p, .overview-card li { font-size: 10pt; line-height: 1.8; color: #333; }
+.overview-card ul { padding-left: 20px; }
+.flow-steps { display: flex; align-items: center; gap: 0; flex-wrap: wrap; padding: 12px 0; }
+.flow-step { display: flex; align-items: center; gap: 6px; }
+.flow-step-box { background: #D2E4F3; border: 1px solid #2D6EB0; border-radius: 2px; padding: 6px 14px; font-size: 9pt; text-align: center; min-width: 80px; }
+.flow-arrow { color: #2D6EB0; font-size: 14px; padding: 0 4px; font-weight: bold; }
+.modal-overlay { display: none; position: fixed; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: #F0F0F0; border: 1px solid #B0C4DE; box-shadow: 0 8px 24px rgba(0,0,0,0.2); min-width: 480px; max-width: 600px; border-radius: 4px; overflow: hidden; }
+.modal-title { background: #2D6EB0; color: #fff; font-weight: bold; font-size: 10pt; padding: 4px 14px; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; }
+.modal-close { background: #CFE3F5; color: #2D82C3; border: 1px solid #2D82C3; cursor: pointer; width: 18px; height: 16px; line-height: 16px; text-align: center; font-size: 11px; padding: 0; }
+.modal-close:hover { background: #E6F2FF; }
+.modal-body { padding: 12px; max-height: 400px; overflow-y: auto; }
+.modal-footer { padding: 8px 12px; display: flex; gap: 8px; justify-content: flex-end; }
+.desc-section { margin-bottom: 12px; }
+.desc-section h4 { font-size: 10pt; color: #2D6EB0; border-bottom: 1px solid #B0C4DE; padding-bottom: 4px; margin-bottom: 8px; }
+.desc-section p, .desc-section li { font-size: 10pt; line-height: 1.8; }
+.desc-section ul { padding-left: 20px; }
+.msg-toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 99999; background: #333; color: #fff; padding: 8px 20px; border-radius: 4px; font-size: 10pt; display: none; }
+.summary-row { display: flex; gap: 20px; padding: 8px 12px; margin-top: 8px; border-top: 1px solid #B0C4DE; font-size: 10pt; }
+.summary-item label { font-weight: bold; }
+.summary-item .value { margin-left: 4px; }
+.email-preview { background: #fff; border: 1px solid #A0A0A0; border-radius: 2px; padding: 12px; margin: 8px 0; font-size: 10pt; line-height: 1.8; }
+
+/* ===== 全局工具栏 ===== */
+.global-toolbar {
+  display: flex;
+  align-items: center;
+  background: #E0E4E8;
+  border-bottom: 1px solid #A0A0A0;
+  padding: 0 12px;
+  height: 32px;
+  flex-shrink: 0;
+  gap: 4px;
+  user-select: none;
+}
+.global-toolbar .tb-label {
+  font-size: 9pt;
+  color: #555;
+  margin-right: 8px;
+  font-weight: bold;
+}
+.global-toolbar .tb-divider {
+  width: 1px;
+  height: 18px;
+  background: #B0B8C0;
+  margin: 0 6px;
+}
+.global-toolbar .tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 8px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 9pt;
+  font-family: inherit;
+  color: #333;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.global-toolbar .tb-btn:hover { background: #D2E4F3; border-color: #2D6EB0; }
+.global-toolbar .tb-btn:active { background: #C4D8E8; }
+.global-toolbar .tb-toggle {
+  font-size: 8pt; padding: 2px 6px; min-width: 24px;
+  background: #D0D4D8; border-color: #A0A0A0;
+}
+.global-toolbar .tb-toggle:hover { background: #C0C8D0; }
+
+/* 折叠状态 */
+.global-toolbar.collapsed .tb-label,
+.global-toolbar.collapsed .tb-btn:not(.tb-toggle),
+.global-toolbar.collapsed .tb-divider { display: none; }
+.global-toolbar.collapsed { height: 28px; padding: 0 4px; justify-content: flex-end; }
+.global-toolbar.collapsed .tb-toggle { font-size: 8pt; background: transparent; border-color: transparent; }
+.global-toolbar.collapsed .tb-toggle:hover { background: #D2E4F3; border-color: #2D6EB0; }
+
+/* ===== 聚焦模式 ===== */
+.focus-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9998;
+}
+.focus-overlay.active { display: block; }
+
+body.focus-mode .window {
+  position: relative;
+  z-index: 9999;
+}
+body.focus-mode .view-panel {
+  position: fixed;
+  z-index: 10000;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(1.05);
+  width: 90vw;
+  max-width: 1200px;
+  max-height: 90vh;
+  margin: 0;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  border-color: #2D82C3;
+}
+body.focus-mode .nav-panel,
+body.focus-mode .global-toolbar,
+body.focus-mode .view-status-bar { opacity: 0; pointer-events: none; }
+body.focus-mode .window { background: transparent; border-color: transparent; box-shadow: none; }
+body.focus-mode { padding: 0; background: transparent; }
+</style>
+</head>
+<body>
+<div class="focus-overlay" id="focusOverlay"></div>
+
+<div class="window">
+<div class="global-toolbar">
+  <span class="tb-label">🔧 工具</span>
+  <button class="tb-btn" onclick="captureCurrentScreenshot()">📸 功能截图</button>
+  <button class="tb-btn" onclick="batchScreenshot()">📚 批量截图</button>
+  <button class="tb-btn" onclick="generateDesignDoc()">📝 生成功能文档</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="zoomPage(1.1)">🔍 放大</button>
+  <button class="tb-btn" onclick="zoomPage(0.9)">🔍 缩小</button>
+  <button class="tb-btn" onclick="resetZoom()">↺ 重置</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+  <button class="tb-btn" onclick="toggleFocus()">🎯 聚焦</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="showHelp()">❓ 帮助</button>
+  <span style="flex:1;"></span>
+  <button class="tb-btn tb-toggle" onclick="toggleToolbar()" title="折叠/展开工具栏">▲</button>
+</div>
+
+<div class="main-container">
+  <div class="nav-panel">
+    <div class="nav-title">功能导航</div>
+    <div class="nav-tree"><div class="tree-root-item active" onclick="switchPane(this,'tab-overview','采购需求管理总览')">📋 总览</div><div class="tree-folder open" id="folder-apply"><div class="tree-folder-header" onclick="toggleFolder('folder-apply')"><span class="tree-folder-toggle">−</span><span>📝 申请与明细</span></div><div class="tree-folder-children"><div class="tree-leaf" onclick="switchPane(this,'tab-apply','需求申请单')">需求申请单</div><div class="tree-leaf" onclick="switchPane(this,'tab-line','需求明细行')">需求明细行</div></div></div><div class="tree-folder open" id="folder-approval"><div class="tree-folder-header" onclick="toggleFolder('folder-approval')"><span class="tree-folder-toggle">−</span><span>✅ 审批与预算</span></div><div class="tree-folder-children"><div class="tree-leaf" onclick="switchPane(this,'tab-approval','需求审批')">需求审批</div><div class="tree-leaf" onclick="switchPane(this,'tab-budget','预算校验')">预算校验</div></div></div><div class="tree-folder open" id="folder-vendor"><div class="tree-folder-header" onclick="toggleFolder('folder-vendor')"><span class="tree-folder-toggle">−</span><span>🔗 供应商与跟踪</span></div><div class="tree-folder-children"><div class="tree-leaf" onclick="switchPane(this,'tab-vendor','供应商建议与分派')">供应商建议与分派</div><div class="tree-leaf" onclick="switchPane(this,'tab-tracking','状态跟踪')">状态跟踪</div></div></div></div>
+  </div>
+
+  <div class="view-panel">
+    <div class="view-title-bar">
+      <div class="view-title-left">
+        <span class="view-title-icon"></span>
+        <span id="viewTitleText">采购需求管理总览</span>
+      </div>
+      <div class="view-controls">
+        <button onclick="showMsg('最小化面板')">_</button>
+        <button onclick="showMsg('最大化面板')">□</button>
+        <button onclick="showMsg('关闭面板')">×</button>
+      </div>
+    </div>
+
+    <div class="view-content" id="prototypeViewContent">
+      <div class="tab-pane active" id="tab-overview"><div class="overview-card"><div class="summary-row"><div class="summary-item"><span class="status-tag status-pending">待处理</span><strong>需求单数：</strong>12</div><div class="summary-item"><span class="status-tag status-done">已完成</span><strong>需求单数：</strong>45</div><div class="summary-item"><span class="status-tag status-exception">预算例外</span><strong>需求单数：</strong>3</div></div></div><div class="overview-card"><h3 class="section-title">最近需求动态</h3><div class="flow-steps"><div class="flow-step"><div class="flow-step-box">2025-03-10<br>IT部-笔记本采购</div><div class="flow-arrow">→</div></div><div class="flow-step"><div class="flow-step-box">2025-03-09<br>行政部-办公桌椅</div><div class="flow-arrow">→</div></div><div class="flow-step"><div class="flow-step-box">2025-03-08<br>财务部-打印机</div></div></div></div><div class="overview-card"><h3 class="section-title">需求处理流程</h3><div class="flow-steps"><div class="flow-step"><div class="flow-step-box">需求申请</div><div class="flow-arrow">→</div></div><div class="flow-step"><div class="flow-step-box">明细维护</div><div class="flow-arrow">→</div></div><div class="flow-step"><div class="flow-step-box">审批</div><div class="flow-arrow">→</div></div><div class="flow-step"><div class="flow-step-box">预算校验</div><div class="flow-arrow">→</div></div><div class="flow-step"><div class="flow-step-box">供应商分派</div><div class="flow-arrow">→</div></div><div class="flow-step"><div class="flow-step-box">采购单生成</div></div></div></div></div><div class="tab-pane" id="tab-apply"><div class="toolbar"><button class="btn btn-sm">新建需求</button><button class="btn btn-sm">查询</button><button class="btn btn-sm">保存</button><button class="btn btn-sm">提交审批</button><button class="btn btn-sm">清除</button></div><div class="form-grid"><div class="form-item"><label class="required">需求编号</label><input type="text" value="REQ-2025-001" readonly class="required-bg"></div><div class="form-item"><label class="required">申请部门</label><select><option>IT部</option><option>行政部</option><option>财务部</option><option>人力资源部</option></select></div><div class="form-item"><label class="required">申请日期</label><input type="text" value="2025-03-10" class="required-bg"></div><div class="form-item"><label>申请人</label><input type="text" value="张三" readonly></div><div class="form-item"><label class="required">用途说明</label><input type="text" value="年度办公设备更新" class="required-bg" style="grid-column:span 3;width:100%;"></div><div class="form-item"><label>优先级</label><select><option>普通</option><option>紧急</option><option>特急</option></select></div></div><div class="section-title">需求行概览</div><div class="data-table"><table class="scroll-table"><thead><tr><th>行号</th><th>物料编码</th><th>物料描述</th><th>数量</th><th>需求日期</th><th>预算科目</th></tr></thead><tbody><tr><td>1</td><td>MAT001</td><td>ThinkPad笔记本</td><td>5</td><td>2025-04-01</td><td>IT-办公设备</td></tr><tr><td>2</td><td>MAT002</td><td>机械键盘</td><td>10</td><td>2025-04-01</td><td>IT-外设</td></tr></tbody></table></div></div><div class="tab-pane" id="tab-line"><div class="toolbar"><button class="btn btn-sm">增加行</button><button class="btn btn-sm">删除行</button><button class="btn btn-sm">导入物料</button><button class="btn btn-sm">复制行</button></div><div class="form-grid"><div class="form-item"><label>需求单号</label><input type="text" value="REQ-2025-001" readonly></div><div class="form-item"><label>总行数</label><input type="text" value="2" readonly></div></div><div class="data-table"><table class="scroll-table"><thead><tr><th>选择</th><th>行号</th><th>物料编码</th><th>物料描述</th><th>数量</th><th>单位</th><th>单价(含税)</th><th>需求日期</th><th>预算科目</th></tr></thead><tbody><tr><td><input type="checkbox"></td><td>1</td><td>MAT001</td><td>ThinkPad笔记本</td><td>5</td><td>台</td><td>7,500.00</td><td>2025-04-01</td><td>IT-办公设备</td></tr><tr><td><input type="checkbox"></td><td>2</td><td>MAT002</td><td>机械键盘</td><td>10</td><td>个</td><td>350.00</td><td>2025-04-01</td><td>IT-外设</td></tr></tbody></table></div><div class="summary-row"><div class="summary-item"><strong>合计金额：</strong>41,000.00</div><div class="summary-item"><strong>合计行数：</strong>2</div></div></div><div class="tab-pane" id="tab-approval"><div class="toolbar"><button class="btn btn-sm">查询待审</button><button class="btn btn-sm">批准</button><button class="btn btn-sm">驳回</button><button class="btn btn-sm">批量审批</button></div><div class="form-grid"><div class="form-item"><label>审批人</label><input type="text" value="李经理" readonly></div><div class="form-item"><label>待审数量</label><input type="text" value="3" readonly></div></div><div class="data-table"><table class="scroll-table"><thead><tr><th>选择</th><th>需求编号</th><th>申请部门</th><th>总金额</th><th>提交人</th><th>提交日期</th><th>状态</th><th>操作</th></tr></thead><tbody><tr><td><input type="checkbox"></td><td>REQ-2025-001</td><td>IT部</td><td>41,000</td><td>张三</td><td>2025-03-10</td><td><span class="status-tag status-pending">待审批</span></td><td><button class="btn btn-sm">处理</button></td></tr><tr><td><input type="checkbox"></td><td>REQ-2025-002</td><td>行政部</td><td>22,500</td><td>李四</td><td>2025-03-09</td><td><span class="status-tag status-done">已批准</span></td><td><button class="btn btn-sm">查看</button></td></tr><tr><td><input type="checkbox"></td><td>REQ-2025-004</td><td>人力资源部</td><td>8,600</td><td>王七</td><td>2025-03-07</td><td><span class="status-tag status-pending">待审批</span></td><td><button class="btn btn-sm">处理</button></td></tr></tbody></table></div></div><div class="tab-pane" id="tab-budget"><div class="toolbar"><button class="btn btn-sm">执行校验</button><button class="btn btn-sm">查看结果</button><button class="btn btn-sm">导出校验报告</button></div><div class="form-grid"><div class="form-item"><label>预算版本</label><select><option>FY2025-预算V2</option><option>FY2025-预算V1</option></select></div><div class="form-item"><label>校验范围</label><select><option>全部未校验需求</option><option>指定需求单</option></select></div><div class="form-item"><label>校验日期</label><input type="text" value="2025-03-10"></div><div class="form-item"><label>校验状态</label><input type="text" value="已完成" readonly></div></div><div class="data-table"><table class="scroll-table"><thead><tr><th>需求编号</th><th>预算科目</th><th>申请金额</th><th>预算余额</th><th>校验结果</th><th>备注</th></tr></thead><tbody><tr><td>REQ-2025-001</td><td>IT-办公设备</td><td>37,500</td><td>120,000</td><td><span class="status-tag status-done">通过</span></td><td>余额充足</td></tr><tr><td>REQ-2025-003</td><td>行政-办公家具</td><td>20,000</td><td>15,000</td><td><span class="status-tag status-exception">预算不足</span></td><td>差额5,000需追加预算</td></tr><tr><td>REQ-2025-002</td><td>行政-办公耗材</td><td>22,500</td><td>50,000</td><td><span class="status-tag status-done">通过</span></td><td>余额充足</td></tr></tbody></table></div><div class="summary-row"><div class="summary-item"><strong>校验通过：</strong>2</div><div class="summary-item"><strong>预算不足：</strong>1</div><div class="summary-item"><strong>总申请金额：</strong>80,000</div></div></div><div class="tab-pane" id="tab-vendor"><div class="toolbar"><button class="btn btn-sm">生成建议</button><button class="btn btn-sm">分派采购员</button><button class="btn btn-sm">确认</button><button class="btn btn-sm">退回</button></div><div class="form-grid"><div class="form-item"><label>需求单</label><input type="text" value="REQ-2025-001" readonly></div><div class="form-item"><label class="required">建议供应商</label><select><option>联想(中国)有限公司</option><option>北京神州数码</option><option>戴尔(中国)有限公司</option></select></div><div class="form-item"><label class="required">采购员</label><select><option>王五</option><option>赵六</option><option>孙七</option></select></div><div class="form-item"><label>分派日期</label><input type="text" value="2025-03-11"></div></div><div class="data-table"><table class="scroll-table"><thead><tr><th>物料编码</th><th>物料描述</th><th>数量</th><th>建议供应商</th><th>参考报价</th><th>采购员</th><th>状态</th></tr></thead><tbody><tr><td>MAT001</td><td>ThinkPad笔记本</td><td>5</td><td>联想(中国)有限公司</td><td>7,200</td><td>王五</td><td><span class="status-tag status-pending">待确认</span></td></tr><tr><td>MAT002</td><td>机械键盘</td><td>10</td><td>北京神州数码</td><td>320</td><td>赵六</td><td><span class="status-tag status-pending">待确认</span></td></tr></tbody></table></div><div class="summary-row"><div class="summary-item"><strong>参考总报价：</strong>39,200</div><div class="summary-item"><strong>节省金额：</strong>1,800</div></div></div><div class="tab-pane" id="tab-tracking"><div class="toolbar"><button class="btn btn-sm">刷新</button><button class="btn btn-sm">导出</button><button class="btn btn-sm">查看详情</button></div><div class="form-grid"><div class="form-item"><label>需求编号</label><input type="text" value=""></div><div class="form-item"><label>申请部门</label><select><option>全部</option><option>IT部</option><option>行政部</option><option>财务部</option></select></div><div class="form-item"><label>当前阶段</label><select><option>全部</option><option>需求申请</option><option>审批中</option><option>预算校验</option><option>供应商分派</option><option>采购单生成</option></select></div><div class="form-item"><label>状态</label><select><option>全部</option><option>进行中</option><option>已完成</option><option>例外</option></select></div></div><div class="data-table"><table class="scroll-table"><thead><tr><th>需求编号</th><th>申请部门</th><th>总金额</th><th>当前阶段</th><th>状态</th><th>最后更新</th><th>操作</th></tr></thead><tbody><tr><td>REQ-2025-001</td><td>IT部</td><td>41,000</td><td>供应商分派</td><td><span class="status-tag status-pending">进行中</span></td><td>2025-03-10 14:30</td><td><button class="btn btn-sm">跟踪</button></td></tr><tr><td>REQ-2025-002</td><td>行政部</td><td>22,500</td><td>采购单生成</td><td><span class="status-tag status-done">已完成</span></td><td>2025-03-09 09:15</td><td><button class="btn btn-sm">查看</button></td></tr><tr><td>REQ-2025-003</td><td>财务部</td><td>5,000</td><td>预算校验</td><td><span class="status-tag status-exception">例外</span></td><td>2025-03-08 11:00</td><td><button class="btn btn-sm">处理</button></td></tr></tbody></table></div><div class="summary-row"><div class="summary-item"><strong>进行中：</strong>1</div><div class="summary-item"><strong>已完成：</strong>1</div><div class="summary-item"><strong>例外：</strong>1</div></div></div>
+    </div>
+
+    <div class="view-status-bar">
+      <span class="view-status-left">采购需求管理系统 v1.0</span>
+      <span class="view-status-right" id="statusRight">就绪</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="modal-overlay" id="modalGeneric">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="modalGenTitle">详情</span>
+      <button class="modal-close" onclick="closeModal('modalGeneric')">×</button>
+    </div>
+    <div class="modal-body" id="modalGenBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalGeneric')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="msg-toast" id="msgToast"></div>
+
+<script>
+const PROTOTYPE_TITLE = "采购需求管理系统 - 功能原型";
+const PROTOTYPE_VERSION_TEXT = "采购需求管理系统 v1.0";
+const HELP_HTML = "<div style=\"font-size:10pt;line-height:1.8;\"><h3>采购需求管理系统 — 操作指南</h3><p>本系统用于管理各部门的采购需求，覆盖从需求申请、明细维护、审批、预算校验、供应商建议到状态跟踪的全流程。</p><ul><li><strong>📋 总览</strong>：查看全局统计与最近动态，快速了解待处理、已完成和预算例外的需求数量及处理流程。</li><li><strong>📝 需求申请单</strong>：创建新的采购需求，填写部门、日期、用途并添加物料明细。点击「新建需求」清空表单，「查询」筛选数据，「保存」校验必填后提交，「提交审批」变更状态为待审批，「清除」清空所有字段。</li><li><strong>📝 需求明细行</strong>：维护申请单下的物料行信息，支持增加行、删除选中行、导入物料LOV选择、复制选中行。</li><li><strong>✅ 需求审批</strong>：审批人查看待审需求，点击「批准」状态变为已批准，「驳回」状态变为已驳回，「批量审批」批量批准选中行。</li><li><strong>✅ 预算校验</strong>：执行预算可用性检查，校验结果显示通过或预算不足，「查看结果」弹出校验汇总报告，「导出校验报告」导出文件。</li><li><strong>🔗 供应商建议与分派</strong>：系统自动推荐供应商并填充参考报价，分派采购员跟进，「确认」后进入采购单生成，「退回」退回需求。</li><li><strong>🔗 状态跟踪</strong>：跟踪每个需求的生命周期状态，支持刷新更新数据、导出报表、「查看详情」弹出完整生命周期信息。</li></ul><p><strong>按钮交互说明</strong>：所有按钮采用C2动作模式，点击直接执行模拟操作（如新建清空表单、查询筛选、保存校验必填、状态变更等），不弹出业务说明弹窗。</p><p>如有疑问，请联系系统管理员。</p></div>";
+const batchTabList = [{"tabId": "tab-overview", "title": "采购需求管理总览"}, {"tabId": "tab-apply", "title": "需求申请单"}, {"tabId": "tab-line", "title": "需求明细行"}, {"tabId": "tab-approval", "title": "需求审批"}, {"tabId": "tab-budget", "title": "预算校验"}, {"tabId": "tab-vendor", "title": "供应商建议与分派"}, {"tabId": "tab-tracking", "title": "状态跟踪"}];
+const docTabList = [{"tabId": "tab-overview", "title": "采购需求管理总览", "desc": "系统首页，展示采购需求全局统计和关键指标"}, {"tabId": "tab-apply", "title": "需求申请单", "desc": "创建和编辑采购需求申请单，填写部门、日期、用途并添加物料明细"}, {"tabId": "tab-line", "title": "需求明细行", "desc": "维护需求申请单中的物料明细行，支持增删改和批量导入"}, {"tabId": "tab-approval", "title": "需求审批", "desc": "审批人查看待审需求，可批准或驳回，支持批量审批操作"}, {"tabId": "tab-budget", "title": "预算校验", "desc": "对需求进行预算可用性校验，确保需求在预算额度内"}, {"tabId": "tab-vendor", "title": "供应商建议与分派", "desc": "系统推荐供应商并分派采购员跟进，确认后进入采购单生成阶段"}, {"tabId": "tab-tracking", "title": "状态跟踪", "desc": "跟踪每个需求的生命周期状态，从新建到采购单生成的全流程监控"}];
+let currentZoom = 1;
+let toolbarCollapsed = false;
+let focusMode = false;
+let msgTimer = null;
+let docCaptureRunning = false;
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function showModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function showMsg(msg) {
+  const t = document.getElementById('msgToast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(() => {
+    t.style.display = 'none';
+  }, 2500);
+}
+
+function escapeHtml(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getActivePane() {
+  return document.querySelector('.tab-pane.active') || document.querySelector('.view-content');
+}
+
+function getPrimaryTable(scope) {
+  const root = scope || getActivePane() || document;
+  return root.querySelector('.scroll-table, .data-table, table');
+}
+
+function getSelectedRow(scope) {
+  const root = scope || getActivePane() || document;
+  return root.querySelector('.scroll-table tbody tr.selected, .data-table tbody tr.selected, table tbody tr.selected');
+}
+
+function summarizeRow(row) {
+  if (!row || !row.cells) {
+    return '未选择记录';
+  }
+  const parts = [];
+  Array.from(row.cells).forEach(function(cell) {
+    if (parts.length >= 4) {
+      return;
+    }
+    const text = (cell.textContent || '').replace(/\s+/g, ' ').trim();
+    if (text) {
+      parts.push(text);
+    }
+  });
+  return parts.join(' / ') || '未选择记录';
+}
+
+function openGenericActionModal(title, html) {
+  document.getElementById('modalGenTitle').textContent = title;
+  document.getElementById('modalGenBody').innerHTML = html;
+  showModal('modalGeneric');
+}
+
+function getCandidateFieldLabels(btn) {
+  const table = getPrimaryTable(btn.closest('.tab-pane') || document);
+  if (table) {
+    const headers = Array.from(table.querySelectorAll('thead th')).map(function(th) {
+      return (th.textContent || '').replace(/\s+/g, ' ').trim();
+    }).filter(function(text) {
+      return text && text !== '操作' && text !== '选择';
+    });
+    if (headers.length) {
+      return headers.slice(0, 4);
+    }
+  }
+  return ['编码', '名称', '说明', '状态'];
+}
+
+function buildGeneratedFormHtml(btn, actionLabel) {
+  const labels = getCandidateFieldLabels(btn);
+  const items = labels.map(function(label, index) {
+    const placeholder = label.indexOf('状态') >= 0 ? '待处理' : ('请输入' + label);
+    return '<div class="form-item" style="grid-column:' + (index > 1 ? '1 / -1' : 'auto') + ';">' +
+      '<label>' + escapeHtml(label) + '</label>' +
+      '<input type="text" class="c2-form-input" data-label="' + escapeHtml(label) + '" placeholder="' + escapeHtml(placeholder) + '">' +
+      '</div>';
+  }).join('');
+  return '' +
+    '<div style="font-size:10pt;line-height:1.8;">' +
+      '<p>请填写' + escapeHtml(actionLabel) + '所需信息：</p>' +
+      '<div class="form-grid">' + items + '</div>' +
+      '<div class="toolbar" style="justify-content:flex-end;margin-top:12px;">' +
+        '<button class="btn btn-primary" onclick="submitGeneratedForm(\'' + escapeHtml(actionLabel) + '\')">确定</button>' +
+        '<button class="btn" onclick="closeModal(\'modalGeneric\')">取消</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function insertGeneratedRow(actionLabel) {
+  const table = getPrimaryTable();
+  if (!table) {
+    return false;
+  }
+  const tbody = table.querySelector('tbody');
+  const headerCells = Array.from(table.querySelectorAll('thead th'));
+  if (!tbody || !headerCells.length) {
+    return false;
+  }
+
+  const values = Array.from(document.querySelectorAll('#modalGenBody .c2-form-input')).map(function(input) {
+    return (input.value || '').trim();
+  });
+  const row = document.createElement('tr');
+
+  headerCells.forEach(function(th, index) {
+    const td = document.createElement('td');
+    const headerText = (th.textContent || '').replace(/\s+/g, ' ').trim();
+    const value = values[index] || '';
+    if (headerText === '选择') {
+      td.innerHTML = '<input type="checkbox">';
+    } else if (headerText === '操作') {
+      td.innerHTML = '<button class="btn btn-sm">查看</button>';
+    } else if (headerText.indexOf('状态') >= 0) {
+      td.innerHTML = '<span class="status-tag status-pending">' + escapeHtml(value || '待处理') + '</span>';
+    } else {
+      td.textContent = value || ('新' + headerText);
+    }
+    row.appendChild(td);
+  });
+
+  tbody.prepend(row);
+  row.addEventListener('click', function() {
+    selectTr(row);
+  });
+  selectTr(row);
+  return true;
+}
+
+function submitGeneratedForm(actionLabel) {
+  const inputs = Array.from(document.querySelectorAll('#modalGenBody .c2-form-input'));
+  const missing = inputs.find(function(input) {
+    return !(input.value || '').trim();
+  });
+  if (missing) {
+    showMsg('请先填写：' + (missing.getAttribute('data-label') || '必填项'));
+    return;
+  }
+  closeModal('modalGeneric');
+  if (insertGeneratedRow(actionLabel)) {
+    showMsg(actionLabel + '成功，已写入当前列表');
+  } else {
+    showMsg(actionLabel + '成功');
+  }
+}
+
+function confirmDeleteSelected() {
+  const row = getSelectedRow();
+  if (!row) {
+    showMsg('请先选择一条记录');
+    return;
+  }
+  row.remove();
+  closeModal('modalGeneric');
+  showMsg('删除成功');
+}
+
+function updateSelectedRowStatus(text, className) {
+  const row = getSelectedRow();
+  if (!row) {
+    return false;
+  }
+  const tag = row.querySelector('.status-tag');
+  if (tag) {
+    tag.className = 'status-tag ' + className;
+    tag.textContent = text;
+    return true;
+  }
+  const statusCell = Array.from(row.cells).find(function(cell) {
+    return /状态|审批|处理/.test(cell.textContent || '');
+  });
+  if (statusCell) {
+    statusCell.textContent = text;
+    return true;
+  }
+  return false;
+}
+
+function submitApproval(decision) {
+  const opinionInput = document.getElementById('c2ApprovalOpinion');
+  const opinion = opinionInput ? (opinionInput.value || '').trim() : '';
+  if (decision === 'reject' && !opinion) {
+    showMsg('请填写审批意见');
+    return;
+  }
+  closeModal('modalGeneric');
+  if (decision === 'approve') {
+    updateSelectedRowStatus('审批中', 'status-running');
+    showMsg('已提交审批');
+  } else {
+    updateSelectedRowStatus('已驳回', 'status-exception');
+    showMsg('已退回并记录审批意见');
+  }
+}
+
+let pendingLovTarget = null;
+
+function chooseLovValue(value) {
+  if (!pendingLovTarget) {
+    closeModal('modalGeneric');
+    return;
+  }
+  if (pendingLovTarget.tagName === 'SELECT') {
+    const option = Array.from(pendingLovTarget.options).find(function(item) {
+      return item.text === value || item.value === value;
+    });
+    if (option) {
+      pendingLovTarget.value = option.value;
+    }
+  } else {
+    pendingLovTarget.value = value;
+  }
+  closeModal('modalGeneric');
+  showMsg('已选择：' + value);
+}
+
+function openLovDialog(btn) {
+  pendingLovTarget = btn.parentElement ? btn.parentElement.querySelector('input, select, textarea') : null;
+  const options = ['001-标准值', '002-业务值', '003-示例值', '004-测试值'];
+  const html = '' +
+    '<div style="font-size:10pt;line-height:1.8;">' +
+      '<p>请选择一条 LOV 记录：</p>' +
+      '<div class="scroll-table"><table class="data-table"><thead><tr><th>编码</th><th>名称</th><th>操作</th></tr></thead><tbody>' +
+      options.map(function(item) {
+        const name = item.split('-')[1] || item;
+        return '<tr><td>' + escapeHtml(item.split('-')[0]) + '</td><td>' + escapeHtml(name) + '</td><td><button class="btn btn-sm" onclick="chooseLovValue(\'' + escapeHtml(item) + '\')">选择</button></td></tr>';
+      }).join('') +
+      '</tbody></table></div>' +
+    '</div>';
+  openGenericActionModal('LOV 选择', html);
+}
+
+function handleGeneratedButtonAction(btn) {
+  const label = (btn.textContent || '').replace(/\s+/g, ' ').trim();
+  if (!label) {
+    showMsg('按钮已触发');
+    return;
+  }
+
+  if (label === '⋯' || label.indexOf('LOV') >= 0 || label.indexOf('选择') >= 0) {
+    openLovDialog(btn);
+    return;
+  }
+  if (label.indexOf('重置') >= 0) {
+    resetForm(btn);
+    return;
+  }
+  if (label.indexOf('查询') >= 0 || label.indexOf('刷新') >= 0 || label.indexOf('检索') >= 0) {
+    openGenericActionModal(label, '<div style="font-size:10pt;line-height:1.8;"><p>已按当前条件执行' + escapeHtml(label) + '。</p><p>当前原型会保留查询表单与列表联动入口，便于后续继续细化真实规则。</p></div>');
+    return;
+  }
+  if (label.indexOf('新增') >= 0 || label.indexOf('新建') >= 0 || label.indexOf('创建') >= 0) {
+    openGenericActionModal(label, buildGeneratedFormHtml(btn, label));
+    return;
+  }
+  if (label.indexOf('编辑') >= 0 || label.indexOf('维护') >= 0) {
+    if (!getSelectedRow()) {
+      showMsg('请先选择一条记录');
+      return;
+    }
+    openGenericActionModal(label, buildGeneratedFormHtml(btn, label));
+    return;
+  }
+  if (label.indexOf('删除') >= 0 || label.indexOf('作废') >= 0) {
+    if (!getSelectedRow()) {
+      showMsg('请先选择一条记录');
+      return;
+    }
+    openGenericActionModal(label, '<div style="font-size:10pt;line-height:1.8;"><p>确认删除以下记录？</p><div class="overview-card" style="margin:10px 0;">' + escapeHtml(summarizeRow(getSelectedRow())) + '</div><div class="toolbar" style="justify-content:flex-end;"><button class="btn btn-primary" onclick="confirmDeleteSelected()">确认删除</button><button class="btn" onclick="closeModal(\'modalGeneric\')">取消</button></div></div>');
+    return;
+  }
+  if ((label.indexOf('审批') >= 0 || label.indexOf('审核') >= 0) && label.indexOf('查看') < 0) {
+    if (!getSelectedRow()) {
+      showMsg('请先选择一条记录');
+      return;
+    }
+    openGenericActionModal(label, '<div style="font-size:10pt;line-height:1.8;"><p>请填写审批意见：</p><div class="form-grid"><div class="form-item" style="grid-column:1 / -1;"><label>审批意见</label><textarea id="c2ApprovalOpinion" rows="4" style="width:100%;resize:vertical;"></textarea></div></div><div class="toolbar" style="justify-content:flex-end;margin-top:12px;"><button class="btn btn-primary" onclick="submitApproval(\'approve\')">同意</button><button class="btn" onclick="submitApproval(\'reject\')">驳回</button></div></div>');
+    return;
+  }
+  if (label.indexOf('查看') >= 0 || label.indexOf('预览') >= 0 || label.indexOf('详情') >= 0 || label.indexOf('明细') >= 0) {
+    openGenericActionModal(label, '<div style="font-size:10pt;line-height:1.8;"><p><b>当前记录：</b></p><div class="overview-card" style="margin:10px 0;">' + escapeHtml(summarizeRow(getSelectedRow())) + '</div><p>' + escapeHtml(label) + '功能已打开，可继续按业务需求细化字段、页签和联动逻辑。</p></div>');
+    return;
+  }
+  if (label.indexOf('提交') >= 0 || label.indexOf('保存') >= 0 || label.indexOf('确认') >= 0) {
+    openGenericActionModal(label, '<div style="font-size:10pt;line-height:1.8;"><p>确认执行“' + escapeHtml(label) + '”吗？</p><div class="toolbar" style="justify-content:flex-end;"><button class="btn btn-primary" onclick="closeModal(\'modalGeneric\');showMsg(\'' + escapeHtml(label) + '成功\')">确认</button><button class="btn" onclick="closeModal(\'modalGeneric\')">取消</button></div></div>');
+    return;
+  }
+  if (label.indexOf('导出') >= 0 || label.indexOf('下载') >= 0 || label.indexOf('打印') >= 0) {
+    openGenericActionModal(label, '<div style="font-size:10pt;line-height:1.8;"><p>已准备' + escapeHtml(label) + '内容。</p><p>当前为原型环境，保留导出入口与格式确认弹框，便于后续接入真实文件流。</p></div>');
+    return;
+  }
+  showMsg(label + '已触发');
+}
+
+function selectTr(el) {
+  const table = el.closest('table');
+  if (!table) return;
+  table.querySelectorAll('tr').forEach(function(row) {
+    row.classList.remove('selected');
+  });
+  el.classList.add('selected');
+}
+
+function switchPane(el, tabId, title) {
+  document.querySelectorAll('.tree-leaf, .tree-root-item').forEach(function(node) {
+    node.classList.remove('active');
+  });
+  el.classList.add('active');
+  document.querySelectorAll('.tab-pane').forEach(function(pane) {
+    pane.classList.remove('active');
+  });
+  const targetPane = document.getElementById(tabId);
+  if (targetPane) {
+    targetPane.classList.add('active');
+  }
+  document.getElementById('viewTitleText').textContent = title;
+  document.getElementById('statusRight').textContent = '当前功能：' + title;
+}
+
+function toggleFolder(id) {
+  const folder = document.getElementById(id);
+  if (!folder) return;
+  folder.classList.toggle('open');
+  const toggle = folder.querySelector('.tree-folder-toggle');
+  if (toggle) {
+    toggle.textContent = folder.classList.contains('open') ? '−' : '+';
+  }
+}
+
+function resetForm(btn) {
+  const grid = btn.closest('.form-grid');
+  if (!grid) {
+    showMsg('未找到可重置的查询区域');
+    return;
+  }
+  grid.querySelectorAll('input').forEach(function(input) {
+    if (input.type === 'checkbox' || input.type === 'radio') {
+      input.checked = false;
+    } else {
+      input.value = '';
+    }
+  });
+  grid.querySelectorAll('select').forEach(function(select) {
+    select.selectedIndex = 0;
+  });
+  showMsg('查询条件已重置');
+}
+
+function toggleToolbar() {
+  toolbarCollapsed = !toolbarCollapsed;
+  document.querySelector('.global-toolbar').classList.toggle('collapsed', toolbarCollapsed);
+  const btn = document.querySelector('.tb-toggle');
+  btn.textContent = toolbarCollapsed ? '▼' : '▲';
+}
+
+function zoomPage(factor) {
+  currentZoom = Math.min(Math.max(currentZoom * factor, 0.5), 2);
+  document.querySelector('.window').style.transform = 'scale(' + currentZoom + ')';
+  document.querySelector('.window').style.transformOrigin = 'top center';
+  showMsg('缩放: ' + Math.round(currentZoom * 100) + '%');
+}
+
+function resetZoom() {
+  currentZoom = 1;
+  document.querySelector('.window').style.transform = 'scale(1)';
+  document.querySelector('.window').style.transformOrigin = 'top center';
+  showMsg('缩放已重置');
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().then(function() {
+      showMsg('全屏模式');
+    }).catch(function() {
+      showMsg('全屏不可用，请通过浏览器菜单操作');
+    });
+  } else {
+    document.exitFullscreen();
+    showMsg('已退出全屏');
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (document.body.hasAttribute('data-focus-exit') && focusMode) {
+    const btn = e.target.closest ? e.target.closest('.tb-btn') : null;
+    if (btn && btn.getAttribute('onclick') && btn.getAttribute('onclick').indexOf('toggleFocus') !== -1) return;
+    if (focusMode && e.target.closest && e.target.closest('.view-panel')) return;
+    toggleFocus();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.body.hasAttribute('data-focus-exit') && focusMode) {
+    toggleFocus();
+  }
+});
+
+function toggleFocus() {
+  focusMode = !focusMode;
+  document.body.classList.toggle('focus-mode', focusMode);
+  document.getElementById('focusOverlay').classList.toggle('active', focusMode);
+  showMsg(focusMode ? '🎯 聚焦模式 — 按 ESC 或再次点击按钮退出' : '已退出聚焦模式');
+  if (focusMode) {
+    document.body.setAttribute('data-focus-exit', '1');
+  } else {
+    document.body.removeAttribute('data-focus-exit');
+  }
+}
+
+function showHelp() {
+  showModal('modalGeneric');
+  document.getElementById('modalGenTitle').textContent = '❓ 帮助 — ' + PROTOTYPE_TITLE;
+  document.getElementById('modalGenBody').innerHTML = HELP_HTML || '<div style="font-size:10pt;line-height:1.8;">暂无帮助说明</div>';
+}
+
+function captureCurrentScreenshot() {
+  const target = document.querySelector('.view-panel');
+  if (!target || typeof html2canvas !== 'function') {
+    showMsg('截图依赖未就绪');
+    return;
+  }
+
+  const funcName = document.getElementById('viewTitleText').textContent.trim() || '未知功能';
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2);
+  const timeStr = ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2) + ('0' + now.getSeconds()).slice(-2);
+  const fileName = PROTOTYPE_TITLE + '_' + funcName + '_' + dateStr + '_' + timeStr + '.png';
+
+  showMsg('正在截图...');
+
+  html2canvas(target, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#EAEEF2',
+    logging: false,
+    allowTaint: true,
+    width: target.scrollWidth,
+    height: target.scrollHeight
+  }).then(function(canvas) {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showMsg('✅ 截图已保存: ' + fileName);
+  }).catch(function(err) {
+    showMsg('截图失败: ' + err.message);
+  });
+}
+
+function batchScreenshot() {
+  if (batchScreenshot.running) {
+    showMsg('批量截图进行中，请等待...');
+    return;
+  }
+  if (typeof html2canvas !== 'function') {
+    showMsg('批量截图依赖未就绪');
+    return;
+  }
+  batchScreenshot.running = true;
+
+  const total = batchTabList.length;
+  const results = [];
+  showMsg('开始批量截图，共 ' + total + ' 个界面...');
+
+  function captureNext(index) {
+    if (index >= total) {
+      generateWordDoc(results);
+      batchScreenshot.running = false;
+      return;
+    }
+
+    const item = batchTabList[index];
+    const navItem = document.querySelector('.tree-leaf[onclick*="\'' + item.tabId + '\'"], .tree-root-item[onclick*="\'' + item.tabId + '\'"]');
+    if (navItem) {
+      navItem.click();
+    }
+
+    setTimeout(function() {
+      const panel = document.querySelector('.view-panel');
+      if (!panel) {
+        captureNext(index + 1);
+        return;
+      }
+      showMsg('截图 (' + (index + 1) + '/' + total + '): ' + item.title);
+      html2canvas(panel, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F0F0F0',
+        logging: false,
+        allowTaint: true,
+        width: panel.scrollWidth,
+        height: panel.scrollHeight
+      }).then(function(canvas) {
+        results.push({ title: item.title, dataUrl: canvas.toDataURL('image/png') });
+        captureNext(index + 1);
+      }).catch(function() {
+        results.push({ title: item.title, dataUrl: null });
+        captureNext(index + 1);
+      });
+    }, 500);
+  }
+
+  captureNext(0);
+}
+
+function generateWordDoc(results) {
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2);
+  const fileName = PROTOTYPE_TITLE + '_批量截图_' + dateStr + '.doc';
+  showMsg('正在生成Word文档...');
+
+  let htmlContent = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+  htmlContent += '<head><meta charset="UTF-8"><title>' + PROTOTYPE_TITLE + ' - 功能截图</title>';
+  htmlContent += '<style>body { font-family: 宋体, SimSun, serif; font-size: 12pt; margin: 40px; } h2 { text-align: center; font-size: 16pt; margin-top: 30px; margin-bottom: 20px; } .screenshot { text-align: center; margin-bottom: 10px; } .screenshot img { max-width: 100%; } .page-break { page-break-after: always; }</style>';
+  htmlContent += '</head><body>';
+
+  results.forEach(function(result, index) {
+    if (!result.dataUrl) {
+      htmlContent += '<h2>' + result.title + ' - 截图失败</h2>' + (index < results.length - 1 ? '<br class="page-break">' : '');
+      return;
+    }
+    htmlContent += '<h2>' + result.title + '</h2>';
+    htmlContent += '<div class="screenshot"><img src="' + result.dataUrl + '" style="width:100%;max-width:650px;"></div>';
+    if (index < results.length - 1) {
+      htmlContent += '<br class="page-break">';
+    }
+  });
+
+  htmlContent += '</body><\/html>';
+  const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showMsg('✅ 批量截图完成: ' + fileName);
+}
+
+function generateDesignDoc() {
+  showModal('modalGeneric');
+  document.getElementById('modalGenTitle').textContent = '📝 选择导出格式';
+  document.getElementById('modalGenBody').innerHTML = `
+    <div style="font-size:10pt;line-height:1.8;padding:10px 0;">
+      <p>请选择功能设计文档的导出格式：</p>
+      <div style="display:flex;gap:12px;margin-top:16px;justify-content:center;">
+        <button class="btn btn-primary" onclick="closeModal('modalGeneric');startDocCapture('doc')" style="padding:8px 24px;min-height:40px;font-size:11pt;">📄 Word 文档 (.docx)</button>
+        <button class="btn" onclick="closeModal('modalGeneric');startDocCapture('md')" style="padding:8px 24px;min-height:40px;font-size:11pt;">📝 Markdown 文档 (.md)</button>
+      </div>
+      <p style="margin-top:12px;color:#666;text-align:center;">两种格式均包含全部功能界面的截图和功能说明</p>
+    </div>`;
+}
+
+function startDocCapture(format) {
+  if (docCaptureRunning) {
+    showMsg('文档生成进行中，请等待...');
+    return;
+  }
+  if (typeof html2canvas !== 'function') {
+    showMsg('文档生成依赖未就绪');
+    return;
+  }
+  docCaptureRunning = true;
+  const total = docTabList.length;
+  const results = [];
+  showMsg('开始截取界面，共 ' + total + ' 个...');
+
+  function captureNext(index) {
+    if (index >= total) {
+      if (format === 'md') {
+        buildMarkdownDoc(results);
+      } else {
+        buildWordDoc(results);
+      }
+      docCaptureRunning = false;
+      return;
+    }
+
+    const item = docTabList[index];
+    const navItem = document.querySelector('.tree-leaf[onclick*="\'' + item.tabId + '\'"], .tree-root-item[onclick*="\'' + item.tabId + '\'"]');
+    if (navItem) {
+      navItem.click();
+    }
+
+    setTimeout(function() {
+      const panel = document.querySelector('.view-panel');
+      if (!panel) {
+        captureNext(index + 1);
+        return;
+      }
+      showMsg('截取 (' + (index + 1) + '/' + total + '): ' + item.title);
+      html2canvas(panel, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F0F0F0',
+        logging: false,
+        allowTaint: true,
+        width: panel.scrollWidth,
+        height: panel.scrollHeight
+      }).then(function(canvas) {
+        results.push({ title: item.title, desc: item.desc, dataUrl: canvas.toDataURL('image/png') });
+        captureNext(index + 1);
+      }).catch(function() {
+        results.push({ title: item.title, desc: item.desc, dataUrl: null });
+        captureNext(index + 1);
+      });
+    }, 500);
+  }
+
+  captureNext(0);
+}
+
+function buildMarkdownDoc(results) {
+  if (typeof JSZip !== 'function') {
+    showMsg('Markdown导出依赖未就绪');
+    return;
+  }
+  showMsg('正在生成Markdown文档...');
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2);
+  const folderName = PROTOTYPE_TITLE + '_功能设计文档_' + dateStr;
+  const imgDir = 'images/';
+  let md = '# ' + PROTOTYPE_TITLE + ' — 功能设计文档\n\n';
+  md += '**版本：** v1.0  **日期：** ' + now.toLocaleDateString('zh-CN') + '\n\n---\n\n';
+  results.forEach(function(result, index) {
+    const imgFile = imgDir + result.title + '.png';
+    md += '## ' + (index + 1) + '. ' + result.title + '\n\n';
+    md += (result.desc || '') + '\n\n';
+    if (result.dataUrl) {
+      md += '![' + result.title + '](' + imgFile + ')\n\n';
+    }
+  });
+
+  const zip = new JSZip();
+  zip.file(folderName + '.md', md);
+  const imgFolder = zip.folder(imgDir);
+  results.forEach(function(result) {
+    if (result.dataUrl) {
+      imgFolder.file(result.title + '.png', result.dataUrl.split(',')[1], { base64: true });
+    }
+  });
+
+  zip.generateAsync({ type: 'blob' }).then(function(blob) {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = folderName + '.zip';
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showMsg('✅ Markdown文档已生成: ' + folderName + '.zip');
+  });
+}
+
+function buildWordDoc(results) {
+  showMsg('正在生成Word文档...');
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2);
+  const fileName = PROTOTYPE_TITLE + '_功能设计文档_' + dateStr + '.docx';
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+  html += '<head><meta charset="UTF-8"><title>' + PROTOTYPE_TITLE + ' - 功能设计文档</title>';
+  html += '<style>body { font-family: 宋体, SimSun, serif; font-size: 11pt; margin: 50px; line-height: 1.7; } h1 { text-align: center; font-size: 20pt; color: #2D82C3; border-bottom: 2px solid #2D82C3; padding-bottom: 10px; } h2 { font-size: 14pt; color: #2D6EB0; margin-top: 25px; border-left: 4px solid #2D6EB0; padding-left: 10px; } .screenshot { text-align: center; margin: 12px 0; } .screenshot img { max-width: 100%; width: 650px; } .desc-box { background: #F8FAFC; border: 1px solid #B0C4DE; padding: 10px 14px; margin: 8px 0; } .page-break { page-break-after: always; }</style></head><body>';
+  html += '<h1>' + PROTOTYPE_TITLE + '</h1>';
+  html += '<h2 style="border:none;text-align:center;font-size:16pt;margin-top:5px;">功能设计文档</h2>';
+  results.forEach(function(result, index) {
+    html += '<h2>' + result.title + '</h2>';
+    if (result.dataUrl) {
+      html += '<div class="screenshot"><img src="' + result.dataUrl + '"></div>';
+    }
+    html += '<div class="desc-box"><b>功能说明：</b><br>' + (result.desc || '') + '</div>';
+    if (index < results.length - 1) {
+      html += '<br class="page-break">';
+    }
+  });
+  html += '</body><\/html>';
+  const blob = new Blob([html], { type: 'application/msword;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showMsg('✅ Word文档已生成: ' + fileName);
+}
+
+function activatePrototypeInteractions() {
+  document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.classList.remove('open');
+      }
+    });
+  });
+
+  document.querySelectorAll('.scroll-table tbody tr, .data-table tbody tr').forEach(function(row) {
+    row.addEventListener('click', function() {
+      selectTr(row);
+    });
+  });
+
+  document.querySelectorAll('.view-content .btn, .view-content .btn-sm').forEach(function(btn) {
+    if (btn.getAttribute('onclick')) {
+      return;
+    }
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleGeneratedButtonAction(btn);
+    });
+  });
+}
+
+activatePrototypeInteractions();
+</script>
+<script>
+(function () {
+  function ensureToast() {
+    var toast = document.getElementById('prototype-runtime-toast');
+    if (toast) {
+      return toast;
+    }
+    toast = document.createElement('div');
+    toast.id = 'prototype-runtime-toast';
+    toast.style.cssText = 'position:fixed;top:16px;right:16px;z-index:99999;max-width:420px;padding:10px 14px;background:rgba(33,37,41,.92);color:#fff;font:12px/1.6 "Microsoft YaHei",sans-serif;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.22);display:none;white-space:pre-wrap;';
+    document.body.appendChild(toast);
+    return toast;
+  }
+
+  function showMsg(message) {
+    var toast = ensureToast();
+    toast.textContent = message || '演示功能已触发';
+    toast.style.display = 'block';
+    window.clearTimeout(showMsg.__timer__);
+    showMsg.__timer__ = window.setTimeout(function () {
+      toast.style.display = 'none';
+    }, 2600);
+  }
+
+  if (typeof window.showMsg !== 'function') {
+    window.showMsg = showMsg;
+  }
+
+  [
+    ['captureCurrentScreenshot', '当前原型未接入截图引擎，这里先保留演示入口。'],
+    ['batchScreenshot', '批量截图为演示占位，导出目录后可继续接入真实能力。'],
+    ['generateDesignDoc', 'PRD 生成为演示占位，请在当前页面继续补充业务规则。'],
+    ['zoomPage', '缩放功能未定义，当前用演示提示代替。'],
+    ['resetZoom', '缩放重置为演示占位。'],
+    ['toggleFullscreen', '全屏操作已触发，若浏览器拦截请手动使用浏览器全屏。'],
+    ['toggleFocus', '聚焦模式为演示占位。'],
+    ['showHelp', '帮助面板为演示占位。'],
+    ['toggleToolbar', '工具栏折叠功能未定义，当前用演示提示代替。']
+  ].forEach(function (item) {
+    if (typeof window[item[0]] !== 'function') {
+      window[item[0]] = function () {
+        window.showMsg(item[1]);
+      };
+    }
+  });
+
+  window.addEventListener('error', function (event) {
+    if (!event || !event.message) {
+      return;
+    }
+    window.showMsg('原型脚本提示：' + event.message);
+    event.preventDefault();
+  });
+
+  window.addEventListener('unhandledrejection', function (event) {
+    var reason = event && event.reason ? String(event.reason) : '未知 Promise 错误';
+    window.showMsg('原型脚本提示：' + reason);
+    event.preventDefault();
+  });
+})();
+</script>
+</body>
+</html>

@@ -13,7 +13,7 @@ opportunity_bp = Blueprint("opportunity", __name__)
 @opportunity_bp.route('/api/opportunity/parse', methods=['POST'])
 def parse_opportunity():
     """
-    使用 ModelScope DeepSeek-V4-Flash 解析商机自然语言描述
+    使用 ModelScope model 解析商机自然语言描述
     """
     try:
         data = request.get_json()
@@ -87,7 +87,7 @@ def parse_opportunity():
         }
 
         payload = {
-            'model': 'deepseek-ai/DeepSeek-V4-Flash',
+            'model': Config.resolve_llm_model(),
             'messages': [
                 {'role': 'system', 'content': system_prompt},
                 {'role': 'user', 'content': user_prompt}

@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle PRD 助手 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .oracle-prd-page {
+            overflow: hidden;
+        }
+
+        .oracle-prd-page .content-grid {
+            display: grid;
+            grid-template-columns: 420px minmax(0, 1fr);
+            gap: 16px;
+            height: calc(100vh - 102px);
+            min-height: 720px;
+        }
+
+        .oracle-prd-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .oracle-card-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .oracle-card-header.headline {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .oracle-card-header-main {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .oracle-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            color: #303133;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .oracle-card-title i {
+            color: #ad063e;
+        }
+
+        .oracle-card-desc {
+            margin: 6px 0 0;
+            color: #667085;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: nowrap;
+        }
+
+        .oracle-status-text {
+            margin-top: 8px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #475467;
+        }
+
+        .oracle-status-text.visible {
+            display: inline-flex;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: #98a2b3;
+        }
+
+        .oracle-status-text.idle .status-dot {
+            background: #98a2b3;
+        }
+
+        .oracle-status-text.running .status-dot {
+            background: #f79009;
+            box-shadow: 0 0 0 4px rgba(247, 144, 9, 0.16);
+            animation: status-pulse 1.4s ease-in-out infinite;
+        }
+
+        .oracle-status-text.success .status-dot {
+            background: #12b76a;
+        }
+
+        .oracle-status-text.error .status-dot {
+            background: #f04438;
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .preview-action-btn {
+            height: 30px;
+            padding: 0 12px;
+            border-radius: 8px;
+            border: 1px solid #d0d5dd;
+            background: #fff;
+            color: #344054;
+            font-size: 12px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preview-action-btn:hover:not(:disabled) {
+            border-color: #ad063e;
+            color: #ad063e;
+            background: rgba(173, 6, 62, 0.04);
+        }
+
+        .preview-action-btn:disabled {
+            cursor: not-allowed;
+            color: #98a2b3;
+            background: #f8fafc;
+            border-color: #e4e7ec;
+        }
+
+        .preview-export-path {
+            margin: 0;
+            font-size: 12px;
+            color: #667085;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: right;
+        }
+
+        .export-picker-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.42);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 1200;
+        }
+
+        .export-picker-overlay.open {
+            display: flex;
+        }
+
+        .export-picker-dialog {
+            width: min(760px, calc(100vw - 32px));
+            max-height: min(82vh, 860px);
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .export-picker-header {
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid #eaecf0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .export-picker-title {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 700;
+            color: #101828;
+        }
+
+        .export-picker-desc {
+            margin: 6px 0 0;
+            color: #667085;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .export-picker-close {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d0d5dd;
+            background: #fff;
+            border-radius: 10px;
+            color: #344054;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .export-picker-close:hover {
+            border-color: #ad063e;
+            color: #ad063e;
+            background: rgba(173, 6, 62, 0.04);
+        }
+
+        .export-picker-toolbar {
+            padding: 14px 20px 12px;
+            border-bottom: 1px solid #f2f4f7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .export-picker-search {
+            flex: 1;
+            min-width: 220px;
+            height: 38px;
+            border: 1px solid #d0d5dd;
+            border-radius: 10px;
+            padding: 0 14px;
+            font: inherit;
+            color: #101828;
+            background: #fff;
+        }
+
+        .export-picker-search:focus {
+            outline: none;
+            border-color: #ad063e;
+            box-shadow: 0 0 0 4px rgba(173, 6, 62, 0.08);
+        }
+
+        .export-picker-meta {
+            font-size: 12px;
+            color: #667085;
+            white-space: nowrap;
+        }
+
+        .export-picker-list {
+            padding: 16px 20px 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 220px;
+        }
+
+        .export-picker-item {
+            border: 1px solid #e4e7ec;
+            border-radius: 14px;
+            background: #fff;
+            padding: 14px 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .export-picker-item:hover {
+            border-color: rgba(173, 6, 62, 0.38);
+            box-shadow: 0 10px 24px rgba(173, 6, 62, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .export-picker-item.selected {
+            border-color: #ad063e;
+            background: rgba(173, 6, 62, 0.04);
+            box-shadow: 0 0 0 3px rgba(173, 6, 62, 0.08);
+        }
+
+        .export-picker-item-title {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: #101828;
+        }
+
+        .export-picker-item-subtitle {
+            margin: 6px 0 0;
+            color: #667085;
+            font-size: 12px;
+            line-height: 1.5;
+            word-break: break-all;
+        }
+
+        .export-picker-item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .export-picker-tag {
+            display: inline-flex;
+            align-items: center;
+            height: 24px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: #f8fafc;
+            border: 1px solid #e4e7ec;
+            color: #475467;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .export-picker-empty {
+            display: none;
+            margin: auto;
+            padding: 24px;
+            text-align: center;
+            color: #667085;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .export-picker-empty.visible {
+            display: block;
+        }
+
+        .export-picker-footer {
+            padding: 14px 20px 18px;
+            border-top: 1px solid #eaecf0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .oracle-card-header-side {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 8px;
+            flex-shrink: 0;
+            max-width: 560px;
+        }
+
+        .oracle-model-picker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 30px;
+            padding: 0 10px;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .oracle-model-picker-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475467;
+            white-space: nowrap;
+        }
+
+        .oracle-model-picker-label i {
+            color: #ad063e;
+        }
+
+        .oracle-model-picker select {
+            border: none;
+            background: transparent;
+            font: inherit;
+            font-size: 12px;
+            color: #101828;
+            cursor: pointer;
+            outline: none;
+            max-width: 220px;
+        }
+
+        @keyframes status-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(247, 144, 9, 0.22); }
+            70% { box-shadow: 0 0 0 8px rgba(247, 144, 9, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(247, 144, 9, 0); }
+        }
+
+        .oracle-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .oracle-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            color: #475467;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .oracle-badge.accent {
+            background: rgba(173, 6, 62, 0.06);
+            border-color: rgba(173, 6, 62, 0.14);
+            color: #ad063e;
+        }
+
+        .chat-layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+            background: linear-gradient(180deg, #fcfcfd 0%, #f8fafc 100%);
+            scrollbar-gutter: stable;
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #d0d5dd;
+            border-radius: 999px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-msg {
+            display: flex;
+            gap: 10px;
+            max-width: 92%;
+        }
+
+        .chat-msg.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+            align-items: stretch;
+        }
+
+        .chat-msg.assistant {
+            align-self: flex-start;
+            align-items: stretch;
+        }
+
+        .chat-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+
+        .chat-msg.user .chat-avatar {
+            background: #ad063e;
+            color: #fff;
+        }
+
+        .chat-msg.assistant .chat-avatar {
+            background: #f2f4f7;
+            color: #667085;
+            height: auto;
+            min-height: 34px;
+            border-radius: 18px;
+            align-items: flex-start;
+            padding-top: 10px;
+        }
+
+        .chat-bubble {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .chat-msg.user .chat-bubble {
+            background: #ad063e;
+            color: #fff;
+            border-top-right-radius: 2px;
+            max-height: 360px;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+
+        .chat-msg.user .chat-bubble::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-msg.user .chat-bubble::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.42);
+            border-radius: 999px;
+        }
+
+        .chat-msg.user .chat-bubble::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-msg.assistant .chat-bubble {
+            background: #fff;
+            color: #303133;
+            border: 1px solid #e5e7eb;
+            border-top-left-radius: 2px;
+            max-height: 360px;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+
+        .chat-msg.assistant .chat-bubble::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-msg.assistant .chat-bubble::-webkit-scrollbar-thumb {
+            background: #d0d5dd;
+            border-radius: 999px;
+        }
+
+        .chat-msg.assistant .chat-bubble::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-meta {
+            display: block;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #98a2b3;
+        }
+
+        .chat-msg.user .chat-meta {
+            color: rgba(255, 255, 255, 0.72);
+            text-align: right;
+        }
+
+        .chat-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 14px 16px 12px;
+            border-top: 1px solid #eef2f6;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .suggestions-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .suggestion-chip {
+            padding: 6px 12px;
+            border-radius: 16px;
+            border: 1px solid #dbe1e8;
+            background: #fff;
+            color: #475467;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-chip:hover {
+            border-color: #ad063e;
+            color: #ad063e;
+            background: rgba(173, 6, 62, 0.04);
+        }
+
+        .chat-input-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 14px 16px 16px;
+            border-top: 1px solid #e5e7eb;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .chat-input {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #dbe1e8;
+            font-size: 13px;
+            font-family: inherit;
+            resize: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #ad063e;
+        }
+
+        .chat-send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 10px;
+            background: #ad063e;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s ease;
+        }
+
+        .chat-send-btn:hover {
+            background: #900533;
+        }
+
+        .chat-send-btn:disabled {
+            background: #c4c7cc;
+            cursor: not-allowed;
+        }
+
+        .typing-row {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border-top-left-radius: 2px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            flex-direction: column;
+            min-width: 280px;
+            max-width: 420px;
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c0c4cc;
+            animation: typing-bounce 1.3s ease-in-out infinite;
+        }
+
+        .typing-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .typing-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #344054;
+            line-height: 1.5;
+        }
+
+        .typing-detail {
+            font-size: 12px;
+            color: #667085;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing-bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        .display-layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .display-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px 0;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .display-tab {
+            padding: 8px 14px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid #e5e7eb;
+            border-bottom: none;
+            background: #f8fafc;
+            color: #667085;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .display-tab.active {
+            background: #fff;
+            color: #ad063e;
+            border-color: #e5e7eb;
+        }
+
+        .display-panels {
+            flex: 1;
+            min-height: 0;
+            border-top: 1px solid #e5e7eb;
+            background: #fff;
+        }
+
+        .display-panel {
+            display: none;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .display-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-preview {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #303133;
+            background: #fff;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .preview-frame-wrap {
+            flex: 1;
+            min-height: 0;
+            padding: 12px;
+            background: #f8fafc;
+            overflow: auto;
+        }
+
+        .preview-frame {
+            width: 100%;
+            min-height: 560px;
+            height: 560px;
+            border: 1px solid #dbe1e8;
+            border-radius: 10px;
+            background: #fff;
+            display: block;
+        }
+
+        .empty-preview {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #98a2b3;
+            font-size: 13px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        @media (max-width: 1200px) {
+            .oracle-prd-page .content-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .oracle-prd-card {
+                min-height: 640px;
+            }
+        }
+
+        body.iframe-mode .oracle-prd-page .content-grid {
+            height: calc(100vh - 32px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+            <main class="main-content-area oracle-prd-page">
+                <div class="content-grid">
+                    <section class="oracle-prd-card">
+                        <div class="oracle-card-header headline">
+                            <div class="oracle-card-header-main">
+                                <h2 class="oracle-card-title"><i class="fas fa-comments"></i>Oracle PRD</h2>
+                                <p class="oracle-card-desc">多轮澄清 Oracle EBS Forms 原型需求。可切换对话与生成使用的模型。</p>
+                            </div>
+                            <div class="oracle-card-header-side">
+                                <label class="oracle-model-picker">
+                                    <span class="oracle-model-picker-label"><i class="fas fa-microchip"></i> 模型</span>
+                                    <select id="prdModel" data-model-options="true"></select>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="chat-layout">
+                            <div class="chat-messages" id="chatMessages"></div>
+
+                            <div class="chat-suggestions">
+                                <div class="suggestions-group">
+                                    <button id="loadProcurementCaseBtn" class="suggestion-chip" type="button" data-action="load-procurement-case">加载采购案例</button>
+                                    <button class="suggestion-chip" data-prompt="请先总结你对当前业务需求的理解，然后只问我一个最关键的确认问题。">梳理当前需求</button>
+                                    <button class="suggestion-chip" data-prompt="请继续按 Oracle EBS Forms 原型梳理流程推进，如果信息还不完整，一次只问我一个关键问题。">继续需求澄清</button>
+                                    <button class="suggestion-chip" data-prompt="请基于当前已确认的信息，先给我左树右屏的导航结构和页面分组建议，暂时不要生成 HTML。">先出导航结构</button>
+                                    <button class="suggestion-chip" data-prompt="如果当前信息已经足够，请严格基于现有模板生成 Oracle EBS Forms 单文件 HTML 原型。">生成原型 HTML</button>
+                                </div>
+                            </div>
+
+                            <div class="chat-input-bar">
+                                <textarea id="chatInput" class="chat-input" rows="1" placeholder="直接描述你的业务需求即可，我会按 skill 流程继续追问。Shift+Enter 换行，Enter 发送。"></textarea>
+                                <button id="sendButton" class="chat-send-btn" title="发送">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="oracle-prd-card">
+                        <div class="oracle-card-header headline">
+                            <div class="oracle-card-header-main">
+                                <h2 class="oracle-card-title"><i class="fas fa-display"></i> 展示区域</h2>
+                                <p class="oracle-card-desc">AI 当前输出、需求文档摘要、skill 参考和示例原型预览。</p>
+                            </div>
+                            <div class="oracle-card-header-side">
+                                <div class="preview-actions">
+                                    <button id="loadExportedPrototypeBtn" class="preview-action-btn" type="button">加载已导出原型</button>
+                                    <button id="exportPrototypeBtn" class="preview-action-btn" type="button" disabled>导出原型目录</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="display-layout">
+                            <div class="display-tabs">
+                                <button class="display-tab active" data-tab="aiOutput">AI 输出</button>
+                                <button class="display-tab" data-tab="document">需求文档</button>
+                                <button class="display-tab" data-tab="skill">Skill 参考</button>
+                                <button class="display-tab" data-tab="preview">示例原型</button>
+                            </div>
+
+                            <div class="display-panels">
+                                <section class="display-panel active" data-panel="aiOutput">
+                                    <div class="text-preview" id="aiOutputPanel">等待模型返回内容...</div>
+                                </section>
+                                <section class="display-panel" data-panel="document">
+                                    <div class="text-preview" id="documentPanel">正在加载需求文档...</div>
+                                </section>
+                                <section class="display-panel" data-panel="skill">
+                                    <div class="text-preview" id="skillPanel">正在加载 skill 参考...</div>
+                                </section>
+                                <section class="display-panel" data-panel="preview">
+                                    <div class="preview-frame-wrap">
+                                        <iframe id="previewFrame" class="preview-frame" title="Oracle PRD 示例原型"></iframe>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+        <div id="footer-placeholder"></div>
+    </div>
+
+    <div id="exportPickerOverlay" class="export-picker-overlay" aria-hidden="true">
+        <div class="export-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="exportPickerTitle">
+            <div class="export-picker-header">
+                <div>
+                    <h3 id="exportPickerTitle" class="export-picker-title">选择已导出原型</h3>
+                    <p class="export-picker-desc">从最近导出的版本中选择一个加载到右侧预览，后续修改会基于该版本继续生成。</p>
+                </div>
+                <button id="exportPickerCloseBtn" class="export-picker-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="export-picker-toolbar">
+                <input id="exportPickerSearch" class="export-picker-search" type="text" placeholder="搜索标题、导出目录名或模型">
+                <span id="exportPickerMeta" class="export-picker-meta">0 个结果</span>
+            </div>
+            <div id="exportPickerList" class="export-picker-list"></div>
+            <div id="exportPickerEmpty" class="export-picker-empty">没有找到匹配的导出原型。<br>可以先清空搜索条件再试一次。</div>
+            <div class="export-picker-footer">
+                <button id="exportPickerCancelBtn" class="preview-action-btn" type="button">取消</button>
+                <button id="exportPickerConfirmBtn" class="preview-action-btn" type="button" disabled>加载选中原型</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/js/layout.js"></script>
+    <script src="static/js/model-options.js"></script>
+    <script>
+        (function() {
+            var chatMessages = document.getElementById('chatMessages');
+            var chatInput = document.getElementById('chatInput');
+            var prdModelSelect = document.getElementById('prdModel');
+            var sendButton = document.getElementById('sendButton');
+            var prdModelSelect = document.getElementById('prdModel');
+            var aiOutputPanel = document.getElementById('aiOutputPanel');
+            var documentPanel = document.getElementById('documentPanel');
+            var skillPanel = document.getElementById('skillPanel');
+            var previewFrame = document.getElementById('previewFrame');
+            var previewStatusText = document.getElementById('previewStatusText');
+            var previewStatusLabel = document.getElementById('previewStatusLabel');
+            var loadExportedPrototypeBtn = document.getElementById('loadExportedPrototypeBtn');
+            var exportPrototypeBtn = document.getElementById('exportPrototypeBtn');
+            var exportPathText = document.getElementById('exportPathText');
+            var exportPickerOverlay = document.getElementById('exportPickerOverlay');
+            var exportPickerSearch = document.getElementById('exportPickerSearch');
+            var exportPickerList = document.getElementById('exportPickerList');
+            var exportPickerEmpty = document.getElementById('exportPickerEmpty');
+            var exportPickerMeta = document.getElementById('exportPickerMeta');
+            var exportPickerCloseBtn = document.getElementById('exportPickerCloseBtn');
+            var exportPickerCancelBtn = document.getElementById('exportPickerCancelBtn');
+            var exportPickerConfirmBtn = document.getElementById('exportPickerConfirmBtn');
+            var tabButtons = Array.prototype.slice.call(document.querySelectorAll('.display-tab'));
+            var tabPanels = Array.prototype.slice.call(document.querySelectorAll('.display-panel'));
+            var suggestionButtons = Array.prototype.slice.call(document.querySelectorAll('.suggestion-chip'));
+
+            var state = {
+                loading: false,
+                messages: [],
+                contextLoaded: false,
+                prototypeStatusTimer: null,
+                chatStatusTimer: null,
+                prototypeStartedAt: 0,
+                chatRequestStartedAt: 0,
+                chatStreamStatusMessage: '',
+                prototypeStreamStatusMessage: '',
+                currentPrototypeHtml: '',
+                currentPrototypeTitle: '',
+                currentExportName: '',
+                currentExportDir: '',
+                lastAutoExportDir: '',
+                exportPickerItems: [],
+                exportPickerSelectedName: '',
+                exportLoading: false,
+                loadExportLoading: false
+            };
+
+            var PROCUREMENT_CASE_PROMPT = [
+                '我这里有一个 Oracle EBS 采购需求申请与审批的案例，先作为业务背景给你。',
+                '请按 skill 的引导流程继续，如果信息还不完整，一次只问我一个最关键的问题；不要直接开始生成原型。',
+                '',
+                '业务场景：',
+                '各部门在 Oracle EBS 中发起采购需求，填写物料、数量、需求日期、预算归属和用途说明。采购部门统一查看需求，校验预算，分派采购员，并结合供应商建议推进后续采购。',
+                '',
+                '我目前初步想到的模块有：需求总览、需求申请单、明细行、审批、预算校验、供应商建议与分派、状态跟踪。',
+                '',
+                '请你先继续问我下一个最关键的问题。'
+            ].join('\n');
+
+            var CHAT_PROGRESS_STEPS = [
+                '正在整理本轮需求上下文',
+                '正在结合已加载文档和模板理解业务意图',
+                '正在等待模型返回结构化回复',
+                '正在校验回复格式并准备写入界面'
+            ];
+
+            var PROTOTYPE_PROGRESS_STEPS = [
+                '正在汇总当前对话和原型约束',
+                '正在组织左树右屏页面结构',
+                '正在生成页面内容与交互区域',
+                '正在校验原型格式并准备写入预览'
+            ];
+
+            function getBaseUrl() {
+                var match = window.location.pathname.match(/^(\/proxy\/\d+)/);
+                return match ? match[1] : '';
+            }
+
+            function buildUrl(path) {
+                if (!path) {
+                    return getBaseUrl() + '/';
+                }
+                return path.charAt(0) === '/'
+                    ? getBaseUrl() + path
+                    : getBaseUrl() + '/' + path;
+            }
+
+            async function readJsonResponse(response, fallbackMessage) {
+                var contentType = response.headers.get('content-type') || '';
+                if (contentType.indexOf('application/json') >= 0) {
+                    return response.json();
+                }
+
+                var text = await response.text();
+                var compactText = String(text || '').trim().slice(0, 180);
+                throw new Error(
+                    (fallbackMessage || '接口返回了非 JSON 响应') +
+                    (compactText ? '：' + compactText : '')
+                );
+            }
+
+            function updateTypingMessage(title, detail) {
+                var titleNode = document.getElementById('typingTitle');
+                var detailNode = document.getElementById('typingDetail');
+                if (!titleNode || !detailNode) {
+                    return;
+                }
+                titleNode.textContent = title || 'AI 正在回复';
+                detailNode.textContent = detail || '正在准备本轮处理...';
+            }
+
+            async function readEventStreamResponse(response, handlers, fallbackMessage) {
+                if (!response.ok) {
+                    var errorText = await response.text();
+                    throw new Error((fallbackMessage || '流式接口调用失败') + (errorText ? '：' + errorText.slice(0, 240) : ''));
+                }
+
+                var contentType = response.headers.get('content-type') || '';
+                if (contentType.indexOf('text/event-stream') < 0) {
+                    var maybeJson = await readJsonResponse(response, fallbackMessage || '流式接口返回异常');
+                    if (maybeJson && maybeJson.error) {
+                        throw new Error(maybeJson.error);
+                    }
+                    throw new Error(fallbackMessage || '流式接口返回异常');
+                }
+
+                var reader = response.body && response.body.getReader ? response.body.getReader() : null;
+                if (!reader) {
+                    throw new Error('当前浏览器不支持读取流式响应');
+                }
+
+                var decoder = new TextDecoder('utf-8');
+                var buffer = '';
+
+                function emitBlock(block) {
+                    var eventName = 'message';
+                    var dataLines = [];
+                    String(block || '').split('\n').forEach(function(line) {
+                        if (!line) {
+                            return;
+                        }
+                        if (line.indexOf('event:') === 0) {
+                            eventName = line.slice(6).trim() || 'message';
+                            return;
+                        }
+                        if (line.indexOf('data:') === 0) {
+                            dataLines.push(line.slice(5).trim());
+                        }
+                    });
+
+                    if (!dataLines.length) {
+                        return;
+                    }
+
+                    var payloadText = dataLines.join('\n');
+                    var payload = {};
+                    try {
+                        payload = JSON.parse(payloadText);
+                    } catch (error) {
+                        payload = { text: payloadText };
+                    }
+
+                    if (handlers && typeof handlers[eventName] === 'function') {
+                        handlers[eventName](payload);
+                    }
+                }
+
+                while (true) {
+                    var readResult = await reader.read();
+                    if (readResult.done) {
+                        break;
+                    }
+
+                    buffer += decoder.decode(readResult.value, { stream: true });
+                    buffer = buffer.replace(/\r\n/g, '\n');
+
+                    var separatorIndex = buffer.indexOf('\n\n');
+                    while (separatorIndex >= 0) {
+                        var block = buffer.slice(0, separatorIndex);
+                        buffer = buffer.slice(separatorIndex + 2);
+                        emitBlock(block);
+                        separatorIndex = buffer.indexOf('\n\n');
+                    }
+                }
+
+                buffer += decoder.decode();
+                buffer = buffer.replace(/\r\n/g, '\n');
+                if (buffer.trim()) {
+                    emitBlock(buffer);
+                }
+            }
+
+            function nowText() {
+                var date = new Date();
+                var hh = String(date.getHours()).padStart(2, '0');
+                var mm = String(date.getMinutes()).padStart(2, '0');
+                return hh + ':' + mm;
+            }
+
+            function switchTab(tabName) {
+                tabButtons.forEach(function(button) {
+                    button.classList.toggle('active', button.getAttribute('data-tab') === tabName);
+                });
+                tabPanels.forEach(function(panel) {
+                    panel.classList.toggle('active', panel.getAttribute('data-panel') === tabName);
+                });
+            }
+
+            function appendMessage(role, content) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'chat-msg ' + (role === 'user' ? 'user' : 'assistant');
+
+                var avatar = document.createElement('div');
+                avatar.className = 'chat-avatar';
+                avatar.innerHTML = role === 'user'
+                    ? '<i class="fas fa-user"></i>'
+                    : '<i class="fas fa-robot"></i>';
+
+                var bubble = document.createElement('div');
+                bubble.className = 'chat-bubble';
+                bubble.textContent = content;
+
+                var meta = document.createElement('span');
+                meta.className = 'chat-meta';
+                meta.textContent = (role === 'user' ? '我' : 'Oracle PRD 助手') + ' · ' + nowText();
+                bubble.appendChild(document.createElement('br'));
+                bubble.appendChild(meta);
+
+                wrapper.appendChild(avatar);
+                wrapper.appendChild(bubble);
+                chatMessages.appendChild(wrapper);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function upsertAssistantStream(content) {
+                var row = document.getElementById('assistantStreamRow');
+                if (!row) {
+                    row = document.createElement('div');
+                    row.className = 'chat-msg assistant';
+                    row.id = 'assistantStreamRow';
+                    row.innerHTML =
+                        '<div class="chat-avatar"><i class="fas fa-robot"></i></div>' +
+                        '<div class="chat-bubble">' +
+                            '<span class="assistant-stream-text"></span><br>' +
+                            '<span class="chat-meta assistant-stream-meta">Oracle PRD 助手 · 正在输出</span>' +
+                        '</div>';
+                    chatMessages.appendChild(row);
+                }
+
+                var textNode = row.querySelector('.assistant-stream-text');
+                if (textNode) {
+                    textNode.textContent = content || '';
+                }
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function commitAssistantStream(content) {
+                var row = document.getElementById('assistantStreamRow');
+                if (!row) {
+                    appendMessage('assistant', content || '已收到。');
+                    return;
+                }
+
+                var textNode = row.querySelector('.assistant-stream-text');
+                var metaNode = row.querySelector('.assistant-stream-meta');
+                if (textNode) {
+                    textNode.textContent = content || '已收到。';
+                }
+                if (metaNode) {
+                    metaNode.textContent = 'Oracle PRD 助手 · ' + nowText();
+                    metaNode.classList.remove('assistant-stream-meta');
+                }
+                row.removeAttribute('id');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function clearAssistantStream() {
+                var row = document.getElementById('assistantStreamRow');
+                if (row) {
+                    row.remove();
+                }
+            }
+
+            function showTyping() {
+                hideTyping();
+                var wrapper = document.createElement('div');
+                wrapper.className = 'chat-msg assistant';
+                wrapper.id = 'typingRow';
+                wrapper.innerHTML =
+                    '<div class="chat-avatar"><i class="fas fa-robot"></i></div>' +
+                    '<div class="typing-row">' +
+                        '<div class="typing-indicator">' +
+                            '<span class="typing-dot"></span>' +
+                            '<span class="typing-dot"></span>' +
+                            '<span class="typing-dot"></span>' +
+                        '</div>' +
+                        '<div class="typing-text">' +
+                            '<span class="typing-title" id="typingTitle">AI 正在回复</span>' +
+                            '<span class="typing-detail" id="typingDetail">正在准备本轮处理...</span>' +
+                        '</div>' +
+                    '</div>';
+                chatMessages.appendChild(wrapper);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                startChatStatusUpdates();
+            }
+
+            function hideTyping() {
+                stopChatStatusUpdates();
+                var row = document.getElementById('typingRow');
+                if (row) {
+                    row.remove();
+                }
+            }
+
+            function renderChatStatus() {
+                var elapsedSeconds = Math.max(1, Math.floor((Date.now() - state.chatRequestStartedAt) / 1000));
+                var stepIndex = Math.min(
+                    CHAT_PROGRESS_STEPS.length - 1,
+                    Math.floor((elapsedSeconds - 1) / 4)
+                );
+                var currentStep = CHAT_PROGRESS_STEPS[stepIndex] || CHAT_PROGRESS_STEPS[0];
+                var detailText = state.chatStreamStatusMessage
+                    ? state.chatStreamStatusMessage + '，已等待 ' + elapsedSeconds + ' 秒'
+                    : currentStep + '，已等待 ' + elapsedSeconds + ' 秒';
+                updateTypingMessage('AI 正在回复', detailText);
+            }
+
+            function startChatStatusUpdates() {
+                stopChatStatusUpdates();
+                state.chatRequestStartedAt = Date.now();
+                state.chatStreamStatusMessage = '';
+                renderChatStatus();
+                state.chatStatusTimer = window.setInterval(renderChatStatus, 1000);
+            }
+
+            function stopChatStatusUpdates() {
+                if (state.chatStatusTimer) {
+                    window.clearInterval(state.chatStatusTimer);
+                    state.chatStatusTimer = null;
+                }
+                state.chatStreamStatusMessage = '';
+            }
+
+            function setLoading(loading) {
+                state.loading = loading;
+                sendButton.disabled = loading;
+            }
+
+            function updateDisplay(payload) {
+                if (!payload) {
+                    return;
+                }
+                aiOutputPanel.textContent = payload.display_markdown || payload.reply || '';
+
+                if (payload.prototype_html) {
+                    state.currentPrototypeHtml = payload.prototype_html;
+                    state.currentPrototypeTitle = payload.display_title || state.currentPrototypeTitle || 'Oracle PRD Prototype';
+                    exportPrototypeBtn.disabled = false;
+                    previewFrame.srcdoc = payload.prototype_html;
+                    switchTab('preview');
+                    window.setTimeout(resizePreviewFrame, 120);
+                }
+
+                if (payload.auto_export && payload.auto_export.export_dir) {
+                    state.currentExportName = payload.auto_export.export_name || state.currentExportName || '';
+                    state.currentExportDir = payload.auto_export.export_dir;
+                    state.lastAutoExportDir = payload.auto_export.export_dir;
+                    setExportStatus('已自动导出目录：' + payload.auto_export.export_dir);
+                    appendMessage('assistant', '本轮原型已自动导出到目录：' + payload.auto_export.export_dir);
+                }
+            }
+
+            function upsertPrototypeNotice(kind, content) {
+                var row = document.getElementById('prototypeNoticeRow');
+                if (!content) {
+                    if (row) {
+                        row.remove();
+                    }
+                    return;
+                }
+
+                if (!row) {
+                    row = document.createElement('div');
+                    row.className = 'chat-msg assistant';
+                    row.id = 'prototypeNoticeRow';
+                    row.innerHTML =
+                        '<div class="chat-avatar"><i class="fas fa-wand-magic-sparkles"></i></div>' +
+                        '<div class="chat-bubble"><span class="prototype-notice-text"></span><br><span class="chat-meta">原型生成状态</span></div>';
+                    chatMessages.appendChild(row);
+                }
+
+                row.setAttribute('data-kind', kind || 'running');
+                var textNode = row.querySelector('.prototype-notice-text');
+                if (textNode) {
+                    textNode.textContent = content;
+                }
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function setPreviewStatus(kind, message) {
+                if (!previewStatusText || !previewStatusLabel) {
+                    return;
+                }
+                previewStatusText.classList.add('visible');
+                previewStatusText.classList.remove('idle', 'running', 'success', 'error');
+                previewStatusText.classList.add(kind || 'idle');
+                previewStatusLabel.textContent = message || '预览状态：待命';
+            }
+
+            function setExportStatus(message) {
+                if (!exportPathText) {
+                    return;
+                }
+                exportPathText.textContent = message || '';
+            }
+
+            function getFilteredExportItems() {
+                var keyword = (exportPickerSearch && exportPickerSearch.value ? exportPickerSearch.value : '').trim().toLowerCase();
+                if (!keyword) {
+                    return state.exportPickerItems.slice();
+                }
+                return state.exportPickerItems.filter(function(item) {
+                    return [
+                        item.title || '',
+                        item.export_name || '',
+                        item.export_dir || '',
+                        item.model || ''
+                    ].join(' ').toLowerCase().indexOf(keyword) >= 0;
+                });
+            }
+
+            function updateExportPickerConfirmState() {
+                if (!exportPickerConfirmBtn) {
+                    return;
+                }
+                exportPickerConfirmBtn.disabled = !state.exportPickerSelectedName || state.loadExportLoading;
+                exportPickerConfirmBtn.textContent = state.loadExportLoading ? '加载中...' : '加载选中原型';
+            }
+
+            function closeExportPicker() {
+                if (!exportPickerOverlay) {
+                    return;
+                }
+                exportPickerOverlay.classList.remove('open');
+                exportPickerOverlay.setAttribute('aria-hidden', 'true');
+            }
+
+            function renderExportPickerList() {
+                if (!exportPickerList || !exportPickerEmpty || !exportPickerMeta) {
+                    return;
+                }
+
+                var filteredItems = getFilteredExportItems();
+                if (!filteredItems.some(function(item) { return item.export_name === state.exportPickerSelectedName; })) {
+                    state.exportPickerSelectedName = filteredItems.length ? filteredItems[0].export_name : '';
+                }
+
+                exportPickerList.innerHTML = '';
+                filteredItems.forEach(function(item) {
+                    var button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'export-picker-item' + (item.export_name === state.exportPickerSelectedName ? ' selected' : '');
+                    button.innerHTML =
+                        '<div class="export-picker-item-title">' + escapeHtml(item.title || item.export_name || '未命名原型') + '</div>' +
+                        '<div class="export-picker-item-subtitle">' + escapeHtml(item.export_name || '') + '</div>' +
+                        '<div class="export-picker-item-tags">' +
+                            '<span class="export-picker-tag">生成时间：' + escapeHtml(item.generated_at || '未知') + '</span>' +
+                            '<span class="export-picker-tag">模型：' + escapeHtml(item.model || '未记录') + '</span>' +
+                        '</div>';
+                    button.addEventListener('click', function() {
+                        state.exportPickerSelectedName = item.export_name || '';
+                        renderExportPickerList();
+                    });
+                    button.addEventListener('dblclick', function() {
+                        state.exportPickerSelectedName = item.export_name || '';
+                        renderExportPickerList();
+                        confirmLoadSelectedExport();
+                    });
+                    exportPickerList.appendChild(button);
+                });
+
+                exportPickerMeta.textContent = filteredItems.length + ' 个结果';
+                exportPickerEmpty.classList.toggle('visible', !filteredItems.length);
+                updateExportPickerConfirmState();
+            }
+
+            function openExportPicker(items) {
+                state.exportPickerItems = Array.isArray(items) ? items.slice() : [];
+                state.exportPickerSelectedName = state.exportPickerItems.length ? state.exportPickerItems[0].export_name || '' : '';
+                if (exportPickerSearch) {
+                    exportPickerSearch.value = '';
+                }
+                renderExportPickerList();
+                if (exportPickerOverlay) {
+                    exportPickerOverlay.classList.add('open');
+                    exportPickerOverlay.setAttribute('aria-hidden', 'false');
+                }
+                window.setTimeout(function() {
+                    if (exportPickerSearch) {
+                        exportPickerSearch.focus();
+                    }
+                }, 30);
+            }
+
+            function applyLoadedExport(selected, loadResult) {
+                state.currentPrototypeHtml = loadResult.prototype_html || '';
+                state.currentPrototypeTitle = loadResult.title || selected.title || selected.export_name;
+                state.currentExportName = loadResult.export_name || selected.export_name || '';
+                state.currentExportDir = loadResult.export_dir || selected.export_dir || '';
+                exportPrototypeBtn.disabled = !state.currentPrototypeHtml;
+                previewFrame.srcdoc = state.currentPrototypeHtml;
+                switchTab('preview');
+                setPreviewStatus('success', '预览状态：已加载导出原型，可继续修改');
+                setExportStatus('已加载导出目录：' + (loadResult.export_dir || selected.export_dir || selected.export_name));
+                appendMessage('assistant', '已加载导出原型：' + state.currentPrototypeTitle + '。现在你可以继续描述修改需求，我会基于当前版本继续生成。');
+                pushConversation('assistant', '当前已加载既有原型版本：' + state.currentExportName + '，标题为“' + state.currentPrototypeTitle + '”。后续修改将基于该版本继续进行。');
+                window.setTimeout(resizePreviewFrame, 120);
+            }
+
+            async function confirmLoadSelectedExport() {
+                if (state.loadExportLoading || !state.exportPickerSelectedName) {
+                    return;
+                }
+
+                var selected = state.exportPickerItems.find(function(item) {
+                    return item.export_name === state.exportPickerSelectedName;
+                }) || null;
+                if (!selected) {
+                    setExportStatus('未找到对应的导出原型。');
+                    return;
+                }
+
+                state.loadExportLoading = true;
+                loadExportedPrototypeBtn.disabled = true;
+                loadExportedPrototypeBtn.textContent = '加载中...';
+                setExportStatus('正在加载：' + selected.export_name);
+                updateExportPickerConfirmState();
+
+                try {
+                    var loadUrl = new URL(buildUrl('/api/oracle-prd/export-load'), window.location.origin);
+                    loadUrl.searchParams.set('export_name', selected.export_name);
+                    var loadResponse = await fetch(loadUrl.toString());
+                    var loadResult = await readJsonResponse(loadResponse, '加载导出原型失败');
+                    if (!loadResult.success) {
+                        throw new Error(loadResult.error || '加载导出原型失败');
+                    }
+
+                    closeExportPicker();
+                    applyLoadedExport(selected, loadResult);
+                } catch (error) {
+                    setPreviewStatus('error', '预览状态：加载导出原型失败');
+                    setExportStatus('加载失败：' + error.message);
+                    appendMessage('assistant', '加载导出原型失败：' + error.message);
+                } finally {
+                    state.loadExportLoading = false;
+                    loadExportedPrototypeBtn.disabled = false;
+                    loadExportedPrototypeBtn.textContent = '加载已导出原型';
+                    updateExportPickerConfirmState();
+                }
+            }
+
+            function clearPrototypeStatusTimer() {
+                if (state.prototypeStatusTimer) {
+                    window.clearInterval(state.prototypeStatusTimer);
+                    state.prototypeStatusTimer = null;
+                }
+            }
+
+            function buildPrototypeProgressMessage(elapsedSeconds) {
+                var stepIndex = Math.min(
+                    PROTOTYPE_PROGRESS_STEPS.length - 1,
+                    Math.floor((elapsedSeconds - 1) / 6)
+                );
+                var currentStep = state.prototypeStreamStatusMessage || PROTOTYPE_PROGRESS_STEPS[stepIndex] || PROTOTYPE_PROGRESS_STEPS[0];
+                var lines = [
+                    '原型生成进行中',
+                    currentStep,
+                    '已耗时 ' + elapsedSeconds + ' 秒'
+                ];
+
+                if (elapsedSeconds >= 45) {
+                    lines.push('模型响应偏慢，建议继续等待；若多次超时，再缩小页面范围重试');
+                } else if (elapsedSeconds >= 20) {
+                    lines.push('当前仍在生成完整 HTML，这一步通常会比文字回复明显更慢');
+                } else {
+                    lines.push('正在等待模型返回完整 HTML，完成后会自动写入右侧预览');
+                }
+
+                return lines.join('\n');
+            }
+
+            function beginPrototypeStatus() {
+                clearPrototypeStatusTimer();
+                state.prototypeStartedAt = Date.now();
+                state.prototypeStreamStatusMessage = '';
+                state.currentPrototypeHtml = '';
+                exportPrototypeBtn.disabled = true;
+                setExportStatus('正在生成新的原型文件，生成完成后会自动导出到 exports 目录。');
+
+                function renderStatus() {
+                    var elapsedSeconds = Math.max(1, Math.floor((Date.now() - state.prototypeStartedAt) / 1000));
+                    var baseMessage = '预览状态：正在生成原型，已耗时 ' + elapsedSeconds + ' 秒';
+                    var detailMessage = elapsedSeconds >= 45
+                        ? baseMessage + '，模型响应偏慢，请继续等待或稍后缩小页面范围重试'
+                        : baseMessage;
+
+                    setPreviewStatus('running', detailMessage);
+                    upsertPrototypeNotice('running', buildPrototypeProgressMessage(elapsedSeconds));
+                }
+
+                renderStatus();
+                state.prototypeStatusTimer = window.setInterval(renderStatus, 1000);
+            }
+
+            function finishPrototypeStatus(success, message) {
+                clearPrototypeStatusTimer();
+                var elapsedSeconds = state.prototypeStartedAt
+                    ? Math.max(1, Math.floor((Date.now() - state.prototypeStartedAt) / 1000))
+                    : 0;
+                state.prototypeStreamStatusMessage = '';
+                var finalMessage = message || (
+                    success
+                        ? '预览状态：原型生成完成，用时 ' + elapsedSeconds + ' 秒'
+                        : '预览状态：原型生成失败'
+                );
+
+                setPreviewStatus(success ? 'success' : 'error', finalMessage);
+                upsertPrototypeNotice(success ? 'success' : 'error', success
+                    ? '原型预览已生成完成，用时 ' + elapsedSeconds + ' 秒。右侧可直接查看。'
+                    : finalMessage
+                );
+            }
+
+            function escapeHtml(text) {
+                return String(text || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function setPreviewLoading(message) {
+                previewFrame.srcdoc =
+                    '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>' +
+                    'body{margin:0;font-family:Arial,"Microsoft YaHei",sans-serif;background:#f8fafc;color:#475467;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;text-align:center;line-height:1.8;}' +
+                    '.box{max-width:520px;padding:24px 28px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.06);}' +
+                    '.title{font-size:16px;font-weight:700;color:#303133;margin-bottom:10px;}' +
+                    '.desc{font-size:13px;white-space:pre-wrap;}' +
+                    '</style></head><body><div class="box"><div class="title">正在生成原型预览</div><div class="desc">' +
+                    escapeHtml(message || '模型正在输出完整 HTML，这一步通常比文字分析更慢。') +
+                    '</div></div></body></html>';
+                switchTab('preview');
+                window.setTimeout(resizePreviewFrame, 80);
+            }
+
+            async function generatePrototypePreview(analysisResult) {
+                var currentPrototypeHtmlBeforeRegenerate = state.currentPrototypeHtml || '';
+                beginPrototypeStatus();
+                setPreviewLoading('模型正在输出完整 HTML，这一步通常比文字分析更慢，请稍等。');
+
+                var result = null;
+                var response = await fetch(buildUrl('/api/oracle-prd/prototype-stream'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        messages: state.messages,
+                        analysis: {
+                            phase: analysisResult.phase || '',
+                            reply: analysisResult.reply || '',
+                            display_title: analysisResult.display_title || '',
+                            display_markdown: analysisResult.display_markdown || '',
+                            prototype_requirements: analysisResult.prototype_requirements || ''
+                        },
+                        current_prototype_html: currentPrototypeHtmlBeforeRegenerate,
+                        model: getSelectedModel()
+                    })
+                });
+
+                await readEventStreamResponse(response, {
+                    status: function(payload) {
+                        state.prototypeStreamStatusMessage = payload.message || '';
+                        var elapsedSeconds = state.prototypeStartedAt
+                            ? Math.max(1, Math.floor((Date.now() - state.prototypeStartedAt) / 1000))
+                            : 1;
+                        upsertPrototypeNotice('running', buildPrototypeProgressMessage(elapsedSeconds));
+                    },
+                    result: function(payload) {
+                        result = payload;
+                    },
+                    error: function(payload) {
+                        throw new Error(payload.error || '原型生成失败');
+                    }
+                }, 'Oracle PRD 原型生成接口调用失败');
+
+                if (!result || !result.success) {
+                    throw new Error((result && result.error) || '原型生成失败');
+                }
+
+                updateDisplay({
+                    prototype_html: result.prototype_html,
+                    display_title: result.display_title || analysisResult.display_title || 'Oracle PRD Prototype'
+                });
+                finishPrototypeStatus(true);
+            }
+
+            async function exportPrototypeBundle() {
+                if (state.exportLoading || !state.currentPrototypeHtml) {
+                    return;
+                }
+
+                state.exportLoading = true;
+                exportPrototypeBtn.disabled = true;
+                exportPrototypeBtn.textContent = '导出中...';
+                setExportStatus('正在导出原型目录...');
+
+                try {
+                    var response = await fetch(buildUrl('/api/oracle-prd/export'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prototype_html: state.currentPrototypeHtml,
+                            title: state.currentPrototypeTitle || 'Oracle PRD Prototype'
+                        })
+                    });
+                    var result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error || '导出失败');
+                    }
+
+                    state.currentExportName = result.export_name || state.currentExportName || '';
+                    state.currentExportDir = result.export_dir || state.currentExportDir || '';
+                    setExportStatus('已导出目录：' + result.export_dir);
+                    appendMessage('assistant', '原型已导出到目录：' + result.export_dir);
+
+                    if (result.download_url) {
+                        var link = document.createElement('a');
+                        link.href = buildUrl(result.download_url);
+                        link.download = '';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                } catch (error) {
+                    setExportStatus('导出失败：' + error.message);
+                    appendMessage('assistant', '原型导出失败：' + error.message);
+                } finally {
+                    state.exportLoading = false;
+                    exportPrototypeBtn.disabled = !state.currentPrototypeHtml;
+                    exportPrototypeBtn.textContent = '导出原型目录';
+                }
+            }
+
+            async function loadExportedPrototype() {
+                if (state.loadExportLoading) {
+                    return;
+                }
+
+                loadExportedPrototypeBtn.disabled = true;
+                loadExportedPrototypeBtn.textContent = '加载中...';
+                setExportStatus('正在读取已导出的原型列表...');
+
+                try {
+                    var listResponse = await fetch(buildUrl('/api/oracle-prd/exports'));
+                    var listResult = await readJsonResponse(listResponse, '读取导出列表失败');
+                    if (!listResult.success) {
+                        throw new Error(listResult.error || '读取导出列表失败');
+                    }
+
+                    if (!listResult.items || !listResult.items.length) {
+                        throw new Error('当前还没有可加载的导出原型');
+                    }
+
+                    openExportPicker(listResult.items.slice(0, 20));
+                    setExportStatus('请选择一个已导出原型版本。');
+                } catch (error) {
+                    setPreviewStatus('error', '预览状态：读取导出原型列表失败');
+                    setExportStatus('读取失败：' + error.message);
+                    appendMessage('assistant', '加载导出原型失败：' + error.message);
+                } finally {
+                    loadExportedPrototypeBtn.disabled = false;
+                    loadExportedPrototypeBtn.textContent = '加载已导出原型';
+                }
+            }
+
+            function resizePreviewFrame() {
+                try {
+                    var doc = previewFrame.contentDocument || (previewFrame.contentWindow && previewFrame.contentWindow.document);
+                    if (!doc || !doc.body || !doc.documentElement) {
+                        return;
+                    }
+
+                    var bodyHeight = doc.body.scrollHeight || 0;
+                    var docHeight = doc.documentElement.scrollHeight || 0;
+                    var nextHeight = Math.max(bodyHeight, docHeight, 560);
+                    previewFrame.style.height = nextHeight + 24 + 'px';
+                } catch (error) {
+                    previewFrame.style.height = '960px';
+                }
+            }
+
+            function pushConversation(role, content) {
+                state.messages.push({ role: role, content: content });
+            }
+
+            function getSelectedModel() {
+                return prdModelSelect && prdModelSelect.value ? prdModelSelect.value : 'deepseek';
+            }
+
+            async function loadContext() {
+                try {
+                    var response = await fetch(buildUrl('/api/oracle-prd/context'));
+                    var result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error || '加载上下文失败');
+                    }
+
+                    documentPanel.textContent = result.document_excerpt || '未读取到需求文档内容。';
+                    skillPanel.textContent =
+                        (result.skill_excerpt || '') +
+                        '\n\n================ 设计规范摘要 ================\n\n' +
+                        (result.forms_spec_excerpt || '');
+
+                    if (result.preview_html) {
+                        previewFrame.srcdoc = result.preview_html;
+                        window.setTimeout(resizePreviewFrame, 120);
+                    }
+
+                    state.contextLoaded = true;
+                } catch (error) {
+                    documentPanel.textContent = '加载需求文档失败：' + error.message;
+                    skillPanel.textContent = '加载 skill 失败：' + error.message;
+                }
+            }
+
+            async function sendMessage() {
+                if (state.loading) {
+                    return;
+                }
+
+                var text = chatInput.value.trim();
+                if (!text) {
+                    return;
+                }
+
+                appendMessage('user', text);
+                pushConversation('user', text);
+                chatInput.value = '';
+                chatInput.style.height = '44px';
+                setLoading(true);
+                clearAssistantStream();
+                showTyping();
+
+                try {
+                    var requestUrl = buildUrl('/api/oracle-prd/chat-stream');
+                    var result = null;
+                    var response = await fetch(requestUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'text/event-stream'
+                        },
+                        body: JSON.stringify({
+                            messages: state.messages,
+                            current_prototype_html: state.currentPrototypeHtml || '',
+                            current_export_name: state.currentExportName || '',
+                            current_export_title: state.currentPrototypeTitle || '',
+                            current_export_dir: state.currentExportDir || '',
+                            model: getSelectedModel()
+                        })
+                    });
+
+                    await readEventStreamResponse(response, {
+                        status: function(payload) {
+                            state.chatStreamStatusMessage = payload.message || '';
+                            renderChatStatus();
+                        },
+                        reply_delta: function(payload) {
+                            state.chatStreamStatusMessage = '正在输出回复内容';
+                            renderChatStatus();
+                            upsertAssistantStream(payload.reply || payload.delta || '');
+                        },
+                        result: function(payload) {
+                            result = payload;
+                        },
+                        error: function(payload) {
+                            throw new Error(payload.error || '调用失败');
+                        }
+                    }, 'Oracle PRD 对话接口调用失败');
+
+                    if (!result || !result.success) {
+                        throw new Error((result && result.error) || '调用失败');
+                    }
+
+                    pushConversation('assistant', result.reply || '已收到。');
+                    commitAssistantStream(result.reply || '已收到。');
+                    updateDisplay(result);
+
+                    hideTyping();
+
+                    if (result.should_generate_prototype) {
+                        generatePrototypePreview(result).catch(function(prototypeError) {
+                            var failMessage = '原型生成失败：' + prototypeError.message + '。建议先缩小范围，例如只生成“申请单 + 明细行”两个页面。';
+                            setPreviewLoading(failMessage);
+                            finishPrototypeStatus(false, '预览状态：生成失败，' + prototypeError.message);
+                        });
+                    } else {
+                        upsertPrototypeNotice('', '');
+                        setPreviewStatus('idle', '预览状态：本轮未触发原型生成');
+                    }
+                } catch (error) {
+                    hideTyping();
+                    clearAssistantStream();
+                    appendMessage('assistant', '调用失败：' + error.message);
+                } finally {
+                    setLoading(false);
+                }
+            }
+
+            function initSuggestions() {
+                suggestionButtons.forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        var action = button.getAttribute('data-action') || '';
+                        if (action === 'load-procurement-case') {
+                            loadProcurementCase(false);
+                            return;
+                        }
+
+                        chatInput.value = button.getAttribute('data-prompt') || '';
+                        chatInput.focus();
+                        chatInput.style.height = '44px';
+                        chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+                    });
+                });
+            }
+
+            function loadProcurementCase(runImmediately) {
+                chatInput.value = PROCUREMENT_CASE_PROMPT;
+                chatInput.focus();
+                chatInput.style.height = '44px';
+                chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+                if (runImmediately) {
+                    sendMessage();
+                }
+            }
+
+            function initTabs() {
+                tabButtons.forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        switchTab(button.getAttribute('data-tab'));
+                    });
+                });
+            }
+
+            function initInput() {
+                chatInput.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        sendMessage();
+                    }
+                });
+
+                chatInput.addEventListener('input', function() {
+                    chatInput.style.height = '44px';
+                    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+                });
+
+                sendButton.addEventListener('click', sendMessage);
+            }
+
+            function initExportPicker() {
+                if (exportPickerSearch) {
+                    exportPickerSearch.addEventListener('input', renderExportPickerList);
+                    exportPickerSearch.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            confirmLoadSelectedExport();
+                        } else if (event.key === 'Escape') {
+                            closeExportPicker();
+                        }
+                    });
+                }
+
+                if (exportPickerOverlay) {
+                    exportPickerOverlay.addEventListener('click', function(event) {
+                        if (event.target === exportPickerOverlay) {
+                            closeExportPicker();
+                        }
+                    });
+                }
+
+                if (exportPickerCloseBtn) {
+                    exportPickerCloseBtn.addEventListener('click', closeExportPicker);
+                }
+                if (exportPickerCancelBtn) {
+                    exportPickerCancelBtn.addEventListener('click', closeExportPicker);
+                }
+                if (exportPickerConfirmBtn) {
+                    exportPickerConfirmBtn.addEventListener('click', confirmLoadSelectedExport);
+                }
+
+                document.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape' && exportPickerOverlay && exportPickerOverlay.classList.contains('open')) {
+                        closeExportPicker();
+                    }
+                });
+            }
+
+            function initWelcome() {
+                var welcomeMessage = [
+                    '我已经加载了本地 Oracle PRD Word 文档和 ebs-forms-design skill。',
+                    '你只需要正常描述业务需求，我会按 skill 的流程逐步澄清；只有你明确要求时，才会开始生成原型。'
+                ].join('\n');
+
+                appendMessage('assistant', welcomeMessage);
+                pushConversation('assistant', welcomeMessage);
+            }
+
+            initTabs();
+            initSuggestions();
+            initInput();
+            initExportPicker();
+            initWelcome();
+            setPreviewStatus('idle', '预览状态：待命');
+            loadExportedPrototypeBtn.addEventListener('click', loadExportedPrototype);
+            exportPrototypeBtn.addEventListener('click', exportPrototypeBundle);
+            previewFrame.addEventListener('load', function() {
+                window.setTimeout(resizePreviewFrame, 80);
+            });
+            loadContext();
+        })();
+    </script>
+</body>
+</html>

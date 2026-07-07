@@ -796,11 +796,7 @@
             <div class="ai-summary-toolbar">
                 <div class="toolbar-left">
                     <label>AI 模型：</label>
-                    <select id="aiModelSelect">
-                        <option value="deepseek">DeepSeek-V4-Flash (推荐)</option>
-                        <option value="qwen">通义千问 Qwen2.5-72B</option>
-                        <option value="qwen-vl">通义千问 VL</option>
-                    </select>
+                    <select id="aiModelSelect" data-model-options="true"></select>
                 </div>
                 <div class="toolbar-right">
                     <button class="btn-generate" id="btnGenerateSummary" onclick="generateAiSummary()">
@@ -832,6 +828,7 @@
     </div>
 
     <script src="static/js/layout.js"></script>
+    <script src="static/js/model-options.js"></script>
     <script src="static/js/whisper.js"></script>
 </body>
 </html>

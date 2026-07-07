@@ -2,8 +2,9 @@
 页面路由 - 处理所有前端页面访问，移除 .html 后缀
 """
 
-from flask import Blueprint, send_from_directory, redirect
+from flask import Blueprint, send_from_directory, redirect, jsonify
 from app_core import app
+from config import Config
 
 page_bp = Blueprint("pages", __name__)
 
@@ -37,6 +38,7 @@ PAGE_ROUTES = {
     "/contract-recognition": "contract_recognition.html",
     "/opportunity-entry": "opportunity_entry.html",
     "/ai-agent-service-desk": "ai_agent_service_desk.html",
+    "/oracle-prd": "oracle_prd.html",
     "/price-comparison": "price_comparison.html",
     "/item-code-generation": "item_code_generation.html",
     "/procurement-matching": "procurement_matching.html",
@@ -87,3 +89,32 @@ def legacy_html_redirect(filename):
 def static_files(filename):
     """静态资源文件"""
     return send_from_directory("../frontend/static", filename)
+
+
+@page_bp.route("/api/ui/model-options", methods=["GET"])
+def get_ui_model_options():
+    """返回前端页面使用的模型标签与实际模型映射（兼容旧接口）"""
+    return jsonify({
+        "success": True,
+        "models": Config.get_model_options(),
+    })
+
+
+@page_bp.route("/api/llm/config", methods=["GET"])
+def get_llm_config():
+    """通用 LLM 配置接口 - 返回可用模型列表，前端动态渲染模型选择器"""
+    models = Config.get_llm_models()
+    # 默认模型排到最前面
+    sorted_models = sorted(models, key=lambda m: (not m.get('default', False), m.get('key', '')))
+    return jsonify({
+        "success": True,
+        "models": [
+            {
+                "key": m["key"],
+                "label": m.get("label", m["key"]),
+                "default": bool(m.get("default", False)),
+            }
+            for m in sorted_models
+        ],
+        "default_model": Config.get_llm_default_model(),
+    })

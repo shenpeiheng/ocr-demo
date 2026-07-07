@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}} — 功能原型</title>
+<!-- html2canvas: 截图必需 / JSZip: Markdown ZIP 导出必需 -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 10pt; }
+body {
+  font-family: 宋体, SimSun, SimSun-ExtB, serif;
+  font-size: 12pt;
+  background: #D0D0D0;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+.window {
+  width: 1300px; max-width: 100%;
+  background: #E8E8E8;
+  border: 1px solid #A0A0A0;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.25);
+  display: flex; flex-direction: column;
+  max-height: 95vh; min-height: 500px;
+}
+.global-toolbar {
+  display: flex; align-items: center;
+  background: #E0E4E8; border-bottom: 1px solid #A0A0A0;
+  padding: 0 12px; height: 32px;
+  flex-shrink: 0; gap: 4px; user-select: none;
+}
+.global-toolbar .tb-label { font-size: 9pt; color: #555; margin-right: 8px; font-weight: bold; }
+.global-toolbar .tb-divider { width: 1px; height: 18px; background: #B0B8C0; margin: 0 6px; }
+.global-toolbar .tb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 2px 8px; height: 26px; background: transparent;
+  border: 1px solid transparent; border-radius: 2px; cursor: pointer;
+  font-size: 9pt; font-family: inherit; color: #333; white-space: nowrap;
+}
+.global-toolbar .tb-btn:hover { background: #D2E4F3; border-color: #2D6EB0; }
+.global-toolbar .tb-btn:active { background: #C4D8E8; }
+.global-toolbar .tb-toggle { font-size: 8pt; padding: 2px 6px; min-width: 24px; background: #D0D4D8; border-color: #A0A0A0; }
+.global-toolbar .tb-toggle:hover { background: #C0C8D0; }
+.global-toolbar.collapsed .tb-label, .global-toolbar.collapsed .tb-btn:not(.tb-toggle), .global-toolbar.collapsed .tb-divider { display: none; }
+.global-toolbar.collapsed { height: 28px; padding: 0 4px; justify-content: flex-end; }
+.global-toolbar.collapsed .tb-toggle { font-size: 8pt; background: transparent; border-color: transparent; }
+.global-toolbar.collapsed .tb-toggle:hover { background: #D2E4F3; border-color: #2D6EB0; }
+.main-container { display: flex; flex: 1; overflow: hidden; }
+.nav-panel { width: 210px; background: #EAEEF2; border-right: 1px solid #9A9A9A; display: flex; flex-direction: column; flex-shrink: 0; }
+.nav-title { background: #2D6EB0; color: #fff; font-weight: bold; font-size: 14px; padding: 6px 10px; flex-shrink: 0; }
+.nav-tree { flex: 1; overflow-y: auto; padding: 4px 0; user-select: none; }
+.nav-tree::-webkit-scrollbar { width: 5px; }
+.nav-tree::-webkit-scrollbar-thumb { background: #B0C4DE; border-radius: 3px; }
+.tree-folder-header { display: flex; align-items: center; padding: 4px 8px 4px 6px; cursor: pointer; font-size: 14px; color: #333; gap: 3px; border-left: 3px solid transparent; }
+.tree-folder-header:hover { background: #D2E4F3; }
+.folder-toggle { display: inline-block; width: 14px; text-align: center; font-size: 14px; color: #666; flex-shrink: 0; font-weight: bold; }
+.tree-folder.open > .tree-folder-header .folder-toggle::before { content: '−'; }
+.tree-folder:not(.open) > .tree-folder-header .folder-toggle::before { content: '+'; }
+.tree-folder.open > .tree-children { display: block; }
+.tree-folder:not(.open) > .tree-children { display: none; }
+.tree-leaf { display: flex; align-items: center; padding: 4px 8px 4px 22px; cursor: pointer; font-size: 14px; color: #333; border-left: 3px solid transparent; margin: 1px 0; }
+.tree-leaf:hover { background: #D2E4F3; }
+.tree-leaf.active { background: #2D82C3; color: #FFF; border-left-color: #1A6AAB; }
+.tree-root-item { display: flex; align-items: center; padding: 5px 8px 5px 6px; cursor: pointer; font-size: 14px; color: #333; border-left: 3px solid transparent; margin: 2px 0; font-weight: bold; }
+.tree-root-item:hover { background: #D2E4F3; }
+.tree-root-item.active { background: #2D82C3; color: #FFF; border-left-color: #1A6AAB; }
+.view-panel { flex: 1; margin: 0 6px; background: #F0F0F0; border: 1px solid #A0A0A0; box-shadow: 1px 1px 4px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; }
+.view-title-bar { background: #2D82C3; color: #FFF; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; padding: 4px 10px 4px 12px; border-bottom: 1px solid #1A6AAB; text-shadow: 0 1px 1px rgba(0,0,0,0.3); min-height: 28px; user-select: none; flex-shrink: 0; }
+.view-title-left { display: flex; align-items: center; gap: 6px; }
+.view-title-icon { width: 14px; height: 14px; background: url(data:image/png;base64,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) no-repeat center; background-size: contain; flex-shrink: 0; }
+.view-controls { display: flex; gap: 3px; }
+.view-controls button { width: 16px; height: 15px; line-height: 15px; background: #CFE3F5; color: #2D82C3; border: 1px solid #2D82C3; font-size: 10px; cursor: pointer; text-align: center; padding: 0; }
+.view-controls button:hover { background: #E6F2FF; }
+.view-content { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.view-status-bar { background: #F0F0F0; padding: 2px 10px; border-top: 1px solid #A0A0A0; display: flex; justify-content: space-between; font-size: 8pt; flex-shrink: 0; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.section-title { font-weight: bold; font-size: 12pt; color: #000; border-bottom: 1px solid #B0C4DE; padding-bottom: 3px; margin: 12px 0 8px 0; }
+.section-title:first-child { margin-top: 0; }
+.toolbar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; padding: 5px 0; border-bottom: 1px solid #B0C4DE; margin-bottom: 6px; }
+.table-wrap { overflow-x: auto; margin-bottom: 10px; }
+.scroll-table { max-height: 260px; overflow-y: auto; border: 1px solid #A0A0A0; }
+.btn { display: inline-flex; align-items: center; justify-content: center; padding: 2px 10px; min-height: 24px; background: #D2E4F3; border: 1px solid #2D6EB0; border-radius: 2px; color: #000; font-size: 9pt; font-family: inherit; cursor: pointer; box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset; }
+.btn:hover { background: #E6F2FF; }
+.btn:active { background: #C4D8E8; box-shadow: 0 1px 2px rgba(0,0,0,0.1) inset; }
+.btn:disabled { background: #EEE; color: #CCC; border-color: #DDD; cursor: not-allowed; }
+.btn-sm { padding: 2px 8px; min-height: 24px; font-size: 9pt; }
+.btn-primary { background: #2D82C3; color: #FFF; border-color: #1A6AAB; box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset; }
+.btn-primary:hover { background: #3A92D4; }
+.btn-primary:active { background: #1A6AAB; }
+.form-group { display: flex; align-items: center; gap: 3px; }
+.form-label { min-width: 48px; text-align: right; font-size: 9pt; color: #000; flex-shrink: 0; }
+.form-input { padding: 2px 5px; border: 1px solid #A0A0A0; border-radius: 2px; background: #FFF; font-size: 9pt; font-family: inherit; outline: none; height: 24px; }
+.form-input:focus { border-color: #2D6EB0; box-shadow: 0 0 2px rgba(45,110,176,0.3); }
+.form-input.required { background: #FFFFCC; }
+.form-input.readonly { background: #EAEEF2; }
+.form-input.number { text-align: right; }
+.form-select { padding: 2px 3px; border: 1px solid #A0A0A0; border-radius: 2px; background: #FFF; font-size: 9pt; font-family: inherit; outline: none; height: 24px; min-width: 100px; }
+.form-select:focus { border-color: #2D6EB0; box-shadow: 0 0 2px rgba(45,110,176,0.3); }
+table.data-table, table.std-table { width: 100%; border-collapse: collapse; font-size: 9pt; color: #333; }
+table.data-table thead th, table.std-table th { font-weight: bold; text-align: center; padding: 4px 5px; border-bottom: 2px solid #A0A0A0; background: #EAEEF2; }
+table.data-table tbody td, table.std-table td { padding: 2px 3px; border-bottom: 1px solid #E8E8E8; height: 28px; }
+table.data-table tbody tr:hover, table.std-table tr:hover { background: #E6F2FF; }
+table.data-table tbody tr.selected { background: #D6E8FF; }
+.info-card { background: #FFF; border: 1px solid #A0A0A0; border-radius: 2px; padding: 8px; margin-bottom: 6px; }
+.region-header { background: #D8DCE4; font-weight: bold; padding: 3px 6px; border-bottom: 2px solid #A0A0A0; font-size: 9pt; margin-top: 6px; }
+.tag { display: inline-block; padding: 1px 5px; border-radius: 2px; font-size: 8pt; line-height: 1.3; }
+.tag-pending { background: #FFF3CD; color: #856404; border: 1px solid #FFC107; }
+.tag-done { background: #D4EDDA; color: #155724; border: 1px solid #28A745; }
+.tag-exception { background: #F8D7DA; color: #721C24; border: 1px solid #DC3545; }
+.tag-running { background: #CCE5FF; color: #004085; border: 1px solid #007BFF; }
+.hint { color: #666; font-size: 8pt; padding: 3px 0; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #F0F0F0; border: 1px solid #B0C4DE; box-shadow: 0 8px 24px rgba(0,0,0,0.2); min-width: 480px; max-width: 90vw; max-height: 80vh; display: flex; flex-direction: column; }
+.modal-title { background: #2D6EB0; color: #FFF; font-weight: bold; font-size: 10pt; padding: 4px 12px; display: flex; justify-content: space-between; align-items: center; }
+.modal-title .close-btn { cursor: pointer; background: none; border: none; color: #FFF; font-size: 14px; padding: 0 4px; }
+.modal-body { padding: 10px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 6px 10px; display: flex; gap: 5px; justify-content: flex-end; border-top: 1px solid #B0C4DE; }
+</style>
+</head>
+<body>
+
+<div class="window">
+
+<div class="global-toolbar">
+  <span class="tb-label">🔧 工具</span>
+  <button class="tb-btn" onclick="captureCurrentScreenshot()">📸 功能截图</button>
+  <button class="tb-btn" onclick="batchScreenshot()">📚 批量截图</button>
+  <button class="tb-btn" onclick="generateDesignDoc()">📝 生成功能文档</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="zoomPage(1.1)">🔍 放大</button>
+  <button class="tb-btn" onclick="zoomPage(0.9)">🔍 缩小</button>
+  <button class="tb-btn" onclick="resetZoom()">↺ 重置</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="showHelp()">❓ 帮助</button>
+  <span style="flex:1;"></span>
+  <button class="tb-btn tb-toggle" onclick="toggleToolbar()" title="折叠/展开工具栏">▲</button>
+</div>
+
+<div class="main-container">
+  <div class="nav-panel">
+    <div class="nav-title">📋 功能导航</div>
+    <div class="nav-tree">
+      <div class="tree-root-item active" onclick="switchPane(this,'tab0','{{TITLE}}')">📊 总览</div>
+      <!-- TODO: 添加 tree-folder / tree-leaf -->
+    </div>
+  </div>
+
+  <div class="view-panel">
+    <div class="view-title-bar">
+      <div class="view-title-left">
+        <span class="view-title-icon"></span>
+        <span id="viewTitleText">{{TITLE}}</span>
+      </div>
+      <div class="view-controls">
+        <button onclick="showMsg('最小化')">_</button>
+        <button onclick="showMsg('最大化')">□</button>
+        <button onclick="showMsg('关闭')">×</button>
+      </div>
+    </div>
+
+    <div class="view-content" id="contentArea">
+      <div class="tab-pane active" id="tab0">
+        <div class="section-title">业务背景</div>
+        <div class="info-card"><div style="font-size:9pt;line-height:1.6;">在此描述业务背景</div></div>
+        <div class="section-title">需求清单</div>
+        <div class="scroll-table" id="reqList"></div>
+      </div>
+    </div>
+
+    <div class="view-status-bar">
+      <span id="statusLeft">就绪</span>
+      <span class="status-right">{{TITLE}} | EBS R12</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="modal-overlay" id="modalGeneric">
+  <div class="modal-box" style="min-width:480px;">
+    <div class="modal-title">
+      <span id="modalGenTitle">提示</span>
+      <button class="close-btn" onclick="closeModal('modalGeneric')">×</button>
+    </div>
+    <div class="modal-body" id="modalGenBody"></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalGeneric')">关闭</button></div>
+  </div>
+</div>
+
+<script>
+function toggleFolder(id) { document.getElementById(id).classList.toggle('open'); }
+function switchPane(el, tabId, title) {
+  document.querySelectorAll('.tree-leaf, .tree-root-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.getElementById('viewTitleText').textContent = title;
+  document.getElementById('statusLeft').textContent = '当前功能: ' + title;
+}
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function showMsg(msg) {
+  document.getElementById('statusLeft').textContent = msg;
+  const d = document.createElement('div');
+  d.textContent = msg;
+  d.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#FFF;padding:10px 20px;border-radius:4px;z-index:9999;font-size:10pt;opacity:0.9;pointer-events:none;';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 1100);
+}
+
+let toolbarCollapsed = false;
+function toggleToolbar() {
+  toolbarCollapsed = !toolbarCollapsed;
+  document.querySelector('.global-toolbar').classList.toggle('collapsed', toolbarCollapsed);
+  document.querySelector('.tb-toggle').textContent = toolbarCollapsed ? '▼' : '▲';
+}
+let currentZoom = 1;
+function zoomPage(factor) {
+  currentZoom = Math.min(Math.max(currentZoom * factor, 0.5), 2);
+  document.querySelector('.window').style.transform = 'scale(' + currentZoom + ')';
+  document.querySelector('.window').style.transformOrigin = 'top center';
+  showMsg('缩放: ' + Math.round(currentZoom * 100) + '%');
+}
+function resetZoom() { currentZoom = 1; document.querySelector('.window').style.transform = 'scale(1)'; showMsg('缩放已重置'); }
+function toggleFullscreen() {
+  if (!document.fullscreenElement) { document.documentElement.requestFullscreen().then(function(){showMsg('全屏模式');}).catch(function(){showMsg('全屏不可用');}); }
+  else { document.exitFullscreen(); showMsg('已退出全屏'); }
+}
+function showHelp() {
+  showModal('modalGeneric');
+  document.getElementById('modalGenTitle').textContent = '❓ 帮助 — {{TITLE}}';
+  document.getElementById('modalGenBody').innerHTML = '<p style="font-size:10pt;line-height:1.8;">此处填写帮助内容</p>';
+}
+function captureCurrentScreenshot() {
+  var panel = document.querySelector('.view-panel');
+  if (!panel) { showMsg('未找到功能面板'); return; }
+  var funcName = document.getElementById('viewTitleText').textContent.trim() || '未知功能';
+  var now = new Date();
+  var ds = now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2);
+  var ts = ('0'+now.getHours()).slice(-2)+('0'+now.getMinutes()).slice(-2)+('0'+now.getSeconds()).slice(-2);
+  var fn = '{{TITLE}}_' + funcName + '_' + ds + '_' + ts + '.png';
+  showMsg('正在截图...');
+  html2canvas(panel, { scale: 2, useCORS: true, backgroundColor: '#F0F0F0', logging: false, allowTaint: true, width: panel.scrollWidth, height: panel.scrollHeight })
+    .then(function(canvas){ var a=document.createElement('a'); a.download=fn; a.href=canvas.toDataURL('image/png'); a.click(); showMsg('✅ 已保存: '+fn); })
+    .catch(function(){showMsg('截图失败');});
+}
+var batchTabList = [];
+function batchScreenshot() { showMsg('待实现：参考 references/screenshot-feature.md'); }
+function generateDesignDoc() { showMsg('待实现：参考 references/screenshot-feature.md'); }
+</script>
+</body>
+</html>

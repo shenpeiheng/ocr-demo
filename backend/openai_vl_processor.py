@@ -13,6 +13,7 @@ from typing import Dict, List, Any, Optional
 from PIL import Image
 import requests
 from prompt_manager import get_prompt
+from config import Config
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +37,7 @@ class OpenAIVLProcessor:
         # 从环境变量获取配置
         self.api_key = api_key or os.getenv('MODELSCOPE_API_KEY',"ms-83c39231-b66e-4ed8-8a2b-52c9ded22a51")
         self.base_url = base_url or os.getenv('MODELSCOPE_BASE_URL',"https://api-inference.modelscope.cn/v1")
-        self.model = model or os.getenv('MODELSCOPE_MODEL', 'Qwen/Qwen3-VL-235B-A22B-Instruct')
+        self.model = model or Config.MODELSCOPE_MODEL
         
         # 验证配置
         if not self.api_key:

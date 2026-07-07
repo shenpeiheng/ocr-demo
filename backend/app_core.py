@@ -21,7 +21,6 @@ if Config.ENABLE_CORS:
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20MB 每请求
 app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
 app.config["ALLOWED_EXTENSIONS"] = Config.ALLOWED_EXTENSIONS
-app.config["SECRET_KEY"] = Config.SECRET_KEY
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 

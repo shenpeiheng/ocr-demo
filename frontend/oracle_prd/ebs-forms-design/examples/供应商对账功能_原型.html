@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>供应商对账系统 - 功能原型</title>
+<link rel="icon" type="image/x-icon" href="https://www.oracle.com/favicon.ico">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: '宋体', SimSun, 'SimSun-ExtB', serif;
+  font-size: 12pt;
+  background: #D0D0D0;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+.window {
+  width: 1300px;
+  max-width: 100%;
+  background: #E8E8E8;
+  border: 1px solid #A0A0A0;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 95vh;
+  min-height: 500px;
+}
+.title-bar {
+  background: #2D82C3; color: #fff; font-weight: bold; font-size: 10pt;
+  padding: 4px 12px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #1A6AAB; letter-spacing: 1px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3); min-height: 26px; flex-shrink: 0;
+}
+.title-bar-left { display: flex; align-items: center; gap: 8px; }
+.title-bar-icon { width: 16px; height: 16px; background: url('https://www.oracle.com/favicon.ico') no-repeat center; background-size: contain; }
+.window-controls { display: flex; gap: 4px; }
+.window-controls button {
+  width: 18px; height: 16px; line-height: 16px;
+  background: #CFE3F5; color: #2D82C3; border: 1px solid #2D82C3; border-radius: 0;
+  font-size: 11px; cursor: pointer; text-align: center; padding: 0;
+}
+.window-controls button:hover { background: #E6F2FF; }
+.main-container { display: flex; flex: 1; overflow: hidden; }
+.nav-panel { width: 210px; background: #EAEEF2; border-right: 1px solid #9A9A9A; display: flex; flex-direction: column; flex-shrink: 0; }
+.nav-title { background: #2D6EB0; color: #fff; font-weight: bold; font-size: 14px; padding: 6px 10px; flex-shrink: 0; }
+.tree-folder-toggle { width: 14px; text-align: center; font-size: 14px; color: #666; flex-shrink: 0; font-weight: bold; }
+.tree-folder-header { padding: 4px 8px 4px 6px; font-size: 14px; display: flex; align-items: center; gap: 2px; }
+.tree-folder-header:hover { background: #D2E4F3; }
+.tree-root-item { padding: 5px 8px 5px 6px; font-weight: bold; cursor: pointer; border-left: 3px solid transparent; font-size: 14px; user-select: none; }
+.tree-root-item:hover { background: #D2E4F3; }
+.tree-root-item.active { background: #2D82C3; color: #fff; border-left-color: #1A6AAB; }
+.tree-leaf { padding: 4px 8px 4px 22px; border-left: 3px solid transparent; cursor: pointer; font-size: 14px; user-select: none; }
+.tree-leaf:hover { background: #D2E4F3; }
+.tree-leaf.active { background: #2D82C3; color: #fff; border-left-color: #1A6AAB; }
+.tree-folder-children { display: none; }
+.tree-folder.open > .tree-folder-children { display: block; }
+.view-panel { flex: 1; margin: 0 6px; background: #F0F0F0; border: 1px solid #A0A0A0; box-shadow: 1px 1px 4px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; }
+.view-title-bar {
+  background: #2D82C3; color: #fff; font-weight: bold; font-size: 10pt;
+  padding: 4px 10px 4px 12px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #1A6AAB; min-height: 28px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3); flex-shrink: 0;
+}
+.view-title-left { display: flex; align-items: center; gap: 6px; }
+.view-title-icon {
+  width: 14px; height: 14px;
+  background: url('data:image/png;base64,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') no-repeat center;
+  background-size: contain;
+  flex-shrink: 0;
+}
+.view-controls { display: flex; gap: 4px; }
+.view-controls button { width: 16px; height: 15px; line-height: 15px; background: #CFE3F5; color: #2D82C3; border: 1px solid #2D82C3; font-size: 10px; cursor: pointer; text-align: center; padding: 0; }
+.view-controls button:hover { background: #E6F2FF; }
+.view-content { flex: 1; overflow-y: auto; padding: 12px 16px; background: #EAEEF2; }
+.view-status-bar { background: #F0F0F0; border-top: 1px solid #A0A0A0; padding: 2px 10px; display: flex; justify-content: space-between; font-size: 8pt; flex-shrink: 0; }
+.view-status-left { color: #444; }
+.view-status-right { color: #666; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 20px; margin-bottom: 12px; background: #F0F0F0; padding: 10px 12px; border: 1px solid #A0A0A0; border-radius: 2px; }
+.form-item { display: flex; align-items: center; gap: 4px; }
+.form-item label { min-width: 52px; text-align: right; flex-shrink: 0; font-size: 10pt; color: #333; }
+.form-item label.required::after { content: '*'; color: #FF4444; margin-left: 2px; }
+.form-item input, .form-item select { flex: 1; padding: 3px 6px; font-size: 10pt; font-family: '宋体', SimSun, 'SimSun-ExtB', serif; border: 1px solid #A0A0A0; border-radius: 2px; background: #fff; outline: none; min-height: 26px; line-height: 20px; vertical-align: middle; box-sizing: border-box; }
+.form-item input:focus, .form-item select:focus { border-color: #2D6EB0; box-shadow: 0 0 2px rgba(45,110,176,0.3); }
+.form-item input.required-bg { background: #FFFFCC; }
+.form-item input[readonly] { background: #EAEEF2; color: #000; }
+.toolbar { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid #B0C4DE; margin-bottom: 10px; }
+.btn {
+  padding: 3px 12px; min-height: 26px; background: #D2E4F3; color: #000;
+  border: 1px solid #2D6EB0; border-radius: 2px;
+  font-family: '宋体', SimSun, 'SimSun-ExtB', serif; font-size: 10pt; cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset; display: inline-flex; align-items: center; gap: 4px;
+}
+.btn:hover { background: #E6F2FF; }
+.btn:active { background: #C4D8E8; box-shadow: 0 1px 2px rgba(0,0,0,0.1) inset; }
+.btn:disabled { background: #EEE; color: #CCC; border-color: #DDD; cursor: not-allowed; }
+.btn-sm { padding: 2px 10px; min-height: 26px; }
+.btn-primary { background: #D2E4F3; }
+.btn-primary:hover { background: #E6F2FF; }
+.status-tag { display: inline-block; padding: 1px 8px; font-size: 9pt; border-radius: 2px; }
+.status-pending { background: #FFF3CD; color: #856404; }
+.status-done { background: #D4EDDA; color: #155724; }
+.status-exception { background: #F8D7DA; color: #721C24; }
+.status-running { background: #CCE5FF; color: #004085; }
+.scroll-table {
+  max-height: 260px; overflow-y: auto; margin-top: 8px;
+  border: 2px outset #DCDFE4;
+  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.08);
+  border-radius: 1px;
+}
+.scroll-table table { width: 100%; font-size: 10pt; border-collapse: separate; border-spacing: 0; }
+.scroll-table thead { position: sticky; top: 0; z-index: 1; }
+.scroll-table th {
+  font-weight: bold; text-align: center; padding: 4px 6px; height: 28px;
+  background: linear-gradient(180deg, #E4E9EF 0%, #D2D8E0 100%);
+  color: #333; font-size: 9pt;
+  border: 1.5px outset #D6DBE2;
+  border-bottom: 2px outset #C4CAD2;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.scroll-table td {
+  padding: 1px 4px; text-align: center; height: 28px; vertical-align: middle;
+  background: #EAEEF2;
+  border-color: #ECEEF0 #CDD1D6 #CDD1D6 #ECEEF0;
+  border-style: inset;
+  border-width: 1.5px;
+}
+.scroll-table td.editable {
+  background: #FFFFFF;
+}
+.scroll-table tr:hover td { background: #E6F2FF; }
+.scroll-table tr.selected td { background: #D6E8FF; }
+.scroll-table td.num { text-align: right; padding-right: 8px; }
+.scroll-table td.left { text-align: left; }
+
+/* 3D engraved inline tables — each cell has individual outset/inset bevel */
+.data-table {
+  width: 100%; border-collapse: collapse; font-size: 10pt;
+}
+.data-table th {
+  font-weight: bold; text-align: center; padding: 3px 8px; height: 28px;
+  background: linear-gradient(180deg, #E4E9EF 0%, #D2D8E0 100%);
+  color: #333; font-size: 9pt;
+  border: 1.5px outset #D6DBE2;
+  border-bottom: 2px outset #C4CAD2;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+}
+.data-table td {
+  padding: 2px 8px; height: 28px; vertical-align: middle;
+  background: #EAEEF2;
+  border-color: #ECEEF0 #CDD1D6 #CDD1D6 #ECEEF0;
+  border-style: inset;
+  border-width: 1.5px;
+}
+.data-table td.editable {
+  background: #FFFFFF;
+}
+.data-table tr:hover td { background: #E6F2FF; }
+.data-table td.num { text-align: right; }
+.data-table td.left { text-align: left; }
+.section-title { font-weight: bold; font-size: 10pt; color: #000; border-bottom: 1px solid #B0C4DE; padding-bottom: 4px; margin-bottom: 8px; margin-top: 4px; }
+.overview-card { background: #F0F0F0; border: 1px solid #A0A0A0; border-radius: 2px; padding: 12px; margin-bottom: 12px; }
+.overview-card h3 { font-size: 10pt; color: #2D6EB0; border-bottom: 1px solid #B0C4DE; padding-bottom: 4px; margin-bottom: 8px; }
+.overview-card p, .overview-card li { font-size: 10pt; line-height: 1.8; color: #333; }
+.overview-card ul { padding-left: 20px; }
+.flow-steps { display: flex; align-items: center; gap: 0; flex-wrap: wrap; padding: 12px 0; }
+.flow-step { display: flex; align-items: center; gap: 6px; }
+.flow-step-box { background: #D2E4F3; border: 1px solid #2D6EB0; border-radius: 2px; padding: 6px 14px; font-size: 9pt; text-align: center; min-width: 80px; }
+.flow-arrow { color: #2D6EB0; font-size: 14px; padding: 0 4px; font-weight: bold; }
+.modal-overlay { display: none; position: fixed; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: #F0F0F0; border: 1px solid #B0C4DE; box-shadow: 0 8px 24px rgba(0,0,0,0.2); min-width: 480px; max-width: 600px; border-radius: 4px; overflow: hidden; }
+.modal-title { background: #2D6EB0; color: #fff; font-weight: bold; font-size: 10pt; padding: 4px 14px; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; }
+.modal-close { background: #CFE3F5; color: #2D82C3; border: 1px solid #2D82C3; cursor: pointer; width: 18px; height: 16px; line-height: 16px; text-align: center; font-size: 11px; padding: 0; }
+.modal-close:hover { background: #E6F2FF; }
+.modal-body { padding: 12px; max-height: 400px; overflow-y: auto; }
+.modal-footer { padding: 8px 12px; display: flex; gap: 8px; justify-content: flex-end; }
+.desc-section { margin-bottom: 12px; }
+.desc-section h4 { font-size: 10pt; color: #2D6EB0; border-bottom: 1px solid #B0C4DE; padding-bottom: 4px; margin-bottom: 8px; }
+.desc-section p, .desc-section li { font-size: 10pt; line-height: 1.8; }
+.desc-section ul { padding-left: 20px; }
+.msg-toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 99999; background: #333; color: #fff; padding: 8px 20px; border-radius: 4px; font-size: 10pt; display: none; }
+.summary-row { display: flex; gap: 20px; padding: 8px 12px; margin-top: 8px; border-top: 1px solid #B0C4DE; font-size: 10pt; }
+.summary-item label { font-weight: bold; }
+.summary-item .value { margin-left: 4px; }
+.email-preview { background: #fff; border: 1px solid #A0A0A0; border-radius: 2px; padding: 12px; margin: 8px 0; font-size: 10pt; line-height: 1.8; }
+
+/* ===== 全局工具栏 ===== */
+.global-toolbar {
+  display: flex;
+  align-items: center;
+  background: #E0E4E8;
+  border-bottom: 1px solid #A0A0A0;
+  padding: 0 12px;
+  height: 32px;
+  flex-shrink: 0;
+  gap: 4px;
+  user-select: none;
+}
+.global-toolbar .tb-label {
+  font-size: 9pt;
+  color: #555;
+  margin-right: 8px;
+  font-weight: bold;
+}
+.global-toolbar .tb-divider {
+  width: 1px;
+  height: 18px;
+  background: #B0B8C0;
+  margin: 0 6px;
+}
+.global-toolbar .tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 8px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 9pt;
+  font-family: inherit;
+  color: #333;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.global-toolbar .tb-btn:hover { background: #D2E4F3; border-color: #2D6EB0; }
+.global-toolbar .tb-btn:active { background: #C4D8E8; }
+.global-toolbar .tb-toggle {
+  font-size: 8pt; padding: 2px 6px; min-width: 24px;
+  background: #D0D4D8; border-color: #A0A0A0;
+}
+.global-toolbar .tb-toggle:hover { background: #C0C8D0; }
+
+/* 折叠状态 */
+.global-toolbar.collapsed .tb-label,
+.global-toolbar.collapsed .tb-btn:not(.tb-toggle),
+.global-toolbar.collapsed .tb-divider { display: none; }
+.global-toolbar.collapsed { height: 28px; padding: 0 4px; justify-content: flex-end; }
+.global-toolbar.collapsed .tb-toggle { font-size: 8pt; background: transparent; border-color: transparent; }
+.global-toolbar.collapsed .tb-toggle:hover { background: #D2E4F3; border-color: #2D6EB0; }
+
+/* ===== 聚焦模式 ===== */
+.focus-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9998;
+}
+.focus-overlay.active { display: block; }
+
+body.focus-mode .window {
+  position: relative;
+  z-index: 9999;
+}
+body.focus-mode .view-panel {
+  position: fixed;
+  z-index: 10000;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(1.05);
+  width: 90vw;
+  max-width: 1200px;
+  max-height: 90vh;
+  margin: 0;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  border-color: #2D82C3;
+}
+body.focus-mode .nav-panel,
+body.focus-mode .global-toolbar,
+body.focus-mode .view-status-bar { opacity: 0; pointer-events: none; }
+body.focus-mode .window { background: transparent; border-color: transparent; box-shadow: none; }
+body.focus-mode { padding: 0; background: transparent; }
+
+</style>
+</head>
+<body>
+<div class="focus-overlay" id="focusOverlay"></div>
+
+<div class="window">
+
+<div class="global-toolbar">
+  <span class="tb-label">🔧 工具</span>
+  <button class="tb-btn" onclick="captureCurrentScreenshot()">📸 功能截图</button>
+  <button class="tb-btn" onclick="batchScreenshot()">📚 批量截图</button>
+  <button class="tb-btn" onclick="generateDesignDoc()">📝 生成功能文档</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="zoomPage(1.1)">🔍 放大</button>
+  <button class="tb-btn" onclick="zoomPage(0.9)">🔍 缩小</button>
+  <button class="tb-btn" onclick="resetZoom()">↺ 重置</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="toggleFullscreen()">⛶ 全屏</button>
+  <button class="tb-btn" onclick="toggleFocus()">🎯 聚焦</button>
+  <span class="tb-divider"></span>
+  <button class="tb-btn" onclick="showHelp()">❓ 帮助</button>
+  <span style="flex:1;"></span>
+  <button class="tb-btn tb-toggle" onclick="toggleToolbar()" title="折叠/展开工具栏">▲</button>
+</div>
+
+<div class="main-container">
+  <!-- Nav -->
+  <div class="nav-panel">
+    <div class="nav-title">功能导航</div>
+    <div class="nav-tree">
+      <div class="tree-root-item active" onclick="switchPane(this,'tab-overview','供应商对账系统总览')">📋 总览</div>
+      <div class="tree-folder open" id="folder-balance">
+        <div class="tree-folder-header" onclick="toggleFolder('folder-balance')">
+          <span class="tree-folder-toggle">−</span><span>💰 余额管理</span>
+        </div>
+        <div class="tree-folder-children">
+          <div class="tree-leaf" onclick="switchPane(this,'tab-balance','供应商余额查询')">供应商余额查询</div>
+        </div>
+      </div>
+      <div class="tree-folder open" id="folder-reconcile">
+        <div class="tree-folder-header" onclick="toggleFolder('folder-reconcile')">
+          <span class="tree-folder-toggle">−</span><span>📄 对账管理</span>
+        </div>
+        <div class="tree-folder-children">
+          <div class="tree-leaf" onclick="switchPane(this,'tab-statement-gen','对账单生成')">对账单生成</div>
+          <div class="tree-leaf" onclick="switchPane(this,'tab-statement-send','对账单发送')">对账单发送</div>
+        </div>
+      </div>
+      <div class="tree-folder open" id="folder-confirm">
+        <div class="tree-folder-header" onclick="toggleFolder('folder-confirm')">
+          <span class="tree-folder-toggle">−</span><span>✅ 确认管理</span>
+        </div>
+        <div class="tree-folder-children">
+          <div class="tree-leaf" onclick="switchPane(this,'tab-confirm','供应商确认跟踪')">供应商确认跟踪</div>
+        </div>
+      </div>
+      <div class="tree-folder open" id="folder-payment">
+        <div class="tree-folder-header" onclick="toggleFolder('folder-payment')">
+          <span class="tree-folder-toggle">−</span><span>💳 付款申请</span>
+        </div>
+        <div class="tree-folder-children">
+          <div class="tree-leaf" onclick="switchPane(this,'tab-payment','付款申请单')">付款申请单</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Panel -->
+  <div class="view-panel">
+    <div class="view-title-bar">
+      <div class="view-title-left">
+        <span class="view-title-icon"></span>
+        <span id="viewTitleText">供应商对账系统总览</span>
+      </div>
+      <div class="view-controls">
+        <button onclick="showMsg('最小化面板')">_</button>
+        <button onclick="showMsg('最大化面板')">□</button>
+        <button onclick="showMsg('关闭面板')">×</button>
+      </div>
+    </div>
+
+    <div class="view-content">
+      <!-- Overview -->
+      <div class="tab-pane active" id="tab-overview">
+        <div class="overview-card">
+          <h3>📌 业务背景</h3>
+          <p>原线下供应商对账方式存在以下问题：</p>
+          <ul>
+            <li>对账过程依赖人工Excel操作，效率低下</li>
+            <li>数据来源分散（PO、入库、发票、付款、预付款），易出错</li>
+            <li>对账单以邮件附件方式线下传递，跟踪困难</li>
+            <li>对账完成后无法及时触发付款申请流程</li>
+          </ul>
+          <p style="margin-top:6px;">通过ERP系统实现供应商对账全流程线上化管理，实时计算供应商余额，自动生成并发送对账单，确认后快速发起付款申请。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔄 业务流程</h3>
+          <div class="flow-steps">
+            <div class="flow-step"><span class="flow-step-box">采购订单<br><small>PO</small></span></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="flow-step-box">入库单<br><small>RCV</small></span></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="flow-step-box">采购发票<br><small>AP</small></span></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="flow-step-box">付款/预付款<br><small>PAY</small></span></div>
+          </div>
+          <div class="flow-steps">
+            <div class="flow-step"><span class="flow-step-box">实时余额计算</span></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="flow-step-box">生成对账单</span></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="flow-step-box">邮件发送</span></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="flow-step-box">供应商确认</span></div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step"><span class="flow-step-box">付款申请</span></div>
+          </div>
+        </div>
+        <div class="overview-card">
+          <h3>📊 数据来源</h3>
+          <table class="data-table">
+            <tr><td style="padding:3px 8px;"><b>采购订单（PO）</b></td><td style="padding:3px 8px;">采购订单金额、已入库金额</td></tr>
+            <tr><td style="padding:3px 8px;"><b>入库单（RCV）</b></td><td style="padding:3px 8px;">收货数量、入库金额</td></tr>
+            <tr><td style="padding:3px 8px;"><b>采购发票（AP）</b></td><td style="padding:3px 8px;">发票金额、已匹配金额</td></tr>
+            <tr><td style="padding:3px 8px;"><b>付款（PAY）</b></td><td style="padding:3px 8px;">付款金额、付款日期</td></tr>
+            <tr><td style="padding:3px 8px;"><b>预付款（PREPAY）</b></td><td style="padding:3px 8px;">预付金额、核销金额</td></tr>
+          </table>
+        </div>
+        <div class="overview-card">
+          <h3>📋 需求清单</h3>
+          <table class="data-table">
+            <thead><tr><th>编号</th><th>功能模块</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>RD-001</td><td>供应商余额查询</td><td>实时查询供应商往来余额，支持多维度筛选</td></tr>
+              <tr><td>RD-002</td><td>对账单生成</td><td>按供应商+期间生成标准对账单</td></tr>
+              <tr><td>RD-003</td><td>对账单发送</td><td>自动发送邮件对账单，支持批量发送</td></tr>
+              <tr><td>RD-004</td><td>供应商确认跟踪</td><td>跟踪供应商确认/异议状态</td></tr>
+              <tr><td><b>RD-005</b></td><td><b>付款申请</b></td><td>对账确认后触发付款申请流程</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="overview-card">
+          <h3>⚙️ 余额计算公式</h3>
+          <p style="margin-top:6px;"><b>期末余额 = 期初余额 + 本期采购金额 + 本期入库金额 + 本期发票金额 − 本期付款金额 − 本期预付款金额</b></p>
+          <p style="margin-top:4px;color:#666;">余额为正表示企业对供应商的应付款项，余额为负表示预付款超出应付款。</p>
+        </div>
+      </div>
+
+      <!-- Balance Query -->
+      <div class="tab-pane" id="tab-balance">
+        <div class="form-grid">
+          <div class="form-item">
+            <label class="required">供应商</label>
+            <input type="text" placeholder="编码或名称" id="balSupplier" class="required-bg">
+            <button class="btn btn-sm" onclick="openLovSupplier('balSupplier')">⋯</button>
+          </div>
+          <div class="form-item">
+            <label class="required">对账月份</label>
+            <select id="balMonth"><option>2026年06月</option><option>2026年05月</option><option>2026年04月</option></select>
+          </div>
+          <div class="form-item">
+            <label>币种</label>
+            <select><option>人民币(CNY)</option><option>美元(USD)</option></select>
+          </div>
+          <div class="form-item" style="justify-content:flex-end;gap:6px;">
+            <button class="btn" onclick="doBalanceQuery()">🔍 查询</button>
+            <button class="btn" onclick="resetBalanceQuery()">↻ 重置</button>
+            <button class="btn" onclick="doExport()">📤 导出</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-sm" onclick="doBalanceRefresh()">🔄 刷新</button>
+          <button class="btn btn-sm" onclick="doBalanceDetail()">📋 查看明细</button>
+        </div>
+        <div class="section-title">余额明细</div>
+        <div class="scroll-table" id="balanceTable">
+          <table>
+            <thead>
+              <tr>
+                <th>供应商编码</th><th>供应商名称</th><th>期初余额</th><th>本期采购额</th>
+                <th>本期入库额</th><th>本期发票额</th><th>本期付款额</th><th>本期预付款</th><th>期末余额</th>
+              </tr>
+            </thead>
+            <tbody id="balanceTbody">
+              <tr onclick="selectTr(this)">
+                <td>VEND-001</td><td class="left">华为技术有限公司</td>
+                <td class="num">150,000.00</td><td class="num">80,000.00</td><td class="num">75,000.00</td>
+                <td class="num">80,000.00</td><td class="num">50,000.00</td><td class="num">0.00</td>
+                <td class="num"><b>255,000.00</b></td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td>VEND-002</td><td class="left">中兴通讯股份有限公司</td>
+                <td class="num">200,000.00</td><td class="num">120,000.00</td><td class="num">110,000.00</td>
+                <td class="num">120,000.00</td><td class="num">100,000.00</td><td class="num">50,000.00</td>
+                <td class="num"><b>280,000.00</b></td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td>VEND-003</td><td class="left">阿里巴巴（中国）有限公司</td>
+                <td class="num">90,000.00</td><td class="num">45,000.00</td><td class="num">42,000.00</td>
+                <td class="num">45,000.00</td><td class="num">30,000.00</td><td class="num">0.00</td>
+                <td class="num"><b>147,000.00</b></td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td>VEND-004</td><td class="left">腾讯云计算（北京）有限公司</td>
+                <td class="num">60,000.00</td><td class="num">30,000.00</td><td class="num">28,000.00</td>
+                <td class="num">30,000.00</td><td class="num">20,000.00</td><td class="num">10,000.00</td>
+                <td class="num"><b>88,000.00</b></td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td>VEND-005</td><td class="left">浪潮电子信息产业股份有限公司</td>
+                <td class="num">300,000.00</td><td class="num">200,000.00</td><td class="num">195,000.00</td>
+                <td class="num">200,000.00</td><td class="num">150,000.00</td><td class="num">0.00</td>
+                <td class="num"><b>545,000.00</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="summary-row" id="balanceSummary">
+          <div class="summary-item"><label>合计期初：</label><span class="value">800,000.00</span></div>
+          <div class="summary-item"><label>合计采购：</label><span class="value">475,000.00</span></div>
+          <div class="summary-item"><label>合计入库：</label><span class="value">450,000.00</span></div>
+          <div class="summary-item"><label>合计发票：</label><span class="value">475,000.00</span></div>
+          <div class="summary-item"><label>合计付款：</label><span class="value">350,000.00</span></div>
+          <div class="summary-item"><label>合计预付款：</label><span class="value">60,000.00</span></div>
+          <div class="summary-item"><label style="font-weight:bold;">合计期末：</label><span class="value" style="font-weight:bold;">1,315,000.00</span></div>
+        </div>
+      </div>
+
+      <!-- Statement Generation -->
+      <div class="tab-pane" id="tab-statement-gen">
+        <div class="form-grid">
+          <div class="form-item">
+            <label class="required">供应商</label>
+            <input type="text" placeholder="编码或名称" id="stmtSupplier" class="required-bg">
+            <button class="btn btn-sm" onclick="openLovSupplier('stmtSupplier')">⋯</button>
+          </div>
+          <div class="form-item">
+            <label class="required">对账期间</label>
+            <select id="stmtPeriod"><option>2026年06月</option><option>2026年05月</option><option>2026年04月</option></select>
+          </div>
+          <div class="form-item">
+            <label>对账状态</label>
+            <select id="stmtStatus"><option>全部</option><option>未生成</option><option>已生成</option><option>已发送</option><option>已确认</option><option>有异议</option></select>
+          </div>
+          <div class="form-item" style="justify-content:flex-end;gap:6px;">
+            <button class="btn" onclick="doStmtQuery()">🔍 查询</button>
+            <button class="btn" onclick="resetForm(this)">↻ 重置</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-sm" onclick="doGenStatement()">📄 生成对账单</button>
+          <button class="btn btn-sm" onclick="doBatchGenStmt()">📚 批量生成</button>
+        </div>
+        <div class="section-title">对账单列表</div>
+        <div class="scroll-table">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:30px"><input type="checkbox" id="stmtCheckAll" onchange="toggleAllChecks('stmtCheckAll','stmtCheck')"></th>
+                <th>对账单号</th><th>供应商名称</th><th>对账期间</th><th>期初余额</th><th>本期发生额</th><th>期末余额</th><th>状态</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="stmtTbody">
+              <tr onclick="selectTr(this)" data-stmt-no="STMT-202606-001" data-status="已生成">
+                <td><input type="checkbox" class="stmtCheck" onclick="event.stopPropagation()"></td>
+                <td>STMT-202606-001</td><td class="left">华为技术有限公司</td><td>2026-06</td>
+                <td class="num">150,000.00</td><td class="num">105,000.00</td><td class="num">255,000.00</td>
+                <td class="stmt-status-cell"><span class="status-tag status-done">已生成</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();doPreviewStmt('STMT-202606-001','华为技术有限公司','2026-06')">预览</button></td>
+              </tr>
+              <tr onclick="selectTr(this)" data-stmt-no="STMT-202606-002" data-status="已生成">
+                <td><input type="checkbox" class="stmtCheck" onclick="event.stopPropagation()"></td>
+                <td>STMT-202606-002</td><td class="left">中兴通讯股份有限公司</td><td>2026-06</td>
+                <td class="num">200,000.00</td><td class="num">180,000.00</td><td class="num">280,000.00</td>
+                <td class="stmt-status-cell"><span class="status-tag status-done">已生成</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();doPreviewStmt('STMT-202606-002','中兴通讯股份有限公司','2026-06')">预览</button></td>
+              </tr>
+              <tr onclick="selectTr(this)" data-stmt-no="" data-status="未生成">
+                <td><input type="checkbox" class="stmtCheck" onclick="event.stopPropagation()"></td>
+                <td>-</td><td class="left">阿里巴巴（中国）有限公司</td><td>2026-06</td>
+                <td class="num">90,000.00</td><td class="num">57,000.00</td><td class="num">147,000.00</td>
+                <td class="stmt-status-cell"><span class="status-tag status-pending">未生成</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();doGenSingleStmt(this)">生成</button></td>
+              </tr>
+              <tr onclick="selectTr(this)" data-stmt-no="" data-status="未生成">
+                <td><input type="checkbox" class="stmtCheck" onclick="event.stopPropagation()"></td>
+                <td>-</td><td class="left">腾讯云计算（北京）有限公司</td><td>2026-06</td>
+                <td class="num">60,000.00</td><td class="num">38,000.00</td><td class="num">88,000.00</td>
+                <td class="stmt-status-cell"><span class="status-tag status-pending">未生成</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();doGenSingleStmt(this)">生成</button></td>
+              </tr>
+              <tr onclick="selectTr(this)" data-stmt-no="STMT-202606-005" data-status="已生成">
+                <td><input type="checkbox" class="stmtCheck" onclick="event.stopPropagation()"></td>
+                <td>STMT-202606-005</td><td class="left">浪潮电子信息产业股份有限公司</td><td>2026-06</td>
+                <td class="num">300,000.00</td><td class="num">245,000.00</td><td class="num">545,000.00</td>
+                <td class="stmt-status-cell"><span class="status-tag status-done">已生成</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();doPreviewStmt('STMT-202606-005','浪潮电子信息产业股份有限公司','2026-06')">预览</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Statement Send -->
+      <div class="tab-pane" id="tab-statement-send">
+        <div class="form-grid">
+          <div class="form-item"><label>供应商</label><input type="text" placeholder="编码或名称"><button class="btn btn-sm" onclick="openLovSupplier('sendSupplier')">⋯</button></div>
+          <div class="form-item"><label>发送状态</label><select id="sendStatusFilter"><option>全部</option><option>待发送</option><option>已发送</option></select></div>
+          <div class="form-item"><label>对账期间</label><select><option>2026年06月</option><option>2026年05月</option></select></div>
+          <div class="form-item" style="justify-content:flex-end;gap:6px;">
+            <button class="btn" onclick="doSendQuery()">🔍 查询</button>
+            <button class="btn" onclick="resetForm(this)">↻ 重置</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-sm" onclick="doSendEmail()">📧 发送邮件</button>
+          <button class="btn btn-sm" onclick="doBatchSend()">📨 批量发送</button>
+        </div>
+        <div class="section-title">发送列表</div>
+        <div class="scroll-table">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:30px"><input type="checkbox" id="sendCheckAll" onchange="toggleAllChecks('sendCheckAll','sendCheck')"></th>
+                <th>对账单号</th><th>供应商名称</th><th>对账期间</th><th>期末余额</th><th>收件人邮箱</th><th>发送状态</th><th>发送时间</th>
+              </tr>
+            </thead>
+            <tbody id="sendTbody">
+              <tr onclick="selectTr(this)" data-sendable="true">
+                <td><input type="checkbox" class="sendCheck" onclick="event.stopPropagation()"></td>
+                <td>STMT-202606-001</td><td class="left">华为技术有限公司</td><td>2026-06</td>
+                <td class="num">255,000.00</td><td>ap@huawei.com</td>
+                <td class="send-status-cell"><span class="status-tag status-running">待发送</span></td>
+                <td class="send-time-cell">-</td>
+              </tr>
+              <tr onclick="selectTr(this)" data-sendable="true">
+                <td><input type="checkbox" class="sendCheck" onclick="event.stopPropagation()"></td>
+                <td>STMT-202606-002</td><td class="left">中兴通讯股份有限公司</td><td>2026-06</td>
+                <td class="num">280,000.00</td><td>finance@zte.com.cn</td>
+                <td class="send-status-cell"><span class="status-tag status-running">待发送</span></td>
+                <td class="send-time-cell">-</td>
+              </tr>
+              <tr onclick="selectTr(this)" data-sendable="false">
+                <td><input type="checkbox" class="sendCheck" onclick="event.stopPropagation()"></td>
+                <td>-</td><td class="left">阿里巴巴（中国）有限公司</td><td>2026-06</td>
+                <td class="num">147,000.00</td><td>ap@alibaba.com</td>
+                <td class="send-status-cell"><span class="status-tag status-pending">未生成</span></td>
+                <td class="send-time-cell">-</td>
+              </tr>
+              <tr onclick="selectTr(this)" data-sendable="false">
+                <td><input type="checkbox" class="sendCheck" onclick="event.stopPropagation()"></td>
+                <td>STMT-202606-005</td><td class="left">浪潮电子信息产业股份有限公司</td><td>2026-06</td>
+                <td class="num">545,000.00</td><td>finance@inspur.com</td>
+                <td class="send-status-cell"><span class="status-tag status-done">已发送</span></td>
+                <td class="send-time-cell">2026-07-03 14:30</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Confirmation -->
+      <div class="tab-pane" id="tab-confirm">
+        <div class="form-grid">
+          <div class="form-item"><label>供应商</label><input type="text" placeholder="编码或名称"><button class="btn btn-sm">⋯</button></div>
+          <div class="form-item"><label>确认状态</label><select><option>全部</option><option>待确认</option><option>已确认</option><option>有异议</option></select></div>
+          <div class="form-item"><label>对账期间</label><select><option>2026年06月</option><option>2026年05月</option></select></div>
+          <div class="form-item" style="justify-content:flex-end;gap:6px;">
+            <button class="btn">🔍 查询</button>
+            <button class="btn" onclick="resetForm(this)">↻ 重置</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-sm" onclick="doResendConfirm()">🔄 重新发送</button>
+          <button class="btn btn-sm" onclick="doConfirmDetail()">📋 查看明细</button>
+        </div>
+        <div class="section-title">确认跟踪列表</div>
+        <div class="scroll-table">
+          <table>
+            <thead>
+              <tr>
+                <th>对账单号</th><th>供应商名称</th><th>对账期间</th><th>期末余额</th><th>确认状态</th><th>确认人</th><th>确认时间</th><th>异议说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="selectTr(this)">
+                <td>STMT-202606-001</td><td class="left">华为技术有限公司</td><td>2026-06</td><td class="num">255,000.00</td>
+                <td class="confirm-status-cell"><span class="status-tag status-running">待确认</span></td><td>-</td><td>-</td><td>-</td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td>STMT-202606-002</td><td class="left">中兴通讯股份有限公司</td><td>2026-06</td><td class="num">280,000.00</td>
+                <td class="confirm-status-cell"><span class="status-tag status-done">已确认</span></td><td>张伟</td><td>2026-07-04 10:15</td><td>-</td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td>STMT-202605-001</td><td class="left">阿里巴巴（中国）有限公司</td><td>2026-05</td><td class="num">135,000.00</td>
+                <td class="confirm-status-cell"><span class="status-tag status-exception">有异议</span></td><td>李敏</td><td>2026-06-10 09:30</td><td>发票AP-202605-0089金额不符</td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td>STMT-202606-005</td><td class="left">浪潮电子信息产业股份有限公司</td><td>2026-06</td><td class="num">545,000.00</td>
+                <td class="confirm-status-cell"><span class="status-tag status-done">已确认</span></td><td>王芳</td><td>2026-07-04 16:20</td><td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment Application -->
+      <div class="tab-pane" id="tab-payment">
+        <div class="form-grid">
+          <div class="form-item"><label class="required">供应商</label><input type="text" placeholder="编码或名称" class="required-bg"><button class="btn btn-sm">⋯</button></div>
+          <div class="form-item"><label>申请状态</label><select><option>全部</option><option>待提交</option><option>审批中</option><option>已审批</option><option>已付款</option></select></div>
+          <div class="form-item"><label>对账期间</label><select><option>2026年06月</option><option>2026年05月</option></select></div>
+          <div class="form-item" style="justify-content:flex-end;gap:6px;">
+            <button class="btn">🔍 查询</button>
+            <button class="btn" onclick="resetForm(this)">↻ 重置</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-sm" onclick="doCreatePayment()">➕ 新建付款申请</button>
+          <button class="btn btn-sm" onclick="doSubmitPayment()">📤 提交审批</button>
+          <button class="btn btn-sm" onclick="doViewApprovalFlow()">🔍 查看审批流</button>
+        </div>
+        <div class="section-title">付款申请列表</div>
+        <div class="scroll-table">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:30px"><input type="checkbox"></th>
+                <th>申请单号</th><th>供应商名称</th><th>对应对账单</th><th>对账金额</th><th>申请付款金额</th><th>申请日期</th><th>状态</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="payTbody">
+              <tr onclick="selectTr(this)">
+                <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td>PAY-202607-001</td><td class="left">中兴通讯股份有限公司</td><td>STMT-202606-002</td>
+                <td class="num">280,000.00</td><td class="num">280,000.00</td><td>2026-07-04</td>
+                <td class="pay-status-cell"><span class="status-tag status-pending">待提交</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();showMsg('编辑付款申请（模拟）')">编辑</button></td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td>PAY-202607-002</td><td class="left">浪潮电子信息产业股份有限公司</td><td>STMT-202606-005</td>
+                <td class="num">545,000.00</td><td class="num">500,000.00</td><td>2026-07-04</td>
+                <td class="pay-status-cell"><span class="status-tag status-running">审批中</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();doViewApprovalFlow()">审批流</button></td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td>PAY-202607-003</td><td class="left">华为技术有限公司</td><td>STMT-202606-001</td>
+                <td class="num">255,000.00</td><td class="num">255,000.00</td><td>2026-07-03</td>
+                <td class="pay-status-cell"><span class="status-tag status-pending">待提交</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();showMsg('编辑付款申请（模拟）')">编辑</button></td>
+              </tr>
+              <tr onclick="selectTr(this)">
+                <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td>PAY-202606-008</td><td class="left">神州数码集团股份有限公司</td><td>STMT-202605-002</td>
+                <td class="num">95,000.00</td><td class="num">95,000.00</td><td>2026-06-20</td>
+                <td class="pay-status-cell"><span class="status-tag status-done">已付款</span></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation();showMsg('查看付款申请（模拟）')">查看</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- view-content -->
+
+    <div class="view-status-bar">
+      <span class="view-status-left">供应商对账系统 v1.0</span>
+      <span class="view-status-right" id="statusRight">就绪</span>
+    </div>
+  </div><!-- view-panel -->
+</div><!-- main-container -->
+</div><!-- window -->
+
+<!-- Modal: Generic -->
+<div class="modal-overlay" id="modalGeneric">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="modalGenTitle">详情</span>
+      <button class="modal-close" onclick="closeModal('modalGeneric')">×</button>
+    </div>
+    <div class="modal-body" id="modalGenBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalGeneric')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="msg-toast" id="msgToast"></div>
+
+<script>
+/* ===== Global ===== */
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showModal(id) { document.getElementById(id).classList.add('open'); }
+
+let msgTimer = null;
+function showMsg(msg) {
+  const t = document.getElementById('msgToast');
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+function selectTr(el) {
+  el.closest('table').querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleAllChecks(masterId, cls) {
+  const master = document.getElementById(masterId);
+  document.querySelectorAll('.'+cls).forEach(c => c.checked = master.checked);
+}
+
+/* ===== Navigation ===== */
+function switchPane(el, tabId, title) {
+  document.querySelectorAll('.tree-leaf, .tree-root-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.getElementById('viewTitleText').textContent = title;
+}
+
+function toggleFolder(id) {
+  const f = document.getElementById(id);
+  f.classList.toggle('open');
+  const t = f.querySelector('.tree-folder-toggle');
+  if (t) t.textContent = f.classList.contains('open') ? '−' : '+';
+}
+
+/* ===== LOV Supplier ===== */
+const supplierDB = [
+  { code: 'VEND-001', name: '华为技术有限公司', email: 'ap@huawei.com' },
+  { code: 'VEND-002', name: '中兴通讯股份有限公司', email: 'finance@zte.com.cn' },
+  { code: 'VEND-003', name: '阿里巴巴（中国）有限公司', email: 'ap@alibaba.com' },
+  { code: 'VEND-004', name: '腾讯云计算（北京）有限公司', email: 'ap@tencent.com' },
+  { code: 'VEND-005', name: '浪潮电子信息产业股份有限公司', email: 'finance@inspur.com' },
+  { code: 'VEND-006', name: '神州数码集团股份有限公司', email: 'ap@digitalchina.com' },
+  { code: 'VEND-007', name: '用友网络科技股份有限公司', email: 'pay@yonyou.com' },
+];
+
+function openLovSupplier(targetInputId) {
+  let rows = supplierDB.map(s =>
+    `<tr onclick="selectSupplier('${s.code}','${s.name}','${targetInputId}')">
+      <td>${s.code}</td><td class="left">${s.name}</td><td>${s.email}</td>
+    </tr>`
+  ).join('');
+  document.getElementById('modalGenTitle').textContent = '供应商选择';
+  document.getElementById('modalGenBody').innerHTML = `
+    <div style="margin-bottom:8px;"><input type="text" id="lovSearchInput" placeholder="搜索供应商编码或名称" oninput="filterLov(this.value)" style="width:100%;padding:3px 6px;font-family:宋体,SimSun,serif;font-size:10pt;border:1px solid #A0A0A0;border-radius:2px;"></div>
+    <div class="scroll-table" style="max-height:300px;">
+      <table><thead><tr><th>编码</th><th>名称</th><th>邮箱</th></tr></thead>
+      <tbody id="lovTbody">${rows}</tbody></table>
+    </div>`;
+  showModal('modalGeneric');
+}
+
+function filterLov(val) {
+  const q = val.toLowerCase();
+  const rows = supplierDB.filter(s => s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
+    .map(s => `<tr onclick="selectSupplier('${s.code}','${s.name}','${document.getElementById('lovSearchInput').dataset.target||'balSupplier'}')">
+      <td>${s.code}</td><td class="left">${s.name}</td><td>${s.email}</td></tr>`);
+  document.getElementById('lovTbody').innerHTML = rows.join('');
+}
+
+function selectSupplier(code, name, targetInputId) {
+  document.getElementById(targetInputId).value = code + ' - ' + name;
+  closeModal('modalGeneric');
+  showMsg('已选择：' + name);
+}
+
+/* ===== Balance Query ===== */
+function doBalanceQuery() {
+  const supplier = document.getElementById('balSupplier').value.trim();
+  if (!supplier) { showMsg('请选择供应商'); return; }
+  document.getElementById('statusRight').textContent = '查询中...';
+  setTimeout(() => {
+    document.getElementById('statusRight').textContent = '共 7 条记录';
+    showMsg('查询完成，共 7 条记录');
+  }, 800);
+}
+
+function resetBalanceQuery() {
+  document.getElementById('balSupplier').value = '';
+  document.getElementById('balMonth').selectedIndex = 0;
+  showMsg('查询条件已重置');
+}
+
+function doExport() {
+  showMsg('正在导出 Excel 文件...');
+  setTimeout(() => showMsg('导出完成：供应商余额_202606.xlsx'), 600);
+}
+
+function doBalanceRefresh() {
+  document.getElementById('statusRight').textContent = '正在刷新...';
+  setTimeout(() => {
+    document.getElementById('statusRight').textContent = '数据已更新至最新';
+    showMsg('数据已更新至最新');
+  }, 1000);
+}
+
+function doBalanceDetail() {
+  const sel = document.querySelector('#balanceTable tr.selected');
+  if (!sel) { showMsg('请先选择一条供应商记录'); return; }
+  const cells = sel.cells;
+  const supplierName = cells[1].textContent.trim();
+  document.getElementById('modalGenTitle').textContent = supplierName + ' - 余额构成明细';
+  document.getElementById('modalGenBody').innerHTML = `
+    <div style="display:flex;gap:4px;margin-bottom:10px;">
+      <button class="btn btn-sm" onclick="showMsg('采购订单明细（模拟）')" style="background:#2D82C3;color:#fff;">采购订单</button>
+      <button class="btn btn-sm" onclick="showMsg('入库单明细（模拟）')">入库单</button>
+      <button class="btn btn-sm" onclick="showMsg('发票明细（模拟）')">发票</button>
+      <button class="btn btn-sm" onclick="showMsg('付款明细（模拟）')">付款</button>
+      <button class="btn btn-sm" onclick="showMsg('预付款明细（模拟）')">预付款</button>
+    </div>
+    <div class="scroll-table" style="max-height:200px;">
+      <table>
+        <thead><tr><th>单据编号</th><th>单据类型</th><th>单据日期</th><th>金额</th></tr></thead>
+        <tbody>
+          <tr><td>PO-202606-0015</td><td>采购订单</td><td>2026-06-10</td><td class="num">80,000.00</td></tr>
+          <tr><td>RCV-202606-0020</td><td>入库单</td><td>2026-06-15</td><td class="num">75,000.00</td></tr>
+          <tr><td>AP-202606-0035</td><td>采购发票</td><td>2026-06-20</td><td class="num">80,000.00</td></tr>
+          <tr><td>PAY-202606-0012</td><td>付款</td><td>2026-06-25</td><td class="num">50,000.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;padding:6px 10px;background:#D4EDDA;border-radius:2px;">
+      <b>期末余额：255,000.00 元</b>（期初150,000 + 采购80,000 + 入库75,000 + 发票80,000 - 付款50,000）
+    </div>`;
+  showModal('modalGeneric');
+}
+
+/* ===== Statement Generation ===== */
+let stmtCounter = 5;
+
+function doGenSingleStmt(btn) {
+  const tr = btn.closest('tr');
+  if (confirm('确定为该供应商生成对账单？')) {
+    tr.querySelector('td:first-child').textContent = 'STMT-202606-00' + (++stmtCounter);
+    const statusCell = tr.querySelector('.stmt-status-cell');
+    statusCell.innerHTML = '<span class="status-tag status-done">已生成</span>';
+    tr.dataset.stmtNo = 'STMT-202606-00' + stmtCounter;
+    tr.dataset.status = '已生成';
+    btn.textContent = '预览';
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const no = this.closest('tr').dataset.stmtNo;
+      const name = this.closest('tr').cells[2].textContent.trim();
+      doPreviewStmt(no, name, '2026-06');
+    };
+    showMsg('对账单已生成：STMT-202606-00' + stmtCounter);
+  }
+}
+
+function doGenStatement() {
+  const rows = document.querySelectorAll('#stmtTbody tr');
+  let pending = 0;
+  rows.forEach(r => { if (r.dataset.status === '未生成') pending++; });
+  if (pending === 0) { showMsg('无可生成的对账单，全部已生成'); return; }
+  if (!confirm('确定生成 ' + pending + ' 条未生成的对账单？')) return;
+
+  let done = 0;
+  rows.forEach(r => {
+    if (r.dataset.status === '未生成') {
+      const no = 'STMT-202606-00' + (++stmtCounter);
+      r.querySelector('td:first-child').textContent = no;
+      r.querySelector('.stmt-status-cell').innerHTML = '<span class="status-tag status-done">已生成</span>';
+      r.dataset.stmtNo = no;
+      r.dataset.status = '已生成';
+      const btn = r.querySelector('td:last-child .btn');
+      btn.textContent = '预览';
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        const n = this.closest('tr').dataset.stmtNo;
+        const nm = this.closest('tr').cells[2].textContent.trim();
+        doPreviewStmt(n, nm, '2026-06');
+      };
+      done++;
+    }
+  });
+  showMsg('批量生成完成：' + done + ' 条');
+}
+
+function doBatchGenStmt() {
+  const checked = document.querySelectorAll('.stmtCheck:checked');
+  if (checked.length === 0) { showMsg('请先勾选需生成对账单的供应商'); return; }
+  let pending = 0;
+  checked.forEach(c => { if (c.closest('tr').dataset.status === '未生成') pending++; });
+  if (pending === 0) { showMsg('所选项目均已生成'); return; }
+  if (!confirm('确定生成所选 ' + pending + ' 条对账单？')) return;
+  checked.forEach(c => {
+    const r = c.closest('tr');
+    if (r.dataset.status === '未生成') {
+      const no = 'STMT-202606-00' + (++stmtCounter);
+      r.querySelector('td:first-child').textContent = no;
+      r.querySelector('.stmt-status-cell').innerHTML = '<span class="status-tag status-done">已生成</span>';
+      r.dataset.stmtNo = no;
+      r.dataset.status = '已生成';
+      const btn = r.querySelector('td:last-child .btn');
+      btn.textContent = '预览';
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        const n = this.closest('tr').dataset.stmtNo;
+        const nm = this.closest('tr').cells[2].textContent.trim();
+        doPreviewStmt(n, nm, '2026-06');
+      };
+    }
+  });
+  showMsg('批量生成完成：' + pending + ' 条');
+}
+
+function doStmtQuery() {
+  showMsg('查询完成');
+  document.getElementById('statusRight').textContent = '对账单列表已刷新';
+}
+
+function doPreviewStmt(no, name, period) {
+  document.getElementById('modalGenTitle').textContent = '对账单预览 - ' + no;
+  document.getElementById('modalGenBody').innerHTML = `
+    <div style="text-align:center;margin-bottom:10px;">
+      <b style="font-size:12pt;">对 账 单</b><br>
+      <span style="color:#666;">编号：${no} | 期间：${period}</span>
+    </div>
+    <table class="data-table" style="margin-bottom:8px;">
+      <tr><td style="padding:3px 6px;width:80px;">供应商</td><td style="padding:3px 6px;">${name}</td></tr>
+      <tr><td style="padding:3px 6px;">对账期间</td><td style="padding:3px 6px;">${period}</td></tr>
+    </table>
+    <div class="scroll-table" style="max-height:180px;">
+      <table><thead><tr><th>项目</th><th>金额</th></tr></thead>
+      <tbody>
+        <tr><td class="left">期初余额</td><td class="num">150,000.00</td></tr>
+        <tr><td class="left">本期采购金额</td><td class="num">80,000.00</td></tr>
+        <tr><td class="left">本期入库金额</td><td class="num">75,000.00</td></tr>
+        <tr><td class="left">本期发票金额</td><td class="num">80,000.00</td></tr>
+        <tr><td class="left">本期付款金额</td><td class="num">50,000.00</td></tr>
+        <tr><td class="left">本期预付款金额</td><td class="num">0.00</td></tr>
+        <tr style="font-weight:bold;border-top:2px solid #A0A0A0;"><td class="left">期末余额</td><td class="num">255,000.00</td></tr>
+      </tbody></table>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;">
+      <button class="btn btn-sm" onclick="showMsg('打印功能（模拟）')">🖨️ 打印</button>
+      <button class="btn btn-sm" onclick="showMsg('已导出 PDF')">📥 导出 PDF</button>
+    </div>`;
+  showModal('modalGeneric');
+}
+
+/* ===== Send Email ===== */
+function doSendQuery() {
+  showMsg('发送列表已刷新');
+  document.getElementById('statusRight').textContent = '发送列表已刷新';
+}
+
+function doSendEmail() {
+  const checked = document.querySelectorAll('.sendCheck:checked');
+  let targets = [];
+  checked.forEach(c => {
+    const tr = c.closest('tr');
+    if (tr.dataset.sendable === 'true' && tr.querySelector('.send-status-cell .status-tag').textContent === '待发送') {
+      targets.push(tr);
+    }
+  });
+  if (targets.length === 0) { showMsg('请勾选待发送的对账单'); return; }
+  if (!confirm('确定发送 ' + targets.length + ' 封邮件？')) return;
+  const now = new Date();
+  const ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  targets.forEach(tr => {
+    tr.querySelector('.send-status-cell').innerHTML = '<span class="status-tag status-done">已发送</span>';
+    tr.querySelector('.send-time-cell').textContent = ts;
+  });
+  showMsg('邮件发送成功：' + targets.length + ' 封');
+}
+
+function doBatchSend() {
+  const checked = document.querySelectorAll('.sendCheck:checked');
+  let targets = [];
+  checked.forEach(c => {
+    const tr = c.closest('tr');
+    if (tr.dataset.sendable === 'true' && tr.querySelector('.send-status-cell .status-tag').textContent === '待发送') {
+      targets.push(tr);
+    }
+  });
+  if (targets.length === 0) { showMsg('请勾选待发送的对账单'); return; }
+  if (!confirm('即将批量发送 ' + targets.length + ' 封邮件，确认？')) return;
+  const now = new Date();
+  const ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  let sent = 0, failed = 0;
+  targets.forEach(tr => {
+    tr.querySelector('.send-status-cell').innerHTML = '<span class="status-tag status-done">已发送</span>';
+    tr.querySelector('.send-time-cell').textContent = ts;
+    sent++;
+  });
+  showMsg('批量发送完成：成功 ' + sent + ' 封' + (failed ? '，失败 ' + failed + ' 封' : ''));
+}
+
+/* ===== Confirmation ===== */
+function doResendConfirm() {
+  const sel = document.querySelector('#tab-confirm tr.selected');
+  if (!sel) { showMsg('请先选择一条记录'); return; }
+  const status = sel.querySelector('.confirm-status-cell .status-tag');
+  if (status.textContent !== '待确认') { showMsg('仅"待确认"的记录可重新发送'); return; }
+  if (!confirm('确定重新发送催办邮件？')) return;
+  showMsg('催办邮件已重新发送');
+}
+
+function doConfirmDetail() {
+  const sel = document.querySelector('#tab-confirm tr.selected');
+  if (!sel) { showMsg('请先选择一条记录'); return; }
+  const cells = sel.cells;
+  document.getElementById('modalGenTitle').textContent = '对账明细 - ' + cells[0].textContent;
+  document.getElementById('modalGenBody').innerHTML = `
+    <table class="data-table">
+      <tr><td style="padding:3px 6px;width:80px;">供应商</td><td style="padding:3px 6px;">${cells[1].textContent}</td></tr>
+      <tr><td style="padding:3px 6px;">对账期间</td><td style="padding:3px 6px;">${cells[2].textContent}</td></tr>
+      <tr><td style="padding:3px 6px;">期末余额</td><td style="padding:3px 6px;">${cells[3].textContent}</td></tr>
+    </table>
+    <div class="scroll-table" style="margin-top:8px;max-height:150px;">
+      <table><thead><tr><th>单据类型</th><th>单据编号</th><th>金额</th></tr></thead>
+      <tbody>
+        <tr><td>采购订单</td><td>PO-202606-0015</td><td class="num">80,000.00</td></tr>
+        <tr><td>入库单</td><td>RCV-202606-0020</td><td class="num">75,000.00</td></tr>
+        <tr><td>采购发票</td><td>AP-202606-0035</td><td class="num">80,000.00</td></tr>
+        <tr><td>付款</td><td>PAY-202606-0012</td><td class="num">50,000.00</td></tr>
+      </tbody></table>
+    </div>`;
+  showModal('modalGeneric');
+}
+
+/* ===== Payment ===== */
+function doCreatePayment() {
+  document.getElementById('modalGenTitle').textContent = '新建付款申请';
+  document.getElementById('modalGenBody').innerHTML = `
+    <table class="data-table">
+      <tr><td style="padding:3px 6px;width:90px;">供应商</td><td style="padding:3px 6px;">
+        <select style="width:100%;font-family:宋体,SimSun,serif;font-size:10pt;padding:2px 4px;"><option>请选择</option><option>华为技术有限公司</option><option>中兴通讯股份有限公司</option><option>浪潮电子信息产业股份有限公司</option></select>
+      </td></tr>
+      <tr><td style="padding:3px 6px;">对账单号</td><td style="padding:3px 6px;">
+        <select style="width:100%;font-family:宋体,SimSun,serif;font-size:10pt;padding:2px 4px;"><option>请选择</option><option>STMT-202606-001（255,000.00）</option><option>STMT-202606-002（280,000.00）</option></select>
+      </td></tr>
+      <tr><td style="padding:3px 6px;">对账金额</td><td style="padding:3px 6px;"><b>280,000.00</b></td></tr>
+      <tr><td style="padding:3px 6px;">申请付款金额</td><td style="padding:3px 6px;"><input type="text" value="280,000.00" style="width:100%;padding:2px 4px;font-family:宋体,SimSun,serif;font-size:10pt;border:1px solid #A0A0A0;text-align:right;"></td></tr>
+      <tr><td style="padding:3px 6px;">付款方式</td><td style="padding:3px 6px;">
+        <select style="width:100%;font-family:宋体,SimSun,serif;font-size:10pt;padding:2px 4px;"><option>银行转账</option><option>银行汇票</option><option>商业承兑汇票</option></select>
+      </td></tr>
+      <tr><td style="padding:3px 6px;">期望付款日</td><td style="padding:3px 6px;"><input type="text" value="2026-07-15" style="width:100%;padding:2px 4px;font-family:宋体,SimSun,serif;font-size:10pt;border:1px solid #A0A0A0;"></td></tr>
+    </table>
+    <div style="margin-top:8px;display:flex;gap:6px;">
+      <button class="btn btn-primary" onclick="showMsg('付款申请已保存，状态：待提交')">💾 保存</button>
+      <button class="btn" onclick="closeModal('modalGeneric')">取消</button>
+    </div>`;
+  showModal('modalGeneric');
+}
+
+function doSubmitPayment() {
+  const sel = document.querySelector('#payTbody tr.selected');
+  if (!sel) { showMsg('请先选择一条付款申请记录'); return; }
+  const statusCell = sel.querySelector('.pay-status-cell');
+  if (statusCell.textContent.trim() !== '待提交') { showMsg('仅"待提交"状态的申请可提交审批'); return; }
+  if (!confirm('确定提交审批？审批路径：部门经理 → 财务总监')) return;
+  statusCell.innerHTML = '<span class="status-tag status-running">审批中</span>';
+  showMsg('已提交审批，当前节点：部门经理审批');
+}
+
+function doViewApprovalFlow() {
+  document.getElementById('modalGenTitle').textContent = '审批流程';
+  document.getElementById('modalGenBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px;padding:8px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:#D4EDDA;color:#155724;padding:4px 10px;border-radius:2px;font-size:9pt;">✓ 已通过</span>
+        <span style="font-size:10pt;"><b>部门经理</b> — 李明<br><small style="color:#666;">2026-07-04 14:20</small></span>
+      </div>
+      <div style="border-left:2px dashed #2D6EB0;height:20px;margin-left:20px;"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:#CCE5FF;color:#004085;padding:4px 10px;border-radius:2px;font-size:9pt;">◉ 审批中</span>
+        <span style="font-size:10pt;"><b>财务总监</b> — 王强<br><small style="color:#666;">待审批</small></span>
+      </div>
+      <div style="border-left:2px dashed #ccc;height:20px;margin-left:20px;"></div>
+      <div style="display:flex;align-items:center;gap:8px;opacity:0.6;">
+        <span style="background:#EAEEF2;color:#666;padding:4px 10px;border-radius:2px;font-size:9pt;">○ 待审批</span>
+        <span style="font-size:10pt;"><b>总经理</b> — 陈总<br><small style="color:#666;">待审批</small></span>
+      </div>
+    </div>`;
+  showModal('modalGeneric');
+}
+
+function resetForm(btn) {
+  const grid = btn.closest('.form-grid');
+  grid.querySelectorAll('input').forEach(i => i.value = '');
+  grid.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+  showMsg('查询条件已重置');
+}
+
+/* Close modal on overlay click */
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+
+/* ===== 全局工具栏功能 ===== */
+let currentZoom = 1;
+let toolbarCollapsed = false;
+let focusMode = false;
+
+// 聚焦模式：点击任意位置或按 ESC 退出
+document.addEventListener('click', function(e) {
+  // 排除工具栏按钮本身的点击
+  if (e.target.closest && e.target.closest('.tb-btn') && e.target.closest('.tb-btn').getAttribute('onclick') && e.target.closest('.tb-btn').getAttribute('onclick').includes('toggleFocus')) {
+    return;
+  }
+  if (document.body.hasAttribute('data-focus-exit') && focusMode) {
+    toggleFocus();
+  }
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.body.hasAttribute('data-focus-exit') && focusMode) {
+    toggleFocus();
+  }
+});
+
+function toggleToolbar() {
+  toolbarCollapsed = !toolbarCollapsed;
+  document.querySelector('.global-toolbar').classList.toggle('collapsed', toolbarCollapsed);
+  const btn = document.querySelector('.tb-toggle');
+  btn.textContent = toolbarCollapsed ? '▼' : '▲';
+}
+
+function zoomPage(factor) {
+  currentZoom = Math.min(Math.max(currentZoom * factor, 0.5), 2);
+  document.querySelector('.window').style.transform = `scale(${currentZoom})`;
+  document.querySelector('.window').style.transformOrigin = 'top center';
+  showMsg(`缩放: ${Math.round(currentZoom * 100)}%`);
+}
+
+function resetZoom() {
+  currentZoom = 1;
+  document.querySelector('.window').style.transform = 'scale(1)';
+  document.querySelector('.window').style.transformOrigin = 'top center';
+  showMsg('缩放已重置');
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().then(() => {
+      showMsg('全屏模式');
+    }).catch(() => {
+      showMsg('全屏不可用，请通过浏览器菜单操作');
+    });
+  } else {
+    document.exitFullscreen();
+    showMsg('已退出全屏');
+  }
+}
+
+function showHelp() {
+  showModal('modalGeneric');
+  document.getElementById('modalGenTitle').textContent = '❓ 帮助 — 供应商对账系统';
+  document.getElementById('modalGenBody').innerHTML = `
+    <div style="font-size:10pt;line-height:1.8;">
+      <p><b>供应商对账系统功能原型</b></p>
+      <p style="margin-top:8px;">本原型演示了供应商对账系统的核心功能流程：</p>
+      <ul style="padding-left:20px;margin-top:4px;">
+        <li><b>余额管理</b> — 查询供应商实时余额及构成明细</li>
+        <li><b>对账管理</b> — 生成并发送对账单</li>
+        <li><b>确认管理</b> — 跟踪供应商确认状态</li>
+        <li><b>付款申请</b> — 创建付款申请单</li>
+        <li>📸 功能截图 — 截图当前功能界面保存为PNG</li>
+      </ul>
+      <p style="margin-top:8px;"><b>工具栏操作：</b></p>
+      <ul style="padding-left:20px;">
+        <li>📸 功能截图 — 截图当前功能内容</li>
+        <li>📚 批量截图 — 全部功能界面截图汇总生成Word文档</li>
+        <li>📝 生成功能文档 — 自动生成功能设计文档（.md）</li>
+        <li>🔍 放大/缩小 — 缩放窗口视图</li>
+        <li>⛶ 全屏 — 浏览器全屏显示</li>
+        <li>🎯 聚焦 — 功能界面弹出放大，其他区域虚化，点击背景退出</li>
+      </ul>
+      <p style="margin-top:8px;color:#666;">Oracle EBS 功能原型 v1.0</p>
+    </div>`;
+}
+
+/* ===== 功能截图（全局工具栏） ===== */
+function captureCurrentScreenshot() {
+  // 截取整个功能面板（标题栏 + 内容区 + 状态栏）
+  const target = document.querySelector('.view-panel');
+  if (!target) { showMsg('未找到功能面板'); return; }
+
+  const funcName = document.getElementById('viewTitleText').textContent.trim() || '未知功能';
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
+  const timeStr = ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2) + ('0'+now.getSeconds()).slice(-2);
+  const fileName = `供应商对账_${funcName}_${dateStr}_${timeStr}.png`;
+
+  showMsg('正在截图...');
+
+  html2canvas(target, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#EAEEF2',
+    logging: false,
+    allowTaint: true,
+    width: target.scrollWidth,
+    height: target.scrollHeight
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showMsg('✅ 截图已保存: ' + fileName);
+  }).catch(err => {
+    showMsg('截图失败: ' + err.message);
+    console.error('Screenshot error:', err);
+  });
+}
+
+/* ===== 批量截图 ===== */
+const batchTabList = [
+  { tabId: 'tab-overview',  title: '供应商对账系统总览' },
+  { tabId: 'tab-balance',   title: '供应商余额查询' },
+  { tabId: 'tab-statement-gen',  title: '对账单生成' },
+  { tabId: 'tab-statement-send', title: '对账单发送' },
+  { tabId: 'tab-confirm',   title: '供应商确认跟踪' },
+  { tabId: 'tab-payment',   title: '付款申请单' }
+];
+
+function batchScreenshot() {
+  if (batchScreenshot.running) { showMsg('批量截图进行中，请等待...'); return; }
+  batchScreenshot.running = true;
+
+  const total = batchTabList.length;
+  let results = [];
+
+  showMsg(`开始批量截图，共 ${total} 个界面...`);
+
+  // 递归截图：逐个切换tab并截图
+  function captureNext(index) {
+    if (index >= total) {
+      // 全部截图完成，生成Word文档
+      generateWordDoc(results);
+      batchScreenshot.running = false;
+      return;
+    }
+
+    const item = batchTabList[index];
+    // 通过导航栏找到对应的树节点并激活
+    const navItem = document.querySelector(
+      `.tree-leaf[onclick*="'${item.tabId}'"], .tree-root-item[onclick*="'${item.tabId}'"]`
+    );
+    if (navItem) {
+      // 模拟点击切换
+      navItem.click();
+    }
+
+    // 等待渲染完成
+    setTimeout(() => {
+      const panel = document.querySelector('.view-panel');
+      if (!panel) { captureNext(index + 1); return; }
+
+      showMsg(`截图 (${index + 1}/${total}): ${item.title}`);
+
+      html2canvas(panel, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F0F0F0',
+        logging: false,
+        allowTaint: true,
+        width: panel.scrollWidth,
+        height: panel.scrollHeight
+      }).then(canvas => {
+        results.push({ title: item.title, dataUrl: canvas.toDataURL('image/png') });
+        captureNext(index + 1);
+      }).catch(() => {
+        results.push({ title: item.title, dataUrl: null });
+        captureNext(index + 1);
+      });
+    }, 500);
+  }
+
+  captureNext(0);
+}
+
+function generateWordDoc(results) {
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
+  const fileName = `供应商对账系统_批量截图_${dateStr}.doc`;
+
+  showMsg('正在生成Word文档...');
+
+  // 生成 Word 兼容的 HTML（含嵌入式 base64 图片）
+  let htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+                        xmlns:w='urn:schemas-microsoft-com:office:word'
+                        xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset="UTF-8"><title>供应商对账系统 - 功能截图</title>
+  <style>
+    body { font-family: 宋体, SimSun, serif; font-size: 12pt; margin: 40px; }
+    h2 { text-align: center; font-size: 16pt; margin-top: 30px; margin-bottom: 20px; }
+    .screenshot { text-align: center; margin-bottom: 10px; }
+    .screenshot img { max-width: 100%; }
+    .page-break { page-break-after: always; }
+  </style></head><body>`;
+
+  results.forEach((r, i) => {
+    if (!r.dataUrl) {
+      htmlContent += `<h2>${r.title} - 截图失败</h2>${i < results.length - 1 ? '<br class="page-break">' : ''}`;
+      return;
+    }
+    htmlContent += `<h2>${r.title}</h2>`;
+    htmlContent += `<div class="screenshot"><img src="${r.dataUrl}" style="width:100%;max-width:650px;"></div>`;
+    if (i < results.length - 1) {
+      htmlContent += `<br class="page-break">`;
+    }
+  });
+
+  htmlContent += `</body></html>`;
+
+  const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(link.href);
+
+  showMsg(`✅ 批量截图完成: ${fileName}`);
+}
+
+/* ===== 生成功能设计文档（含截图） ===== */
+const docTabList = [
+  { tabId: 'tab-overview',  title: '供应商对账系统总览',
+    desc: '系统总览页面，展示业务背景、端到端业务流程、数据来源说明及完整需求清单。使用户快速了解系统全貌。' },
+  { tabId: 'tab-balance',   title: '供应商余额查询',
+    desc: '实时查询供应商往来余额。支持按供应商和账期月份筛选。展示期初余额、本期发生（采购订单/入库单/采购发票/付款/预付款）、期末余额。提供实时刷新、余额构成明细钻取、导出Excel等功能。' },
+  { tabId: 'tab-statement-gen',  title: '对账单生成',
+    desc: '选择供应商和账期月份自动生成对账单。汇总展示PO、入库、发票、付款的金额明细及差异额。支持指定对账截止日期，生成后可预览完整对账单详情。' },
+  { tabId: 'tab-statement-send', title: '对账单发送',
+    desc: '将已生成的对账单通过邮件发送给供应商。支持多供应商批量发送，邮件包含对账单附件及自定义备注。发送完成后记录发送状态（已发送/发送失败）。' },
+  { tabId: 'tab-confirm',   title: '供应商确认跟踪',
+    desc: '跟踪供应商对对账单的确认状态。状态包括：待确认、已确认（无差异）、差异待处理。对差异项可查看明细并跟进处理。确认完成后可触发付款申请。' },
+  { tabId: 'tab-payment',   title: '付款申请单',
+    desc: '基于已确认的对账单创建付款申请单。申请单包含供应商、对账单号、申请金额、付款到期日等信息。流程状态流转：待提交→审批中→已审批→已付款。' }
+];
+
+let docCaptureRunning = false;
+
+function generateDesignDoc() {
+  // 弹出选项框让用户选择格式
+  showModal('modalGeneric');
+  document.getElementById('modalGenTitle').textContent = '📝 选择导出格式';
+  document.getElementById('modalGenBody').innerHTML = `
+    <div style="font-size:10pt;line-height:1.8;padding:10px 0;">
+      <p>请选择功能设计文档的导出格式：</p>
+      <div style="display:flex;gap:12px;margin-top:16px;justify-content:center;">
+        <button class="btn btn-primary" onclick="closeModal('modalGeneric');startDocCapture('doc')" style="padding:8px 24px;min-height:40px;font-size:11pt;">
+          📄 Word 文档 (.docx)
+        </button>
+        <button class="btn" onclick="closeModal('modalGeneric');startDocCapture('md')" style="padding:8px 24px;min-height:40px;font-size:11pt;">
+          📝 Markdown 文档 (.md)
+        </button>
+      </div>
+      <p style="margin-top:12px;color:#666;text-align:center;">两种格式均包含全部功能界面的截图和功能说明</p>
+    </div>`;
+}
+
+function startDocCapture(format) {
+  if (docCaptureRunning) { showMsg('文档生成进行中，请等待...'); return; }
+  docCaptureRunning = true;
+
+  const total = docTabList.length;
+  let results = [];
+
+  showMsg(`开始截取界面，共 ${total} 个...`);
+
+  function captureNext(index) {
+    if (index >= total) {
+      if (format === 'md') buildMarkdownDoc(results);
+      else buildWordDoc(results);
+      docCaptureRunning = false;
+      return;
+    }
+
+    const item = docTabList[index];
+    const navItem = document.querySelector(
+      `.tree-leaf[onclick*="'${item.tabId}'"], .tree-root-item[onclick*="'${item.tabId}'"]`
+    );
+    if (navItem) navItem.click();
+
+    setTimeout(() => {
+      const panel = document.querySelector('.view-panel');
+      if (!panel) { captureNext(index + 1); return; }
+      showMsg(`截取 (${index + 1}/${total}): ${item.title}`);
+
+      html2canvas(panel, {
+        scale: 2, useCORS: true, backgroundColor: '#F0F0F0',
+        logging: false, allowTaint: true,
+        width: panel.scrollWidth, height: panel.scrollHeight
+      }).then(canvas => {
+        results.push({ title: item.title, desc: item.desc, dataUrl: canvas.toDataURL('image/png') });
+        captureNext(index + 1);
+      }).catch(() => {
+        results.push({ title: item.title, desc: item.desc, dataUrl: null });
+        captureNext(index + 1);
+      });
+    }, 500);
+  }
+  captureNext(0);
+}
+
+function buildMarkdownDoc(results) {
+  showMsg('正在生成Markdown文档...');
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
+  const folderName = `供应商对账系统_功能设计文档_${dateStr}`;
+  const imgDir = 'images/';
+
+  let md = `# 供应商对账系统 — 功能设计文档\n\n`;
+  md += `**版本：** v1.0  **日期：** ${now.toLocaleDateString('zh-CN')}\n`;
+  md += `**系统：** Oracle EBS R12  **模块：** 供应商对账系统\n\n`;
+  md += `---\n\n`;
+
+  md += `## 1. 业务背景\n\n`;
+  md += `原线下供应商对账方式存在以下问题：\n\n`;
+  md += `- 对账过程依赖人工Excel操作，效率低下\n`;
+  md += `- 数据来源分散（PO、入库、发票、付款、预付款），易出错\n`;
+  md += `- 对账单以邮件附件方式线下传递，跟踪困难\n`;
+  md += `- 对账完成后无法及时触发付款申请流程\n\n`;
+  md += `通过ERP系统实现供应商对账全流程线上化管理，实时计算供应商余额，自动生成并发送对账单，确认后快速发起付款申请。\n\n`;
+
+  md += `## 2. 业务流程\n\n`;
+  md += `采购订单 → 入库单 → 采购发票 → 付款/预付款 → 实时余额计算 → 生成对账单 → 邮件发送 → 供应商确认 → 付款申请\n\n`;
+
+  md += `## 3. 功能模块详细设计\n\n`;
+  results.forEach((r, i) => {
+    const imgFile = `${imgDir}${r.title}.png`;
+    md += `### 3.${i + 1} ${r.title}\n\n`;
+    md += `${r.desc}\n\n`;
+    if (r.dataUrl) {
+      md += `![${r.title}](${imgFile})\n\n`;
+    }
+    md += `| 项目 | 说明 |\n`;
+    md += `|------|------|\n`;
+    md += `| 功能编号 | FD-${String(i + 1).padStart(3, '0')} |\n`;
+    md += `| 所属模块 | 供应商对账系统 |\n`;
+    md += `| 使用对象 | 财务人员 |\n`;
+    md += `| 前置条件 | 采购订单、入库单、发票、付款数据已录入系统 |\n`;
+    md += `| 后置条件 | 对账确认后触发付款申请 |\n\n`;
+  });
+
+  md += `## 4. 界面导航结构\n\n`;
+  md += `- 📋 总览\n`;
+  md += `- 💰 余额管理\n`;
+  md += `  - 供应商余额查询\n`;
+  md += `- 📄 对账管理\n`;
+  md += `  - 对账单生成\n`;
+  md += `  - 对账单发送\n`;
+  md += `- ✅ 确认管理\n`;
+  md += `  - 供应商确认跟踪\n`;
+  md += `- 💳 付款申请\n`;
+  md += `  - 付款申请单\n\n`;
+
+  md += `## 5. 审批记录\n\n`;
+  md += `| 版本 | 日期 | 修改人 | 修改说明 |\n`;
+  md += `|------|------|--------|----------|\n`;
+  md += `| v1.0 | ${now.toLocaleDateString('zh-CN')} | — | 初始版本 |\n`;
+
+  // 构建 ZIP
+  const zip = new JSZip();
+
+  // 添加 .md 文件
+  zip.file(`${folderName}.md`, md);
+
+  // 添加 images 目录及图片
+  const imgFolder = zip.folder(imgDir);
+  results.forEach(r => {
+    if (r.dataUrl) {
+      const base64 = r.dataUrl.split(',')[1];
+      imgFolder.file(`${r.title}.png`, base64, { base64: true });
+    }
+  });
+
+  // 下载 ZIP
+  zip.generateAsync({ type: 'blob' }).then(blob => {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${folderName}.zip`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showMsg('✅ Markdown文档已生成: ' + folderName + '.zip');
+  });
+}
+
+function buildWordDoc(results) {
+  showMsg('正在生成Word文档...');
+  const now = new Date();
+  const dateStr = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
+  const fileName = `供应商对账系统_功能设计文档_${dateStr}.docx`;
+
+  let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+                  xmlns:w='urn:schemas-microsoft-com:office:word'
+                  xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset="UTF-8"><title>供应商对账系统 - 功能设计文档</title>
+<style>
+  body { font-family: 宋体, SimSun, serif; font-size: 11pt; margin: 50px; line-height: 1.7; }
+  h1 { text-align: center; font-size: 20pt; color: #2D82C3; border-bottom: 2px solid #2D82C3; padding-bottom: 10px; }
+  h2 { font-size: 14pt; color: #2D6EB0; margin-top: 25px; border-left: 4px solid #2D6EB0; padding-left: 10px; }
+  h3 { font-size: 12pt; color: #333; margin-top: 20px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10pt; }
+  th { background: #EAEEF2; padding: 5px 8px; border: 1px solid #A0A0A0; text-align: center; font-weight: bold; }
+  td { padding: 4px 8px; border: 1px solid #A0A0A0; }
+  .screenshot { text-align: center; margin: 12px 0; }
+  .screenshot img { max-width: 100%; width: 650px; }
+  .desc-box { background: #F8FAFC; border: 1px solid #B0C4DE; padding: 10px 14px; margin: 8px 0; }
+  .page-break { page-break-after: always; }
+  .meta { text-align: center; font-size: 10pt; color: #666; margin: 20px 0; }
+  ul { padding-left: 20px; }
+  li { margin: 3px 0; }
+</style></head><body>`;
+
+  // 封面
+  html += `<h1>供应商对账系统</h1>`;
+  html += `<h2 style="border:none;text-align:center;font-size:16pt;margin-top:5px;">功能设计文档</h2>`;
+  html += `<div class="meta">`;
+  html += `<p><b>版本：</b>v1.0 &nbsp;&nbsp; <b>日期：</b>${now.toLocaleDateString('zh-CN')}</p>`;
+  html += `<p><b>系统：</b>Oracle EBS R12 &nbsp;&nbsp; <b>模块：</b>供应商对账系统</p>`;
+  html += `<p><b>使用对象：</b>财务人员</p>`;
+  html += `</div><br class="page-break">`;
+
+  html += `<h2>一、业务背景</h2>`;
+  html += `<p>原线下供应商对账方式存在以下问题：</p><ul>
+    <li>对账过程依赖人工Excel操作，效率低下</li>
+    <li>数据来源分散（PO、入库、发票、付款、预付款），易出错</li>
+    <li>对账单以邮件附件方式线下传递，跟踪困难</li>
+    <li>对账完成后无法及时触发付款申请流程</li>
+  </ul>`;
+  html += `<p>通过ERP系统实现供应商对账全流程线上化管理，实时计算供应商余额，自动生成并发送对账单，确认后快速发起付款申请。</p><br class="page-break">`;
+
+  html += `<h2>二、业务流程</h2>`;
+  html += `<p>端到端业务流程如下：</p>`;
+  html += `<p style="background:#EAEEF2;padding:10px 14px;border-left:4px solid #2D82C3;margin:10px 0;">
+    <b>采购订单 → 入库单 → 采购发票 → 付款/预付款</b> → 实时余额计算 → 生成对账单 → 邮件发送 → 供应商确认 → 付款申请
+  </p><br class="page-break">`;
+
+  html += `<h2>三、功能模块详细设计</h2>`;
+  results.forEach((r, i) => {
+    html += `<h3>3.${i + 1} ${r.title}</h3>`;
+    if (r.dataUrl) html += `<div class="screenshot"><img src="${r.dataUrl}"></div>`;
+    else html += `<p style="color:#999;">（截图失败）</p>`;
+    html += `<div class="desc-box"><b>功能说明：</b><br>${r.desc}</div>`;
+    html += `<table>
+      <tr><th style="width:120px;">项目</th><th>说明</th></tr>
+      <tr><td>功能编号</td><td>FD-${String(i + 1).padStart(3, '0')}</td></tr>
+      <tr><td>所属模块</td><td>供应商对账系统</td></tr>
+      <tr><td>使用对象</td><td>财务人员</td></tr>
+      <tr><td>前置条件</td><td>采购订单、入库单、发票、付款数据已录入系统</td></tr>
+      <tr><td>后置条件</td><td>对账确认后触发付款申请</td></tr>
+    </table>`;
+    if (i < results.length - 1) html += `<br class="page-break">`;
+  });
+
+  html += `<h2>四、界面导航结构</h2><ul>
+    <li>📋 总览</li>
+    <li>💰 余额管理<ul><li>供应商余额查询</li></ul></li>
+    <li>📄 对账管理<ul><li>对账单生成</li><li>对账单发送</li></ul></li>
+    <li>✅ 确认管理<ul><li>供应商确认跟踪</li></ul></li>
+    <li>💳 付款申请<ul><li>付款申请单</li></ul></li>
+  </ul><br class="page-break">`;
+
+  html += `<h2>五、审批记录</h2><table>
+    <tr><th>版本</th><th>日期</th><th>修改人</th><th>修改说明</th></tr>
+    <tr><td>v1.0</td><td>${now.toLocaleDateString('zh-CN')}</td><td>—</td><td>初始版本</td></tr>
+  </table></body></html>`;
+
+  const blob = new Blob([html], { type: 'application/msword;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showMsg('✅ Word文档已生成: ' + fileName);
+}
+
+/* ===== 聚焦模式 ===== */
+function toggleFocus() {
+  focusMode = !focusMode;
+  document.body.classList.toggle('focus-mode', focusMode);
+  document.getElementById('focusOverlay').classList.toggle('active', focusMode);
+  showMsg(focusMode ? '🎯 聚焦模式 — 按 ESC 或再次点击按钮退出' : '已退出聚焦模式');
+
+  if (focusMode) {
+    document.body.setAttribute('data-focus-exit', '1');
+  } else {
+    document.body.removeAttribute('data-focus-exit');
+  }
+}
+</script>
+</body>
+</html>

@@ -120,7 +120,6 @@ http://localhost:5000
 # Flask配置
 DEBUG=false
 PORT=5000
-SECRET_KEY=ocr-industrial-production-key
 
 # OCR配置
 OCR_USE_MOCK=false

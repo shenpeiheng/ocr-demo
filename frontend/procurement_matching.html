@@ -11,10 +11,14 @@
         .pm-page { overflow: hidden; }
         .pm-page .content-grid { display: grid; grid-template-columns: 400px 1fr; gap: 10px; height: 100%; overflow: hidden; }
         .pm-config-panel { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #eaeaea; }
-        .pm-panel-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; background: white; }
+        .pm-panel-header { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; background: white; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .pm-panel-header .pm-header-main { min-width: 0; flex: 1; }
         .pm-panel-header h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; color: #303133; font-weight: 700; line-height: 1.4; }
         .pm-panel-header h2 i { color: #ad063e; }
-        .pm-panel-header p { margin: 8px 0 0 0; font-size: 12px; color: #7f8c8d; }
+        .pm-panel-header p { margin: 4px 0 0 0; font-size: 12px; color: #667085; white-space: nowrap; }
+        .pm-model-picker { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #475467; white-space: nowrap; flex-shrink: 0; }
+        .pm-model-picker i { color: #ad063e; }
+        .pm-model-picker select { border: 1px solid #dcdfe6; border-radius: 6px; padding: 4px 8px; background: #fff; font: inherit; font-size: 12px; color: #101828; cursor: pointer; outline: none; max-width: 200px; }
         .pm-config-body { padding: 5px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         .config-section { background: #f8f9fa; border-radius: 8px; padding: 16px; border: 1px solid #e8eaef; }
         .config-section-title { font-size: 14px; font-weight: 700; color: #303133; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
@@ -106,8 +110,15 @@
                 <div class="content-grid">
             <div class="pm-config-panel">
                 <div class="pm-panel-header">
-                    <h2><i class="fas fa-handshake"></i> 采购需求匹配</h2>
-                    <p style="margin: 4px 0 0; font-size: 12px; color: var(--admin-muted, #667085);">用自然语言描述采购需求，AI 自动匹配历史PO，按匹配率排序</p>
+                    <div class="pm-header-main">
+                        <h2><i class="fas fa-handshake"></i>AI采购</h2>
+                        <p>用自然语言描述采购需求，AI 自动匹配历史PO，按匹配率排序</p>
+                    </div>
+                    <label class="pm-model-picker">
+                        <span><i class="fas fa-microchip"></i> 模型</span>
+                        <select id="aiModel" data-model-options="true"></select>
+                        </select>
+                    </label>
                 </div>
                 <div class="pm-config-body">
                     <div class="config-section">
@@ -177,17 +188,6 @@
                         <div class="config-section-title"><i class="fas fa-weight-hanging"></i> 匹配维度权重</div>
                         <div class="dimension-list" id="dimensionList"></div>
                     </div>
-                    <div class="config-section">
-                        <div class="config-section-title"><i class="fas fa-brain"></i> AI 参数</div>
-                        <div class="form-group">
-                            <label><i class="fas fa-microchip" style="color:#ad063e;width:16px;"></i> AI 模型</label>
-                            <select id="aiModel">
-                                <option value="deepseek">DeepSeek-V4-Flash (推荐)</option>
-                                <option value="openai">OpenAI VL</option>
-                                <option value="qwen">通义千问</option>
-                            </select>
-                        </div>
-                    </div>
                     <div class="action-buttons" style="padding:0 5px 5px;">
                         <button class="btn btn-primary" onclick="startMatching()"><i class="fas fa-search"></i> 开始匹配</button>
                         <button class="btn btn-secondary" onclick="resetForm()"><i class="fas fa-undo"></i> 重置</button>
@@ -229,6 +229,7 @@
         <div id="footer-placeholder"></div>
     </div>
     <script src="static/js/layout.js"></script>
+    <script src="static/js/model-options.js"></script>
     <script src="static/js/main.js"></script>
     <script>
         // ============ Historical PO Data (based on data.md) ============
