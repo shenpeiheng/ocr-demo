@@ -16,6 +16,7 @@ class Config:
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', '2147483648'))  # 2GB 默认值，支持大视频文件
     DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
     PORT = int(os.getenv('PORT', '5000'))
+    SECRET_KEY = os.getenv('SECRET_KEY', 'ocr-demo-local-login').strip()
     
     # 文件上传配置
     upload_folder_from_env = os.getenv('UPLOAD_FOLDER')
@@ -183,6 +184,13 @@ class Config:
 
     # CORS配置
     ENABLE_CORS = os.getenv('ENABLE_CORS', 'true').lower() == 'true'
+
+    # 共享认证后端配置
+    SHARED_AUTH_API_BASE_URL = os.getenv(
+        'SHARED_AUTH_API_BASE_URL',
+        'http://218.13.91.107:6203/admin-api'
+    ).strip().rstrip('/')
+    SHARED_AUTH_TIMEOUT = int(os.getenv('SHARED_AUTH_TIMEOUT', '20'))
     
     @classmethod
     def validate_config(cls):

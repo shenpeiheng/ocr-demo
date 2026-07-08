@@ -78,12 +78,18 @@
                             '<i class="fas fa-user"></i>' +
                         '</div>' +
                         '<div class="user-details">' +
-                            '<span class="user-name">管理员</span>' +
-                            '<span class="user-role">系统管理员</span>' +
+                            '<span class="user-name" data-auth-user-name>未登录</span>' +
+                            '<span class="user-role" data-auth-user-role>共享账号</span>' +
                         '</div>' +
-                        '<button class="user-menu-btn">' +
+                        '<button class="user-menu-btn" type="button" aria-label="用户菜单" aria-expanded="false">' +
                             '<i class="fas fa-chevron-down"></i>' +
                         '</button>' +
+                        '<div class="user-dropdown-menu" id="userDropdownMenu" hidden>' +
+                            '<button class="user-dropdown-item" type="button" data-user-action="logout">' +
+                                '<i class="fas fa-sign-out-alt"></i>' +
+                                '<span>退出登录</span>' +
+                            '</button>' +
+                        '</div>' +
                     '</div>' +
                 '</div>' +
             '</div>' +
@@ -428,6 +434,90 @@
         });
     }
 
+    function initUserMenu() {
+        var profile = document.querySelector('.user-profile');
+        var menuButton = document.querySelector('.user-menu-btn');
+        var dropdownMenu = document.getElementById('userDropdownMenu');
+
+        if (!profile || !menuButton || !dropdownMenu) {
+            return;
+        }
+
+        function setMenuOpen(open) {
+            profile.classList.toggle('is-open', open);
+            dropdownMenu.hidden = !open;
+            menuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        menuButton.addEventListener('click', function(event) {
+            event.stopPropagation();
+            setMenuOpen(dropdownMenu.hidden);
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!profile.contains(event.target)) {
+                setMenuOpen(false);
+                return;
+            }
+
+            var actionButton = event.target.closest('[data-user-action]');
+            if (!actionButton) {
+                return;
+            }
+
+            var action = actionButton.getAttribute('data-user-action');
+            if (action === 'logout') {
+                setMenuOpen(false);
+                handleLogout();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                setMenuOpen(false);
+            }
+        });
+    }
+
+    function initAuthUserInfo() {
+        var nameNode = document.querySelector('[data-auth-user-name]');
+        var roleNode = document.querySelector('[data-auth-user-role]');
+        if (!nameNode || !roleNode) {
+            return;
+        }
+
+        fetch('/api/auth/status', {
+            credentials: 'same-origin'
+        })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (!data || !data.loggedIn || !data.user) {
+                    return;
+                }
+
+                var user = data.user || {};
+                nameNode.textContent = user.nickname || user.username || '已登录用户';
+                roleNode.textContent = user.deptName || user.username || '共享账号';
+            })
+            .catch(function() {
+                // 忽略展示层错误，避免影响页面主体功能
+            });
+    }
+
+    function handleLogout() {
+        fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).finally(function() {
+            window.location.href = '/login';
+        });
+    }
+
     function copyTextToClipboard(text, onSuccess, onError) {
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(text).then(onSuccess).catch(function() {
@@ -501,6 +591,8 @@
     initSidebarCollapse();
     initAiResultTabs();
     initAiJsonCopy();
+    initUserMenu();
+    initAuthUserInfo();
 
     // ==================== 全局函数 ====================
 

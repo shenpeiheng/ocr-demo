@@ -2,8 +2,11 @@
 页面路由 - 处理所有前端页面访问，移除 .html 后缀
 """
 
-from flask import Blueprint, send_from_directory, redirect, jsonify
-from app_core import app
+from urllib.parse import urlencode
+
+from flask import Blueprint, send_from_directory, redirect, jsonify, request
+
+from auth_utils import build_login_redirect_response
 from config import Config
 
 page_bp = Blueprint("pages", __name__)
@@ -14,6 +17,7 @@ PAGE_ROUTES = {
     # 首页
     "/": "index.html",
     "/index": "index.html",
+    "/login": "login.html",
 
     # OCR 相关页面
     "/paddle-ocr": "paddle_ocr.html",
@@ -50,11 +54,17 @@ PAGE_ROUTES = {
     "/whisper": "whisper.html",
 }
 
+PUBLIC_PAGE_ROUTES = {"/login"}
+
 
 # 动态注册所有页面路由
 for route, html_file in PAGE_ROUTES.items():
-    def create_handler(filename):
+    def create_handler(current_route, filename):
         def handler():
+            if current_route not in PUBLIC_PAGE_ROUTES:
+                login_redirect = build_login_redirect_response()
+                if login_redirect:
+                    return login_redirect
             return send_from_directory("../frontend", filename)
         return handler
 
@@ -63,7 +73,7 @@ for route, html_file in PAGE_ROUTES.items():
     page_bp.add_url_rule(
         route,
         endpoint=route_name,
-        view_func=create_handler(html_file)
+        view_func=create_handler(route, html_file)
     )
 
 
@@ -74,14 +84,29 @@ def legacy_html_redirect(filename):
     兼容旧的 .html URL，自动重定向到无后缀版本
     例如: /paddle_ocr.html -> /paddle-ocr
     """
-    # 将下划线转换为连字符（符合现代URL规范）
     clean_path = filename.replace("_", "-")
+    route_path = "/" if clean_path == "index" else f"/{clean_path}"
+
+    if route_path not in PUBLIC_PAGE_ROUTES:
+        login_redirect = build_login_redirect_response()
+        if login_redirect:
+            return login_redirect
+
+    # 将下划线转换为连字符（符合现代URL规范）
+    query_string = request.args.to_dict(flat=False)
+    encoded_query = urlencode(query_string, doseq=True)
 
     # 特殊处理：index.html 重定向到根路径
     if clean_path == "index":
-        return redirect("/", code=301)
+        target = "/"
+        if encoded_query:
+            target = f"{target}?{encoded_query}"
+        return redirect(target, code=301)
 
-    return redirect(f"/{clean_path}", code=301)
+    target = f"/{clean_path}"
+    if encoded_query:
+        target = f"{target}?{encoded_query}"
+    return redirect(target, code=301)
 
 
 # 静态文件路由保持不变

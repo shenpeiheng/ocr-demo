@@ -12,7 +12,10 @@ from ocr_processor import OCRProcessor
 from pdf_processor import create_pdf_processor
 
 
-app = Flask(__name__, static_folder="../frontend", static_url_path="")
+app = Flask(__name__, static_folder=None)
+app.config["SECRET_KEY"] = Config.SECRET_KEY
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 if Config.ENABLE_CORS:
     CORS(app)

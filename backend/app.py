@@ -2,9 +2,11 @@
 OCR 工业图片识别系统后端入口。
 """
 
-from flask import send_from_directory
+from flask import request, send_from_directory
+from auth_utils import build_login_redirect_response
 from app_core import app, ocr_processor
 from config import Config
+from routes.auth_routes import auth_bp
 from routes.ocr_routes import ocr_bp
 from routes.pdf_routes import pdf_bp
 from routes.vision_routes import preload_keypoint, preload_license_ocr, preload_safety_helmet, vision_bp
@@ -14,6 +16,7 @@ from routes.page_routes import page_bp
 from routes.whisper_routes import whisper_bp
 
 
+app.register_blueprint(auth_bp)
 app.register_blueprint(ocr_bp)
 app.register_blueprint(pdf_bp)
 app.register_blueprint(vision_bp)
@@ -21,6 +24,18 @@ app.register_blueprint(opportunity_bp)
 app.register_blueprint(oracle_prd_bp)
 app.register_blueprint(whisper_bp)
 app.register_blueprint(page_bp)
+
+
+@app.before_request
+def enforce_home_login():
+    """首页强制经过登录校验，避免被其它路由匹配绕过。"""
+    if request.method not in {"GET", "HEAD"}:
+        return None
+
+    if request.path not in {"/", "/index", "/index.html"}:
+        return None
+
+    return build_login_redirect_response()
 
 
 @app.route('/mineru_results/<path:filename>')
