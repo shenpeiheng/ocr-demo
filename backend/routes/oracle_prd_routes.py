@@ -2556,12 +2556,13 @@ def oracle_prd_prototype_stream():
     analysis = data.get("analysis")
     current_prototype_html = str(data.get("current_prototype_html", "") or "").strip()
     model = str(data.get("model", "") or "").strip()
+    selected_model = model or Config.get_llm_default_model()
     if not isinstance(messages, list) or not messages:
         return jsonify({"success": False, "error": "缺少 messages"}), 400
     if not isinstance(analysis, dict):
         return jsonify({"success": False, "error": "缺少 analysis"}), 400
 
-    api_key = Config.resolve_llm_key(model)
+    api_key = Config.resolve_llm_key(selected_model)
     if not api_key:
         return jsonify({"success": False, "error": "模型 API Key 未配置"}), 500
 
