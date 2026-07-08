@@ -19,7 +19,7 @@ def is_logged_in() -> bool:
 
 def should_bypass_login() -> bool:
     """嵌入模式请求绕过登录校验。"""
-    return "_no_sidebar" in request.args in request.args
+    return "_no_sidebar" in request.args
 
 
 def has_valid_remote_session() -> bool:
