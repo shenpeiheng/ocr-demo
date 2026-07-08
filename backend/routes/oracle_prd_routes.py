@@ -821,7 +821,9 @@ def _normalize_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     return normalized
 
 
-def _request_modelscope_completion(messages: List[Dict[str, str]], max_tokens: int = 4800, model: str = "") -> Dict[str, Any]:
+def _request_modelscope_completion(messages: List[Dict[str, str]], max_tokens: int | None = None, model: str = "") -> Dict[str, Any]:
+    if max_tokens is None:
+        max_tokens = Config.LLM_REQUEST_MAX_TOKENS
     api_key = Config.resolve_llm_key(model)
     response = requests.post(
         _normalize_modelscope_chat_url(),
@@ -839,7 +841,7 @@ def _request_modelscope_completion(messages: List[Dict[str, str]], max_tokens: i
     )
 
     if response.status_code != 200:
-        raise RuntimeError(f"ModelScope 调用失败: {response.status_code} {response.text[:1000]}")
+        raise RuntimeError(f"模型服务调用失败: {response.status_code} {response.text[:1000]}")
 
     data = response.json()
     choice = (data.get("choices") or [{}])[0]
@@ -850,7 +852,16 @@ def _request_modelscope_completion(messages: List[Dict[str, str]], max_tokens: i
     }
 
 
-def _request_modelscope_completion_with_error_handling(messages: List[Dict[str, str]], max_tokens: int = 4800, timeout_seconds: int = 90, model: str = "") -> Dict[str, Any]:
+def _request_modelscope_completion_with_error_handling(
+    messages: List[Dict[str, str]],
+    max_tokens: int | None = None,
+    timeout_seconds: int | None = None,
+    model: str = "",
+) -> Dict[str, Any]:
+    if max_tokens is None:
+        max_tokens = Config.LLM_REQUEST_MAX_TOKENS
+    if timeout_seconds is None:
+        timeout_seconds = Config.LLM_REQUEST_TIMEOUT
     try:
         api_key = Config.resolve_llm_key(model)
         response = requests.post(
@@ -868,12 +879,12 @@ def _request_modelscope_completion_with_error_handling(messages: List[Dict[str, 
             timeout=timeout_seconds,
         )
     except requests.exceptions.ReadTimeout as exc:
-        raise RuntimeError(f"ModelScope 响应超时（{timeout_seconds}秒），请缩小本次生成范围或重试。") from exc
+        raise RuntimeError(f"模型服务响应超时（{timeout_seconds}秒），请缩小本次生成范围或重试。") from exc
     except requests.exceptions.RequestException as exc:
-        raise RuntimeError(f"ModelScope 网络请求失败: {exc}") from exc
+        raise RuntimeError(f"模型服务网络请求失败: {exc}") from exc
 
     if response.status_code != 200:
-        raise RuntimeError(f"ModelScope 调用失败: {response.status_code} {response.text[:1000]}")
+        raise RuntimeError(f"模型服务调用失败: {response.status_code} {response.text[:1000]}")
 
     data = response.json()
     choice = (data.get("choices") or [{}])[0]
@@ -886,10 +897,14 @@ def _request_modelscope_completion_with_error_handling(messages: List[Dict[str, 
 
 def _iter_modelscope_stream_with_error_handling(
     messages: List[Dict[str, str]],
-    max_tokens: int = 4800,
-    timeout_seconds: int = 90,
+    max_tokens: int | None = None,
+    timeout_seconds: int | None = None,
     model: str = "",
 ) -> Iterator[Dict[str, Any]]:
+    if max_tokens is None:
+        max_tokens = Config.LLM_REQUEST_MAX_TOKENS
+    if timeout_seconds is None:
+        timeout_seconds = Config.LLM_REQUEST_TIMEOUT
     response = None
     try:
         api_key = Config.resolve_llm_key(model)
@@ -910,14 +925,14 @@ def _iter_modelscope_stream_with_error_handling(
             stream=True,
         )
     except requests.exceptions.ReadTimeout as exc:
-        raise RuntimeError(f"ModelScope 响应超时（{timeout_seconds}秒），请缩小本次生成范围或重试。") from exc
+        raise RuntimeError(f"模型服务响应超时（{timeout_seconds}秒），请缩小本次生成范围或重试。") from exc
     except requests.exceptions.RequestException as exc:
-        raise RuntimeError(f"ModelScope 网络请求失败: {exc}") from exc
+        raise RuntimeError(f"模型服务网络请求失败: {exc}") from exc
 
     if response.status_code != 200:
         text = response.text[:1000]
         response.close()
-        raise RuntimeError(f"ModelScope 调用失败: {response.status_code} {text}")
+        raise RuntimeError(f"模型服务调用失败: {response.status_code} {text}")
 
     try:
         response.encoding = "utf-8"
@@ -1022,6 +1037,8 @@ def _finalize_analysis_payload(
     finish_reason: str,
     model: str = "",
 ) -> Dict[str, Any]:
+    analysis_max_tokens = Config.ORACLE_PRD_ANALYSIS_MAX_TOKENS
+    analysis_timeout_seconds = Config.ORACLE_PRD_ANALYSIS_TIMEOUT
     parsed = _extract_json_object(content)
 
     continuation_attempts = 0
@@ -1036,7 +1053,12 @@ def _finalize_analysis_payload(
                 "请从中断处继续输出剩余 JSON 内容，只输出剩余文本，不要重复已经输出的部分。"
             ),
         })
-        continuation = _request_modelscope_completion_with_error_handling(continuation_messages, max_tokens=2200, timeout_seconds=45, model=model)
+        continuation = _request_modelscope_completion_with_error_handling(
+            continuation_messages,
+            max_tokens=analysis_max_tokens,
+            timeout_seconds=analysis_timeout_seconds,
+            model=model,
+        )
         content += continuation["content"]
         finish_reason = continuation["finish_reason"]
         parsed = _extract_json_object(content)
@@ -1106,10 +1128,17 @@ def _extract_best_html_document(raw_text: str) -> str:
 
 
 def _request_prototype_blueprint(bundle: Dict[str, Any], analysis: Dict[str, Any], messages: List[Dict[str, str]], existing_prototype_html: str = "", model: str = "") -> Dict[str, Any]:
+    blueprint_max_tokens = Config.ORACLE_PRD_BLUEPRINT_MAX_TOKENS
+    blueprint_timeout_seconds = Config.ORACLE_PRD_BLUEPRINT_TIMEOUT
     payload_messages = [
         {"role": "system", "content": _build_prototype_blueprint_prompt(bundle, analysis, messages, existing_prototype_html)}
     ]
-    completion = _request_modelscope_completion_with_error_handling(payload_messages, max_tokens=6000, timeout_seconds=180, model=model)
+    completion = _request_modelscope_completion_with_error_handling(
+        payload_messages,
+        max_tokens=blueprint_max_tokens,
+        timeout_seconds=blueprint_timeout_seconds,
+        model=model,
+    )
     content = completion["content"]
     finish_reason = completion["finish_reason"]
     parsed = _extract_json_object(content)
@@ -1126,7 +1155,12 @@ def _request_prototype_blueprint(bundle: Dict[str, Any], analysis: Dict[str, Any
                 "请从中断处继续输出剩余 JSON 内容，只输出剩余文本，不要重复已经输出的部分。"
             ),
         })
-        continuation = _request_modelscope_completion_with_error_handling(continuation_messages, max_tokens=6000, timeout_seconds=180, model=model)
+        continuation = _request_modelscope_completion_with_error_handling(
+            continuation_messages,
+            max_tokens=blueprint_max_tokens,
+            timeout_seconds=blueprint_timeout_seconds,
+            model=model,
+        )
         content += continuation["content"]
         finish_reason = continuation["finish_reason"]
         parsed = _extract_json_object(content)
@@ -1141,13 +1175,20 @@ def _request_full_prototype_html(
     existing_prototype_html: str = "",
     model: str = "",
 ) -> str:
+    html_max_tokens = Config.ORACLE_PRD_HTML_MAX_TOKENS
+    html_timeout_seconds = Config.ORACLE_PRD_HTML_TIMEOUT
     payload_messages = [
         {
             "role": "system",
             "content": _build_html_generation_prompt(bundle, analysis, messages, existing_prototype_html),
         }
     ]
-    completion = _request_modelscope_completion_with_error_handling(payload_messages, max_tokens=7000, timeout_seconds=180, model=model)
+    completion = _request_modelscope_completion_with_error_handling(
+        payload_messages,
+        max_tokens=html_max_tokens,
+        timeout_seconds=html_timeout_seconds,
+        model=model,
+    )
     content = completion["content"]
     finish_reason = completion["finish_reason"]
     html = _extract_html_document(content)
@@ -1164,7 +1205,12 @@ def _request_full_prototype_html(
                 "请继续补齐剩余 HTML；如果已经输出完整，请重新仅输出完整 HTML 文本，不要附加说明。"
             ),
         })
-        continuation = _request_modelscope_completion_with_error_handling(continuation_messages, max_tokens=7000, timeout_seconds=180, model=model)
+        continuation = _request_modelscope_completion_with_error_handling(
+            continuation_messages,
+            max_tokens=html_max_tokens,
+            timeout_seconds=html_timeout_seconds,
+            model=model,
+        )
         content += continuation["content"]
         finish_reason = continuation["finish_reason"]
         html = _extract_html_document(content)
@@ -2367,7 +2413,12 @@ def oracle_prd_chat():
         payload_messages = [{"role": "system", "content": _build_analysis_system_prompt(bundle, loaded_export_context)}]
         payload_messages.extend(normalized_messages)
 
-        completion = _request_modelscope_completion_with_error_handling(payload_messages, max_tokens=2200, timeout_seconds=45, model=model)
+        completion = _request_modelscope_completion_with_error_handling(
+            payload_messages,
+            max_tokens=Config.ORACLE_PRD_ANALYSIS_MAX_TOKENS,
+            timeout_seconds=Config.ORACLE_PRD_ANALYSIS_TIMEOUT,
+            model=model,
+        )
         result = _finalize_analysis_payload(
             payload_messages,
             normalized_messages,
@@ -2417,7 +2468,12 @@ def oracle_prd_chat_stream():
             last_reply = ""
             chunk_count = 0
 
-            for chunk in _iter_modelscope_stream_with_error_handling(payload_messages, max_tokens=2200, timeout_seconds=45, model=model):
+            for chunk in _iter_modelscope_stream_with_error_handling(
+                payload_messages,
+                max_tokens=Config.ORACLE_PRD_ANALYSIS_MAX_TOKENS,
+                timeout_seconds=Config.ORACLE_PRD_ANALYSIS_TIMEOUT,
+                model=model,
+            ):
                 finish_reason = chunk.get("finish_reason", "") or finish_reason
                 delta = chunk.get("content", "") or ""
                 if not delta:
@@ -2528,7 +2584,12 @@ def oracle_prd_prototype_stream():
             blueprint_chunk_count = 0
 
             yield _sse_event("status", {"message": "正在请求原型蓝图"})
-            for chunk in _iter_modelscope_stream_with_error_handling(blueprint_payload, max_tokens=6000, timeout_seconds=180, model=selected_model):
+            for chunk in _iter_modelscope_stream_with_error_handling(
+                blueprint_payload,
+                max_tokens=Config.ORACLE_PRD_BLUEPRINT_MAX_TOKENS,
+                timeout_seconds=Config.ORACLE_PRD_BLUEPRINT_TIMEOUT,
+                model=selected_model,
+            ):
                 blueprint_finish_reason = chunk.get("finish_reason", "") or blueprint_finish_reason
                 delta = chunk.get("content", "") or ""
                 if not delta:
@@ -2575,7 +2636,12 @@ def oracle_prd_prototype_stream():
             html_finish_reason = ""
             html_chunk_count = 0
 
-            for chunk in _iter_modelscope_stream_with_error_handling(html_payload, max_tokens=7000, timeout_seconds=180, model=selected_model):
+            for chunk in _iter_modelscope_stream_with_error_handling(
+                html_payload,
+                max_tokens=Config.ORACLE_PRD_HTML_MAX_TOKENS,
+                timeout_seconds=Config.ORACLE_PRD_HTML_TIMEOUT,
+                model=selected_model,
+            ):
                 html_finish_reason = chunk.get("finish_reason", "") or html_finish_reason
                 delta = chunk.get("content", "") or ""
                 if not delta:

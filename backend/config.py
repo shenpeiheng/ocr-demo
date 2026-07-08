@@ -141,6 +141,18 @@ class Config:
                 return m.get('api_key', '')
         return models[0].get('api_key', '') if models else ''
 
+    # 通用 LLM 请求兜底配置
+    LLM_REQUEST_MAX_TOKENS = int(os.getenv('LLM_REQUEST_MAX_TOKENS', '16000'))
+    LLM_REQUEST_TIMEOUT = int(os.getenv('LLM_REQUEST_TIMEOUT', '900'))
+
+    # Oracle PRD 生成配置
+    ORACLE_PRD_ANALYSIS_MAX_TOKENS = int(os.getenv('ORACLE_PRD_ANALYSIS_MAX_TOKENS', '12000'))
+    ORACLE_PRD_ANALYSIS_TIMEOUT = int(os.getenv('ORACLE_PRD_ANALYSIS_TIMEOUT', '900'))
+    ORACLE_PRD_BLUEPRINT_MAX_TOKENS = int(os.getenv('ORACLE_PRD_BLUEPRINT_MAX_TOKENS', '20000'))
+    ORACLE_PRD_BLUEPRINT_TIMEOUT = int(os.getenv('ORACLE_PRD_BLUEPRINT_TIMEOUT', '1200'))
+    ORACLE_PRD_HTML_MAX_TOKENS = int(os.getenv('ORACLE_PRD_HTML_MAX_TOKENS', '32000'))
+    ORACLE_PRD_HTML_TIMEOUT = int(os.getenv('ORACLE_PRD_HTML_TIMEOUT', '1800'))
+
     # MinerU 其他配置
     _MINERU_DEFAULT_API_URL = (
         os.getenv('MODELSCOPE_BASE_URL', 'https://api-inference.modelscope.cn/v1')

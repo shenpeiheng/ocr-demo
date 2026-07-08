@@ -1514,7 +1514,7 @@
                     '已耗时 ' + elapsedSeconds + ' 秒'
                 ];
 
-                if (elapsedSeconds >= 45) {
+                if (elapsedSeconds >= 180) {
                     lines.push('模型响应偏慢，建议继续等待；若多次超时，再缩小页面范围重试');
                 } else if (elapsedSeconds >= 20) {
                     lines.push('当前仍在生成完整 HTML，这一步通常会比文字回复明显更慢');
@@ -1536,7 +1536,7 @@
                 function renderStatus() {
                     var elapsedSeconds = Math.max(1, Math.floor((Date.now() - state.prototypeStartedAt) / 1000));
                     var baseMessage = '预览状态：正在生成原型，已耗时 ' + elapsedSeconds + ' 秒';
-                    var detailMessage = elapsedSeconds >= 45
+                    var detailMessage = elapsedSeconds >= 180
                         ? baseMessage + '，模型响应偏慢，请继续等待或稍后缩小页面范围重试'
                         : baseMessage;
 
