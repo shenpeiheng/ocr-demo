@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求文档生成 - 赛意AI</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
+    <style>
+        .apex-ai-page { overflow: hidden; }
+        .apex-ai-page .content-grid {
+            display: grid;
+            grid-template-columns: 420px minmax(0, 1fr);
+            gap: 16px;
+            height: calc(100vh - 102px);
+            min-height: 720px;
+        }
+        .apex-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .apex-card-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .apex-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            color: #303133;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .apex-card-title i { color: #ad063e; }
+        .apex-card-desc { margin: 6px 0 0; color: #667085; font-size: 12px; line-height: 1.6; }
+        .apex-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .apex-picker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .apex-picker-label {
+            font-size: 12px;
+            color: #475467;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .apex-picker-label i { color: #ad063e; }
+        .apex-picker select {
+            border: none;
+            background: transparent;
+            font-size: 12px;
+            font-family: inherit;
+            color: #101828;
+            outline: none;
+            cursor: pointer;
+        }
+        .apex-template-toggle {
+            display: inline-flex;
+            padding: 2px;
+            background: #f2f4f7;
+            border-radius: 8px;
+        }
+        .apex-template-toggle button {
+            border: none;
+            background: transparent;
+            padding: 0px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #475467;
+            font-family: inherit;
+        }
+        .apex-template-toggle button.active {
+            background: #fff;
+            color: #ad063e;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+        }
+        .apex-chat-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .apex-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #f9fafb;
+        }
+        .apex-chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .apex-chat-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+        .apex-chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .apex-msg {
+            display: flex;
+            gap: 10px;
+            max-width: 92%;
+        }
+        .apex-msg.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+            align-items: stretch;
+        }
+        .apex-msg.assistant {
+            align-self: flex-start;
+            align-items: stretch;
+        }
+        .apex-msg.system {
+            align-self: center;
+            background: #eef2f6;
+            color: #475467;
+            font-size: 12px;
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+        .apex-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .apex-msg.user .apex-avatar {
+            background: #ad063e;
+            color: #fff;
+        }
+        .apex-msg.assistant .apex-avatar {
+            background: #f2f4f7;
+            color: #667085;
+            min-height: 34px;
+            border-radius: 18px;
+            align-items: flex-start;
+            padding-top: 10px;
+        }
+        .apex-bubble {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .apex-msg.user .apex-bubble {
+            background: #ad063e;
+            color: #fff;
+            border-top-right-radius: 2px;
+            max-height: 360px;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+        .apex-msg.user .apex-bubble::-webkit-scrollbar {
+            width: 8px;
+        }
+        .apex-msg.user .apex-bubble::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.42);
+            border-radius: 999px;
+        }
+        .apex-msg.user .apex-bubble::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .apex-msg.assistant .apex-bubble {
+            background: #fff;
+            color: #303133;
+            border: 1px solid #e5e7eb;
+            border-top-left-radius: 2px;
+            max-height: 360px;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+        .apex-msg.assistant .apex-bubble::-webkit-scrollbar {
+            width: 8px;
+        }
+        .apex-msg.assistant .apex-bubble::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+        .apex-msg.assistant .apex-bubble::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-meta {
+            display: block;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #98a2b3;
+        }
+        .apex-msg.user .chat-meta {
+            color: rgba(255, 255, 255, 0.72);
+        }
+        .apex-msg.user .apex-meta {
+            font-size: 10px;
+            opacity: 0.8;
+            text-align: right;
+            margin-top: 3px;
+        }
+        .apex-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 14px 16px 12px;
+            border-top: 1px solid #eef2f6;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        .apex-suggestion-chip {
+            padding: 6px 12px;
+            border-radius: 16px;
+            border: 1px solid #dbe1e8;
+            background: #fff;
+            color: #475467;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .apex-suggestion-chip:hover {
+            border-color: #ad063e;
+            color: #ad063e;
+            background: rgba(173, 6, 62, 0.04);
+        }
+        .apex-chat-input-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 14px 16px 16px;
+            border-top: 1px solid #e5e7eb;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        .apex-chat-input {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 0px 12px;
+            border-radius: 10px;
+            border: 1px solid #dbe1e8;
+            font-size: 13px;
+            font-family: inherit;
+            resize: none;
+            transition: border-color 0.2s ease;
+            outline: none;
+        }
+        .apex-chat-input:focus {
+            border-color: #ad063e;
+        }
+        .apex-chat-send {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 10px;
+            background: #ad063e;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s ease;
+        }
+        .apex-chat-send:hover {
+            background: #900533;
+        }
+        .apex-chat-send:disabled {
+            background: #c4c7cc;
+            cursor: not-allowed;
+        }
+        .apex-status-line {
+            display: none;
+            padding: 6px 16px;
+            font-size: 12px;
+            color: #475467;
+            background: #fffaeb;
+            border-top: 1px solid #fedf89;
+            gap: 8px;
+            align-items: center;
+        }
+        .apex-status-line.visible { display: flex; }
+        .apex-status-line .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f79009;
+            box-shadow: 0 0 0 4px rgba(247, 144, 9, 0.16);
+            animation: apex-pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes apex-pulse {
+            0%, 100% { transform: scale(0.9); opacity: 0.85; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .apex-display-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .apex-display-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px 0;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        .apex-display-tab {
+            padding: 8px 14px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid #e5e7eb;
+            border-bottom: none;
+            background: #f8fafc;
+            color: #667085;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .apex-display-tab.active {
+            background: #fff;
+            color: #ad063e;
+            border-color: #e5e7eb;
+        }
+        .apex-sub-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .apex-sub-tab {
+            padding: 6px 12px;
+            border: 1px solid #d0d5dd;
+            background: #fff;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #475467;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .apex-sub-tab.active {
+            background: #ad063e;
+            color: #fff;
+            border-color: #ad063e;
+        }
+        .apex-display-panels {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+        }
+        .apex-display-panel { display: none; }
+        .apex-display-panel.active { display: block; }
+        .apex-empty {
+            color: #98a2b3;
+            font-size: 13px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .apex-section {
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fafbfc;
+        }
+        .apex-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0 0 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .apex-section-title i { color: #ad063e; }
+        .apex-section-body {
+            font-size: 13px;
+            line-height: 1.75;
+            color: #344054;
+        }
+        .apex-kv-grid {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            row-gap: 6px;
+            column-gap: 12px;
+            font-size: 12.5px;
+        }
+        .apex-kv-grid dt { color: #667085; font-weight: 600; }
+        .apex-kv-grid dd { margin: 0; color: #101828; }
+        .apex-list { margin: 0; padding-left: 18px; }
+        .apex-list li { margin-bottom: 4px; }
+        .apex-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+        .apex-table th, .apex-table td {
+            border: 1px solid #e5e7eb;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .apex-table th {
+            background: #f2f4f7;
+            font-weight: 600;
+            color: #344054;
+        }
+        .apex-screen-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            background: #fff;
+        }
+        .apex-screen-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ad063e;
+            margin: 0 0 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .apex-screen-subtitle {
+            font-size: 12px;
+            color: #667085;
+            margin: 0 0 8px;
+        }
+        .apex-inline-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 999px;
+            background: #eef4ff;
+            color: #1849a9;
+            margin-right: 4px;
+        }
+        .apex-generate-bar {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .apex-generate-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ad063e, #d0325f);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .apex-generate-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .apex-generate-hint {
+            font-size: 12px;
+            color: #667085;
+            flex: 1;
+        }
+        .apex-download-list {
+            padding: 8px 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .apex-download-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 12.5px;
+        }
+        .apex-download-item i.fa-file-word { color: #2E74B5; font-size: 18px; }
+        .apex-download-title {
+            color: #101828;
+            font-weight: 600;
+            flex: 1;
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .apex-download-meta {
+            color: #667085;
+            font-size: 11.5px;
+        }
+        .apex-download-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .apex-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border: 1px solid #d0d5dd;
+            border-radius: 6px;
+            background: #fff;
+            color: #344054;
+            font-size: 11.5px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: inherit;
+            transition: all 0.15s ease;
+        }
+        .apex-action-btn:hover {
+            background: #f9fafb;
+            border-color: #ad063e;
+            color: #ad063e;
+        }
+        .apex-action-btn i {
+            font-size: 11px;
+        }
+        .apex-preview-btn {
+            border-color: #b692f6;
+            color: #6941c6;
+        }
+        .apex-preview-btn:hover {
+            background: #f9f5ff;
+            border-color: #9e77ed;
+            color: #53389e;
+        }
+        .apex-download-btn {
+            border-color: #2E74B5;
+            color: #2E74B5;
+        }
+        .apex-download-btn:hover {
+            background: #eff8ff;
+            border-color: #1570ef;
+            color: #175cd3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header-placeholder"></div>
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+            <main class="main-content-area apex-ai-page">
+                <div class="content-grid">
+                    <section class="apex-card">
+                        <div class="apex-card-header">
+                            <div>
+                                <h2 class="apex-card-title"><i class="fas fa-comments"></i>Apex AI</h2>
+                                <div class="apex-card-desc apex-template-toggle" id="templateToggle">
+                                    <button type="button" class="active" data-template="form">表单类</button>
+                                    <button type="button" data-template="report">报表类</button>
+                                </div>
+                            </div>
+                            <div class="apex-header-controls">
+                                <label class="apex-picker">
+                                    <span class="apex-picker-label"><i class="fas fa-microchip"></i> 模型</span>
+                                    <select id="apexModel" data-model-options="true"></select>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="apex-chat-layout">
+                            <div class="apex-chat-messages" id="chatMessages"></div>
+                            <div class="apex-status-line" id="chatStatus">
+                                <span class="status-dot"></span>
+                                <span id="chatStatusText">正在处理...</span>
+                            </div>
+                            <div class="apex-suggestions" id="chatSuggestions">
+                                <button class="apex-suggestion-chip" type="button" data-prompt="采购订单管理平台：包含采购申请、订单维护、审批流、收货确认 4 个界面，需要供应商 LOV、物料分类、采购组织等字段。" data-template="form">示例：采购订单</button>
+                                <button class="apex-suggestion-chip" type="button" data-prompt="销售订单分析报表：按区域、产品线、客户分组，展示订单金额、数量、完成率，输出 Excel 供销售经理使用。" data-template="report">示例：销售分析</button>
+                            </div>
+                            <div class="apex-chat-input-bar">
+                                <textarea id="chatInput" class="apex-chat-input" rows="1" placeholder="Enter 发送，Shift+Enter 换行。描述业务背景、涉及界面/报表、字段、规则等。"></textarea>
+                                <button id="sendButton" class="apex-chat-send" type="button" title="发送">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="apex-card">
+                        <div class="apex-card-header headline">
+                            <div class="apex-card-header-main">
+                                <h2 class="apex-card-title"><i class="fas fa-file-word"></i>展示区域</h2>
+                                <p class="apex-card-desc">左侧对话结构化后的分析结果，可一键生成 Word 需求说明书。</p>
+                            </div>
+                            <div class="apex-card-header-side">
+                                <button id="refreshExportsBtn" class="apex-suggestion-chip" type="button" title="刷新历史文档">
+                                    <i class="fas fa-sync"></i> 刷新历史
+                                </button>
+                            </div>
+                        </div>
+                        <div class="apex-display-layout">
+                            <div class="apex-display-tabs">
+                                <button class="apex-display-tab active" data-tab="analysis">分析结果</button>
+                                <button class="apex-display-tab" data-tab="history">历史文档</button>
+                                <button class="apex-display-tab" data-tab="preview">预览</button>
+                            </div>
+                            <div class="apex-display-panels">
+                                <div class="apex-display-panel active" data-panel="analysis">
+                                    <div class="apex-sub-tabs" id="analysisSubTabs" style="display: none; border-bottom: 1px solid #e5e7eb; padding: 8px 16px; background: #f9fafb;">
+                                        <button class="apex-sub-tab active" data-subtab="preview">文档预览</button>
+                                        <button class="apex-sub-tab" data-subtab="info">基础信息</button>
+                                        <button class="apex-sub-tab" data-subtab="json">完整JSON</button>
+                                    </div>
+                                    <div id="analysisPanelContent" style="flex: 1; overflow-y: auto; padding: 16px; background: #fff;">
+                                        <div class="apex-empty">左侧对话后，这里会显示结构化的 MD.050 分析结果。</div>
+                                    </div>
+                                </div>
+                                <div class="apex-display-panel" data-panel="history">
+                                    <div id="historyPanel">
+                                        <div class="apex-empty">还没有生成过文档。</div>
+                                    </div>
+                                </div>
+                                <div class="apex-display-panel" data-panel="preview">
+                                    <div id="historyPreviewPanel" style="flex: 1; overflow-y: auto; padding: 16px; background: #fff;">
+                                        <div class="apex-empty">从“历史文档”中选择一份文档进行预览。</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="apex-generate-bar">
+                                <button id="generateBtn" class="apex-generate-btn" type="button" disabled>
+                                    <i class="fas fa-file-download"></i> 生成需求说明 Word
+                                </button>
+                                <span class="apex-generate-hint" id="generateHint">先描述需求，等分析结果出来后即可点击生成。</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="static/js/layout.js"></script>
+    <script src="static/js/model-options.js"></script>
+    <script>
+        (function () {
+            var chatMessages = document.getElementById('chatMessages');
+            var chatInput = document.getElementById('chatInput');
+            var sendButton = document.getElementById('sendButton');
+            var chatStatus = document.getElementById('chatStatus');
+            var chatStatusText = document.getElementById('chatStatusText');
+            var templateToggle = document.getElementById('templateToggle');
+            var analysisPanel = document.getElementById('analysisPanelContent');
+            var historyPanel = document.getElementById('historyPanel');
+            var historyPreviewPanel = document.getElementById('historyPreviewPanel');
+            var generateBtn = document.getElementById('generateBtn');
+            var generateHint = document.getElementById('generateHint');
+            var modelSelect = document.getElementById('apexModel');
+            var refreshExportsBtn = document.getElementById('refreshExportsBtn');
+            var tabButtons = Array.prototype.slice.call(document.querySelectorAll('.apex-display-tab'));
+            var tabPanels = Array.prototype.slice.call(document.querySelectorAll('.apex-display-panel'));
+            var suggestionButtons = Array.prototype.slice.call(document.querySelectorAll('.apex-suggestion-chip'));
+
+            var state = {
+                templateKey: 'form',
+                messages: [],
+                analysis: null,
+                loading: false,
+                generating: false,
+                downloads: []
+            };
+
+            function escapeHtml(text) {
+                return String(text == null ? '' : text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function getSelectedModel() {
+                return (modelSelect && modelSelect.value) ? modelSelect.value : '';
+            }
+
+            function setChatStatus(visible, text) {
+                if (visible) {
+                    chatStatus.classList.add('visible');
+                    if (text) chatStatusText.textContent = text;
+                } else {
+                    chatStatus.classList.remove('visible');
+                }
+            }
+
+            function nowText() {
+                var date = new Date();
+                var hh = String(date.getHours()).padStart(2, '0');
+                var mm = String(date.getMinutes()).padStart(2, '0');
+                return hh + ':' + mm;
+            }
+
+            function addMessage(role, content) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'apex-msg ' + role;
+
+                if (role === 'system') {
+                    wrapper.textContent = content || '';
+                } else {
+                    // 头像
+                    var avatar = document.createElement('div');
+                    avatar.className = 'apex-avatar';
+                    avatar.innerHTML = role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+                    wrapper.appendChild(avatar);
+
+                    // 气泡
+                    var bubble = document.createElement('div');
+                    bubble.className = 'apex-bubble';
+                    bubble.textContent = content || '';
+
+                    // 添加 chat-meta（时间戳）
+                    var meta = document.createElement('span');
+                    meta.className = 'chat-meta';
+                    meta.textContent = (role === 'user' ? '我' : 'Apex AI 助手') + ' · ' + nowText();
+                    bubble.appendChild(document.createElement('br'));
+                    bubble.appendChild(meta);
+
+                    wrapper.appendChild(bubble);
+                }
+
+                chatMessages.appendChild(wrapper);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return role === 'system' ? wrapper : wrapper.querySelector('.apex-bubble');
+            }
+
+            function pushHistory(role, content) {
+                state.messages.push({ role: role, content: content });
+            }
+
+            function switchTemplate(key) {
+                if (state.templateKey === key) return;
+                state.templateKey = key;
+                Array.prototype.slice.call(templateToggle.querySelectorAll('button')).forEach(function (btn) {
+                    btn.classList.toggle('active', btn.getAttribute('data-template') === key);
+                });
+                addMessage('system', key === 'report'
+                    ? '已切换到报表类 MD.050 模板。'
+                    : '已切换到表单类 MD.050 模板。');
+            }
+
+            function switchTab(name) {
+                tabButtons.forEach(function (btn) {
+                    btn.classList.toggle('active', btn.getAttribute('data-tab') === name);
+                });
+                tabPanels.forEach(function (panel) {
+                    panel.classList.toggle('active', panel.getAttribute('data-panel') === name);
+                });
+            }
+
+            templateToggle.addEventListener('click', function (e) {
+                var btn = e.target.closest('button[data-template]');
+                if (!btn) return;
+                switchTemplate(btn.getAttribute('data-template'));
+            });
+
+            tabButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    switchTab(btn.getAttribute('data-tab'));
+                });
+            });
+            suggestionButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var prompt = btn.getAttribute('data-prompt');
+                    if (!prompt) return;
+
+                    // 检查是否有模板类型属性，如果有则自动切换
+                    var templateType = btn.getAttribute('data-template');
+                    if (templateType && templateType !== state.templateKey) {
+                        switchTemplate(templateType);
+                    }
+
+                    chatInput.value = prompt;
+                    chatInput.focus();
+                    autoResizeInput();
+                });
+            });
+
+            function autoResizeInput() {
+                chatInput.style.height = 'auto';
+                chatInput.style.height = Math.min(chatInput.scrollHeight, 160) + 'px';
+            }
+            chatInput.addEventListener('input', autoResizeInput);
+            chatInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            sendButton.addEventListener('click', sendMessage);
+            refreshExportsBtn.addEventListener('click', function () { loadExports(); });
+
+            async function sendMessage() {
+                if (state.loading) return;
+                var text = (chatInput.value || '').trim();
+                if (!text) return;
+
+                addMessage('user', text);
+                pushHistory('user', text);
+                chatInput.value = '';
+                autoResizeInput();
+
+                state.loading = true;
+                sendButton.disabled = true;
+                setChatStatus(true, '正在分析需求...');
+
+                var placeholder = addMessage('assistant', '正在分析...');
+
+                try {
+                    var response = await fetch('/api/apex-ai/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            messages: state.messages,
+                            template: state.templateKey,
+                            model: getSelectedModel()
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('请求失败: ' + response.status);
+                    }
+
+                    var result = await response.json();
+
+                    if (!result.success || !result.data) {
+                        throw new Error(result.error || '分析失败');
+                    }
+
+                    state.analysis = result.data;
+                    var reply = result.reply || '已完成结构化分析，请查看右侧结果。';
+                    placeholder.textContent = reply;
+                    pushHistory('assistant', reply);
+                    renderAnalysis(result.data);
+                    updateGenerateButton();
+                } catch (err) {
+                    console.error(err);
+                    placeholder.textContent = '分析失败：' + (err && err.message ? err.message : String(err));
+                } finally {
+                    state.loading = false;
+                    sendButton.disabled = false;
+                    setChatStatus(false);
+                }
+            }
+
+            function renderAnalysis(data) {
+                var panel = document.getElementById('analysisPanelContent');
+                var subTabs = document.getElementById('analysisSubTabs');
+
+                if (!data) {
+                    panel.innerHTML = '<div class="apex-empty">暂无分析结果</div>';
+                    subTabs.style.display = 'none';
+                    return;
+                }
+
+                subTabs.style.display = 'flex';
+                showPreview(data);
+
+                var subTabBtns = subTabs.querySelectorAll('.apex-sub-tab');
+                subTabBtns.forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        subTabBtns.forEach(function(b) { b.classList.remove('active'); });
+                        btn.classList.add('active');
+                        var subtab = btn.getAttribute('data-subtab');
+                        if (subtab === 'preview') {
+                            showPreview(data);
+                        } else if (subtab === 'info') {
+                            showInfo(data);
+                        } else if (subtab === 'json') {
+                            showJson(data);
+                        }
+                    });
+                });
+            }
+
+            async function showPreview(data) {
+                var panel = document.getElementById('analysisPanelContent');
+                panel.innerHTML = '<div style="text-align: center; padding: 40px; color: #909399;">正在生成预览...</div>';
+
+                try {
+                    var response = await fetch('/api/apex-ai/preview', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: data, template: state.templateKey })
+                    });
+
+                    if (!response.ok) throw new Error('预览生成失败');
+                    var result = await response.json();
+                    if (result.success && result.html) {
+                        panel.innerHTML = result.html;
+                    } else {
+                        throw new Error(result.error || '预览生成失败');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    panel.innerHTML = '<div style="text-align: center; padding: 40px; color: #f56c6c;">预览生成失败: ' + err.message + '</div>';
+                }
+            }
+
+            function showInfo(data) {
+                var panel = document.getElementById('analysisPanelContent');
+                var docInfo = data.doc_info || {};
+                var html = '<div style="padding: 20px;"><h3 style="color: #303133; margin-bottom: 15px;">基础信息</h3>';
+                html += '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<tr><td style="padding: 8px; border: 1px solid #ddd; background: #f5f7fa; font-weight: 600;">文档标题</td><td style="padding: 8px; border: 1px solid #ddd;">' + (docInfo.title || '-') + '</td></tr>';
+                html += '<tr><td style="padding: 8px; border: 1px solid #ddd; background: #f5f7fa; font-weight: 600;">项目名称</td><td style="padding: 8px; border: 1px solid #ddd;">' + (docInfo.project || '-') + '</td></tr>';
+                html += '<tr><td style="padding: 8px; border: 1px solid #ddd; background: #f5f7fa; font-weight: 600;">模块代码</td><td style="padding: 8px; border: 1px solid #ddd;">' + (docInfo.module || '-') + '</td></tr>';
+                html += '<tr><td style="padding: 8px; border: 1px solid #ddd; background: #f5f7fa; font-weight: 600;">版本号</td><td style="padding: 8px; border: 1px solid #ddd;">' + (docInfo.version || '-') + '</td></tr>';
+                html += '</table></div>';
+                panel.innerHTML = html;
+            }
+
+            function showJson(data) {
+                var panel = document.getElementById('analysisPanelContent');
+                panel.innerHTML = '<pre style="padding: 16px; background: #f5f7fa; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.6;">' + JSON.stringify(data, null, 2) + '</pre>';
+            }
+
+            function renderList(items) {
+                if (!items || !items.length) return '<div class="apex-empty">（暂无）</div>';
+                return '<ul class="apex-ul">' + items.map(function(item) {
+                    return '<li>' + escapeHtml(item) + '</li>';
+                }).join('') + '</ul>';
+            }
+
+            function renderKv(obj) {
+                if (!obj || typeof obj !== 'object') return '<div class="apex-empty">（暂无）</div>';
+                var html = '<dl class="apex-kv-grid">';
+                var keys = {
+                    'target_users': '使用对象',
+                    'responsibility': '所属职责',
+                    'menu_path': '菜单位置',
+                    'prerequisite': '前提条件'
+                };
+                for (var key in keys) {
+                    var label = keys[key];
+                    var value = obj[key] || '';
+                    html += '<dt>' + escapeHtml(label) + '</dt><dd>' + (escapeHtml(value) || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                }
+                html += '</dl>';
+                return html;
+            }
+
+            function renderTable(headers, rows) {
+                if (!rows || !rows.length) return '<div class="apex-empty" style="padding:8px 0;text-align:left;">（暂无）</div>';
+                var head = headers.map(function (h) { return '<th>' + escapeHtml(h) + '</th>'; }).join('');
+                var body = rows.map(function (row) {
+                    return '<tr>' + row.map(function (cell) { return '<td>' + escapeHtml(cell || '') + '</td>'; }).join('') + '</tr>';
+                }).join('');
+                return '<table class="apex-table"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+            }
+            function renderAnalysis(analysis, targetPanel, templateKey) {
+                targetPanel = targetPanel || analysisPanel;
+                if (!analysis) {
+                    targetPanel.innerHTML = '<div class="apex-empty">暂无分析结果。</div>';
+                    return;
+                }
+                var isReport = (templateKey || state.templateKey) === 'report';
+                var docInfo = analysis.doc_info || {};
+                var overview = analysis.overview || {};
+                var design = analysis.design || {};
+                var usage = overview.usage || {};
+
+                if (isReport) {
+                    var reportDescription = analysis.description || {};
+                    var reportTechSpec = analysis.tech_spec || {};
+                    overview.requirements = overview.requirements || (reportDescription.requirements ? [reportDescription.requirements] : []);
+                    design.process = reportTechSpec.data_logic || design.process || '';
+                }
+
+                var html = '';
+
+                html += '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-tag"></i>基础信息</h3>';
+                html += '<div class="apex-section-body">';
+                html += '<dl class="apex-kv-grid">';
+                html += '<dt>文档标题</dt><dd>' + (escapeHtml(docInfo.title || '') || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                html += '<dt>项目名</dt><dd>' + (escapeHtml(docInfo.project || '') || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                html += '<dt>模块代码</dt><dd>' + (escapeHtml(docInfo.module || '') || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                html += '<dt>版本</dt><dd>' + escapeHtml(docInfo.version || 'V1.0') + '</dd>';
+                html += '<dt>模板类型</dt><dd>' + (isReport ? '报表类' : '表单类') + '</dd>';
+                html += '</dl></div></div>';
+
+                html += '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-info-circle"></i>业务背景</h3>';
+                html += '<div class="apex-section-body">' + (escapeHtml(overview.background || '') || '<div class="apex-empty" style="padding:8px 0;text-align:left;">（未填写）</div>') + '</div></div>';
+
+                html += '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-list-check"></i>相关业务需求</h3>';
+                html += '<div class="apex-section-body">' + renderList(overview.requirements) + '</div></div>';
+
+                html += '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-lightbulb"></i>开发后解决的问题</h3>';
+                html += '<div class="apex-section-body">' + renderList(overview.problems) + '</div></div>';
+
+                html += '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-users"></i>使用说明</h3>';
+                html += '<div class="apex-section-body">';
+                html += '<dl class="apex-kv-grid">';
+                html += '<dt>使用对象</dt><dd>' + (escapeHtml(usage.users || '') || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                html += '<dt>所属职责</dt><dd>' + (escapeHtml(usage.responsibility || '') || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                html += '<dt>菜单位置</dt><dd>' + (escapeHtml(usage.menu || '') || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                html += '<dt>前提条件</dt><dd>' + (escapeHtml(usage.prerequisite || '') || '<span style="color:#98a2b3;">—</span>') + '</dd>';
+                html += '</dl></div></div>';
+
+                html += '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-project-diagram"></i>' + (isReport ? '取数逻辑与流程' : '业务流程说明') + '</h3>';
+                html += '<div class="apex-section-body">' + (escapeHtml(design.process || '') || '<div class="apex-empty" style="padding:8px 0;text-align:left;">（未填写）</div>') + '</div></div>';
+
+                if (isReport) {
+                    var reportTech = analysis.tech_spec || {};
+                    html += renderReports([{
+                        name: docInfo.title || '报表设计',
+                        purpose: overview.purpose || '',
+                        output_format: '报表',
+                        parameters: (analysis.parameters || []).map(function (p) {
+                            return { name: p.name, type: p.type, required: p.required, default_value: p.default, description: p.desc };
+                        }),
+                        columns: (reportTech.fields || []).map(function (f) {
+                            return { name: f.name, type: f.type, source: f.source, description: f.desc };
+                        }),
+                        data_logic: reportTech.data_logic || '',
+                        sort_group: [reportTech.grouping, reportTech.sorting].filter(Boolean).join('；'),
+                        notes: analysis.test_points || []
+                    }]);
+                } else {
+                    html += renderScreens(analysis.screens || []);
+                }
+
+                if (analysis.clarify_questions && analysis.clarify_questions.length) {
+                    html += '<div class="apex-section" style="border-color:#fedf89;background:#fffaeb;">';
+                    html += '<h3 class="apex-section-title"><i class="fas fa-question-circle"></i>待澄清问题</h3>';
+                    html += '<div class="apex-section-body">' + renderList(analysis.clarify_questions) + '</div></div>';
+                }
+
+                targetPanel.innerHTML = html;
+            }
+            function renderScreens(screens) {
+                var html = '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-window-restore"></i>界面明细（' + screens.length + ' 个）</h3>';
+                html += '<div class="apex-section-body">';
+                if (!screens.length) {
+                    html += '<div class="apex-empty" style="padding:8px 0;text-align:left;">（未识别到界面，请补充需求）</div>';
+                } else {
+                    screens.forEach(function (screen, index) {
+                        html += '<div class="apex-screen-card">';
+                        html += '<h4 class="apex-screen-title"><i class="fas fa-file-alt"></i>' + (index + 1) + '. ' + escapeHtml(screen.name || '') + '<span class="apex-inline-tag">' + escapeHtml(screen.type || '维护') + '</span></h4>';
+                        html += '<p class="apex-screen-subtitle">' + (escapeHtml(screen.purpose || '') || '（未描述用途）') + '</p>';
+                        html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:8px 0 4px;">字段清单</div>';
+                        html += renderTable(['字段名', '类型', '必填', '说明'], (screen.fields || []).map(function (f) {
+                            return [f.name, f.type, f.required, f.description];
+                        }));
+                        if (screen.actions && screen.actions.length) {
+                            html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:8px 0 4px;">按钮与操作</div>';
+                            html += (screen.actions || []).map(function (a) { return '<span class="apex-inline-tag">' + escapeHtml(a) + '</span>'; }).join(' ');
+                        }
+                        if (screen.rules && screen.rules.length) {
+                            html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:10px 0 4px;">业务规则</div>';
+                            html += renderList(screen.rules);
+                        }
+                        html += '</div>';
+                    });
+                }
+                html += '</div></div>';
+                return html;
+            }
+            function renderReports(reports) {
+                var html = '<div class="apex-section">';
+                html += '<h3 class="apex-section-title"><i class="fas fa-table"></i>报表明细（' + reports.length + ' 个）</h3>';
+                html += '<div class="apex-section-body">';
+                if (!reports.length) {
+                    html += '<div class="apex-empty" style="padding:8px 0;text-align:left;">（未识别到报表，请补充需求）</div>';
+                } else {
+                    reports.forEach(function (report, index) {
+                        html += '<div class="apex-screen-card">';
+                        html += '<h4 class="apex-screen-title"><i class="fas fa-chart-line"></i>' + (index + 1) + '. ' + escapeHtml(report.name || '') + '<span class="apex-inline-tag">' + escapeHtml(report.output_format || 'Excel') + '</span></h4>';
+                        html += '<p class="apex-screen-subtitle">' + (escapeHtml(report.purpose || '') || '（未描述用途）') + '</p>';
+                        if (report.trigger) {
+                            html += '<div style="font-size:12px;color:#475467;margin-bottom:6px;"><b>触发方式：</b>' + escapeHtml(report.trigger) + '</div>';
+                        }
+                        html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:8px 0 4px;">报表参数</div>';
+                        html += renderTable(['参数名', '类型', '必填', '默认值', '说明'], (report.parameters || []).map(function (p) {
+                            return [p.name, p.type, p.required, p.default_value, p.description];
+                        }));
+                        html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:10px 0 4px;">报表输出列</div>';
+                        html += renderTable(['列名', '类型', '取数来源', '说明'], (report.columns || []).map(function (c) {
+                            return [c.name, c.type, c.source, c.description];
+                        }));
+                        if (report.data_logic) {
+                            html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:10px 0 4px;">取数逻辑</div>';
+                            html += '<div style="font-size:12.5px;line-height:1.7;color:#344054;">' + escapeHtml(report.data_logic) + '</div>';
+                        }
+                        if (report.sort_group) {
+                            html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:10px 0 4px;">排序与分组</div>';
+                            html += '<div style="font-size:12.5px;color:#344054;">' + escapeHtml(report.sort_group) + '</div>';
+                        }
+                        if (report.notes && report.notes.length) {
+                            html += '<div style="font-size:12px;color:#475467;font-weight:600;margin:10px 0 4px;">特殊说明</div>';
+                            html += renderList(report.notes);
+                        }
+                        html += '</div>';
+                    });
+                }
+                html += '</div></div>';
+                return html;
+            }
+            function updateGenerateButton() {
+                var hasAnalysis = !!state.analysis;
+                var hasContent = hasAnalysis && (
+                    (state.templateKey === 'form' && (state.analysis.screens || []).length > 0) ||
+                    (state.templateKey === 'report' && !!(state.analysis.doc_info && state.analysis.doc_info.title) && !!state.analysis.tech_spec)
+                );
+                generateBtn.disabled = state.generating || !hasContent;
+                generateHint.textContent = state.generating
+                    ? '正在生成 Word 文档...'
+                    : hasContent
+                        ? '分析已就绪，可以点击生成 Word 需求说明。'
+                        : (hasAnalysis ? '分析结果里还没有界面/报表明细，请补充需求后再生成。' : '先描述需求，等分析结果出来后即可点击生成。');
+            }
+
+            generateBtn.addEventListener('click', async function () {
+                if (!state.analysis || state.generating) return;
+                state.generating = true;
+                updateGenerateButton();
+                addMessage('system', '正在生成 Word 需求说明书...');
+                try {
+                    var response = await fetch('/api/apex-ai/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            analysis: state.analysis,
+                            template_key: state.templateKey
+                        })
+                    });
+                    var data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || '生成失败');
+                    }
+                    addMessage('system', '✅ 已生成：' + (data.title || '需求说明') + '，可在右侧“历史文档”下载。');
+                    await loadExports();
+                    switchTab('history');
+                } catch (err) {
+                    console.error(err);
+                    addMessage('system', '❌ 生成失败：' + (err && err.message ? err.message : String(err)));
+                } finally {
+                    state.generating = false;
+                    updateGenerateButton();
+                }
+            });
+            async function loadExports() {
+                try {
+                    var response = await fetch('/api/apex-ai/exports');
+                    var data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.error || '加载历史失败');
+                    state.downloads = data.items || [];
+                    renderHistory();
+                } catch (err) {
+                    historyPanel.innerHTML = '<div class="apex-empty">加载失败：' + escapeHtml(err && err.message ? err.message : String(err)) + '</div>';
+                }
+            }
+
+            function renderHistory() {
+                if (!state.downloads.length) {
+                    historyPanel.innerHTML = '<div class="apex-empty">还没有生成过文档。</div>';
+                    return;
+                }
+                var html = '<div class="apex-download-list">';
+                state.downloads.forEach(function (item, idx) {
+                    var label = item.template_label || (item.template_key === 'report' ? '报表类' : '表单类');
+                    var displayName = (item.filename || item.title || '').replace(/\.docx$/i, '');
+                    html += '<div class="apex-download-item">';
+                    html += '<i class="fas fa-file-word"></i>';
+                    html += '<span class="apex-download-title" title="' + escapeHtml(displayName) + '">' + escapeHtml(displayName) + '</span>';
+                    html += '<span class="apex-inline-tag">' + escapeHtml(label) + '</span>';
+                    html += '<span class="apex-download-meta">' + escapeHtml(item.generated_at || '') + '</span>';
+                    html += '<div class="apex-download-actions">';
+                    html += '<button class="apex-action-btn apex-preview-btn" data-index="' + idx + '" title="预览"><i class="fas fa-eye"></i> 预览</button>';
+                    html += '<a href="' + escapeHtml(item.download_url) + '" download class="apex-action-btn apex-download-btn" title="下载"><i class="fas fa-download"></i> 下载</a>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+                historyPanel.innerHTML = html;
+
+                // 绑定预览按钮事件
+                historyPanel.querySelectorAll('.apex-preview-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var index = parseInt(btn.getAttribute('data-index'));
+                        var item = state.downloads[index];
+                        if (item) {
+                            previewHistoryDocument(item);
+                        }
+                    });
+                });
+            }
+
+            async function previewHistoryDocument(item) {
+                try {
+                    addMessage('system', '⏳ 正在加载预览：' + item.title);
+
+                    var response = await fetch('/api/apex-ai/preview-history/' + encodeURIComponent(item.filename));
+                    var result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || '预览失败');
+                    }
+
+                    // 分析结果与文档预览分别放入各自的顶层标签。
+                    renderAnalysis(result.data, analysisPanel, result.template_key);
+                    historyPreviewPanel.innerHTML = result.html;
+                    switchTab('preview');
+
+                    addMessage('system', '✅ 预览加载成功：' + item.title);
+                } catch (err) {
+                    addMessage('system', '❌ 预览失败：' + (err && err.message ? err.message : String(err)));
+                }
+            }
+
+            addMessage('assistant', '你好，我是 MD.050 需求分析助手。请用自然语言描述你的业务需求，我会结构化成表单类/报表类需求说明文档，一键生成 Word。默认是「表单类」，右上角可切换为「报表类」。');
+            loadExports();
+        })();
+    </script>
+</body>
+</html>

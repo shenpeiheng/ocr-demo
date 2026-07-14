@@ -43,6 +43,7 @@ PAGE_ROUTES = {
     "/opportunity-entry": "opportunity_entry.html",
     "/ai-agent-service-desk": "ai_agent_service_desk.html",
     "/oracle-prd": "oracle_prd.html",
+    "/apex-ai": "apex_ai.html",
     "/price-comparison": "price_comparison.html",
     "/item-code-generation": "item_code_generation.html",
     "/procurement-matching": "procurement_matching.html",

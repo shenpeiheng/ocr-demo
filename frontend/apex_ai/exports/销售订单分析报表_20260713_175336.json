@@ -1,0 +1,250 @@
+{
+  "template_key": "report",
+  "data": {
+    "description": {
+      "features": [
+        "多维度分组：同时按销售区域、产品线、客户进行三级分组，支持层级展开",
+        "核心指标：订单总金额、订单总数量、已完成金额、已完成数量、完成率（金额）",
+        "参数筛选：公司、订单日期区间、区域、产品线、客户、订单状态（默认已审核）",
+        "Excel导出：通过报表界面一键导出为.xlsx文件，保留分组结构和所有字段",
+        "数据实时性：每次查询读取当前最新订单数据，不依赖快照"
+      ],
+      "requirements": "销售经理日常需要按区域、产品线、客户三个维度查看销售订单的汇总数据，包括订单总金额、订单总数量，并着重关注完成率（已完成订单金额占比）。报表应支持灵活的参数筛选（如指定日期范围、区域、产品线等），并以Excel表格形式输出，便于销售经理结合本地数据进一步分析。报表数据应实时反映当前订单状态，确保每次查询结果均为最新。"
+    },
+    "doc_info": {
+      "module": "OM (订单管理)",
+      "project": "ERP系统",
+      "title": "销售订单分析报表",
+      "version": "1.0"
+    },
+    "notes": "1. 完成率按金额口径为主，数量口径为辅，若用户需要单独强调数量完成率可后续增加配置。\n2. 报表数据源为实时查询，建议在非高峰时段执行大数据量导出以免影响系统性能。\n3. 若订单表头金额为空，则自动以行金额合计代替；若某订单无行金额，则视为0。\n4. 本报表不包含服务订单、退货订单及未审核订单。",
+    "overview": {
+      "background": "企业销售订单数据分散于不同业务系统，销售经理需要快速掌握各区域、产品线及客户的订单执行情况，以支持销售策略调整和资源配置。当前手动汇总方式效率低且易出错，亟需一份自动化的多维度分析报表。报表聚焦于订单金额、数量及完成率，帮助识别销售热点与履约薄弱环节。通过定期输出Excel，销售经理可灵活筛选、排序及进一步分析，提升管理决策的及时性和准确性。",
+      "problems": [
+        "解决销售数据手工汇总耗时、易错的问题",
+        "消除无法即时获取各维度订单完成率的盲区",
+        "避免因数据口径不一致导致的决策偏差",
+        "减少重复制作报表的IT支持成本"
+      ],
+      "purpose": "提供按区域、产品线、客户分组的销售订单执行综合视图，重点展示订单金额、数量及完成率，辅助销售管理层快速定位业绩缺口与履约问题，提升决策效率。",
+      "references": [
+        "销售订单主数据维护规范",
+        "ERP系统数据接口手册（订单模块）",
+        "Excel导出功能需求说明"
+      ],
+      "requirements": [
+        "支持按销售区域、产品线、客户三个维度分组汇总订单数据",
+        "显示每个分组的订单总金额、订单总数量、已完成金额、已完成数量及完成率",
+        "完成率定义为已完成（已发货或已开票）订单金额占总订单金额的百分比",
+        "支持导出为Excel格式，便于销售经理离线使用和二次加工",
+        "参数可灵活控制数据范围，包括公司、订单日期、区域等"
+      ],
+      "scope": "适用于企业所有销售业务，覆盖已审核且未取消的销售订单（含跨公司交易），数据范围限于订单行级别，不包含服务项目或退货订单。",
+      "usage": {
+        "menu": "销售管理 → 销售分析 → 销售订单分析报表",
+        "prerequisite": "系统中存在已审核的销售订单（至少有一条订单行已进入发货或完成状态）",
+        "responsibility": "销售分析与业绩监控",
+        "users": "销售经理、销售总监、区域销售主管"
+      }
+    },
+    "parameters": [
+      {
+        "code": "P_COMPANY",
+        "default": "空（无默认，必须选择）",
+        "desc": "选择要分析的公司，支持多选",
+        "name": "公司",
+        "required": "是",
+        "type": "LOV（值列表）",
+        "value_set": "SELECT company_code, company_name FROM ar_companies WHERE active_flag='Y'"
+      },
+      {
+        "code": "P_DATE_FROM",
+        "default": "当前月份第一天",
+        "desc": "包含此日期及之后的订单",
+        "name": "订单创建日期从",
+        "required": "是",
+        "type": "日期",
+        "value_set": "无"
+      },
+      {
+        "code": "P_DATE_TO",
+        "default": "当前系统日期",
+        "desc": "包含此日期及之前的订单",
+        "name": "订单创建日期至",
+        "required": "是",
+        "type": "日期",
+        "value_set": "无"
+      },
+      {
+        "code": "P_REGION",
+        "default": "全部",
+        "desc": "可选择一个或多个区域，不选则默认全部",
+        "name": "区域",
+        "required": "否",
+        "type": "LOV",
+        "value_set": "SELECT region_code, region_name FROM ar_regions WHERE active_flag='Y'"
+      },
+      {
+        "code": "P_PRODUCT_LINE",
+        "default": "全部",
+        "desc": "可选择一个或多个产品线，不选则全部",
+        "name": "产品线",
+        "required": "否",
+        "type": "LOV",
+        "value_set": "SELECT product_line_code, product_line_name FROM mtl_product_lines WHERE active_flag='Y'"
+      },
+      {
+        "code": "P_CUSTOMER",
+        "default": "全部",
+        "desc": "可选择一个或多个客户，不选则全部",
+        "name": "客户",
+        "required": "否",
+        "type": "LOV",
+        "value_set": "SELECT customer_code, customer_name FROM ar_customers WHERE status='ACTIVE'"
+      },
+      {
+        "code": "P_STATUS",
+        "default": "已审核,部分发货,完全发货,已开票",
+        "desc": "选择需要包含的订单状态，默认排除已取消",
+        "name": "订单状态",
+        "required": "否",
+        "type": "LOV（多选）",
+        "value_set": "固定值集：已审核、部分发货、完全发货、已开票、已取消（默认排除取消）"
+      },
+      {
+        "code": "P_EXPORT",
+        "default": "是",
+        "desc": "勾选后查询结果直接生成Excel文件下载，否则在页面显示表格",
+        "name": "导出Excel",
+        "required": "否",
+        "type": "复选框",
+        "value_set": "是/否"
+      }
+    ],
+    "reply": "已为您生成完整的《销售订单分析报表》需求文档，按照您的要求：按区域、产品线、客户分组，展示订单金额、数量、完成率，并支持Excel导出。文档包含业务背景、技术规格、字段定义（15个字段）、参数（7个）及测试要点。您可以直接用于开发或评审。如果需要调整完成率口径或增加其他维度，请随时反馈。",
+    "tech_spec": {
+      "data_logic": "从订单头表（oe_order_headers）获取订单号、订单金额（header_amount）、订单状态、客户编码、区域编码；从订单行表（oe_order_lines）获取产品线编码、行数量（line_quantity）、行金额（line_amount）。通过订单头与订单行关联后，按区域、产品线、客户分组汇总。已完成订单的判断标准：订单头状态为‘完全发货’或‘已开票’，且无取消行。完成率 = SUM(已完成订单金额) / SUM(总订单金额) * 100%。若某分组总金额为0则完成率显示0。所有金额取订单表头金额（含税或未税，取用系统默认的订单表头总金额字段，若表头金额不存在则使用行金额合计）。数量为行数量的合计。",
+      "data_scope": "已审核且未取消的销售订单（订单状态为‘已审核’、‘部分发货’、‘完全发货’或‘已开票’），取数时间范围为当前系统日期或用户指定日期区间内的订单创建日期",
+      "fields": [
+        {
+          "desc": "销售区域代码，如华东、华北",
+          "name": "区域编码",
+          "seq": "1",
+          "source": "oe_order_headers.sales_region",
+          "type": "文本"
+        },
+        {
+          "desc": "区域描述，便于阅读",
+          "name": "区域名称",
+          "seq": "2",
+          "source": "ar_region.name",
+          "type": "文本"
+        },
+        {
+          "desc": "产品线代码",
+          "name": "产品线编码",
+          "seq": "3",
+          "source": "oe_order_lines.product_line",
+          "type": "文本"
+        },
+        {
+          "desc": "产品线名称",
+          "name": "产品线名称",
+          "seq": "4",
+          "source": "mtl_product_line.name",
+          "type": "文本"
+        },
+        {
+          "desc": "客户主数据中的唯一编码",
+          "name": "客户编码",
+          "seq": "5",
+          "source": "oe_order_headers.customer_code",
+          "type": "文本"
+        },
+        {
+          "desc": "客户全称",
+          "name": "客户名称",
+          "seq": "6",
+          "source": "ar_customer.name",
+          "type": "文本"
+        },
+        {
+          "desc": "该分组下的订单头数量",
+          "name": "订单总笔数",
+          "seq": "7",
+          "source": "COUNT(DISTINCT order_header_id)",
+          "type": "数字（整数）"
+        },
+        {
+          "desc": "所有订单行数量之和",
+          "name": "订单总数量",
+          "seq": "8",
+          "source": "SUM(oe_order_lines.line_quantity)",
+          "type": "数字（小数，保留两位）"
+        },
+        {
+          "desc": "所有订单的表头金额之和，若无则按行金额合计",
+          "name": "订单总金额",
+          "seq": "9",
+          "source": "SUM(oe_order_headers.header_amount)",
+          "type": "数字（金额，保留两位，货币单位元）"
+        },
+        {
+          "desc": "状态为完全发货或已开票的订单头数",
+          "name": "已完成笔数",
+          "seq": "10",
+          "source": "COUNT(DISTINCT CASE WHEN header_status IN ('COMPLETE','INVOICED') THEN order_header_id END)",
+          "type": "数字（整数）"
+        },
+        {
+          "desc": "已完成订单的行数量之和",
+          "name": "已完成数量",
+          "seq": "11",
+          "source": "SUM(CASE WHEN header_status IN ('COMPLETE','INVOICED') THEN line_quantity ELSE 0 END)",
+          "type": "数字（小数，保留两位）"
+        },
+        {
+          "desc": "已完成订单的表头金额之和",
+          "name": "已完成金额",
+          "seq": "12",
+          "source": "SUM(CASE WHEN header_status IN ('COMPLETE','INVOICED') THEN header_amount ELSE 0 END)",
+          "type": "数字（金额，保留两位）"
+        },
+        {
+          "desc": "按金额口径计算的订单完成比例",
+          "name": "完成率（金额）",
+          "seq": "13",
+          "source": "已完成金额 / 订单总金额 * 100",
+          "type": "百分比（格式如85.12%）"
+        },
+        {
+          "desc": "按数量口径计算的订单完成比例，辅助分析",
+          "name": "完成率（数量）",
+          "seq": "14",
+          "source": "已完成数量 / 订单总数量 * 100",
+          "type": "百分比"
+        },
+        {
+          "desc": "每个订单的平均金额，反映客单价水平",
+          "name": "平均订单金额",
+          "seq": "15",
+          "source": "订单总金额 / 订单总笔数",
+          "type": "数字（金额，保留两位）"
+        }
+      ],
+      "grouping": "先按销售区域（字段：sales_region）分组，再按产品线（字段：product_line）分组，最后按客户（字段：customer_code）分组。同一客户下不进一步细分订单行，直接汇总",
+      "layout": "报表采用二维表格布局，列字段依次为：区域、区域名称、产品线、产品线名称、客户编码、客户名称、订单总笔数、订单总数量、订单总金额、已完成笔数、已完成数量、已完成金额、完成率（金额）、完成率（数量）、平均订单金额。每行代表一个区域+产品线+客户组合。底部提供合计行。",
+      "reference_report": "无（新建报表）",
+      "request_group": "销售订单数据请求组（包含订单头、订单行、客户、区域、产品线）",
+      "sorting": "区域编码升序 → 产品线编码升序 → 客户编码升序"
+    },
+    "test_points": [
+      "验证按区域、产品线、客户分组后，订单总金额是否等于所有明细行金额的和（抽样对比）",
+      "验证完成率计算逻辑：选取几条已完成和未完成的订单，手动计算金额完成率，与报表数值比对",
+      "测试日期参数边界：查询当天、跨月、跨年，确保数据准确",
+      "测试多选参数（如多个区域、多个产品线）组合过滤，确认结果与期望一致",
+      "测试Excel导出功能：导出的文件是否包含所有字段、分组是否保留、数值格式是否正常"
+    ]
+  },
+  "generated_at": "2026-07-13T17:53:36.414839"
+}

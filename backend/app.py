@@ -12,6 +12,7 @@ from routes.pdf_routes import pdf_bp
 from routes.vision_routes import preload_keypoint, preload_license_ocr, preload_safety_helmet, vision_bp
 from routes.opportunity_routes import opportunity_bp
 from routes.oracle_prd_routes import oracle_prd_bp
+from routes.apex_ai_routes import apex_ai_bp
 from routes.page_routes import page_bp
 from routes.whisper_routes import whisper_bp
 
@@ -22,6 +23,7 @@ app.register_blueprint(pdf_bp)
 app.register_blueprint(vision_bp)
 app.register_blueprint(opportunity_bp)
 app.register_blueprint(oracle_prd_bp)
+app.register_blueprint(apex_ai_bp, url_prefix="/api/apex-ai")
 app.register_blueprint(whisper_bp)
 app.register_blueprint(page_bp)
 
@@ -44,6 +46,14 @@ def serve_mineru_results(filename):
     import os
     results_dir = Config.UPLOAD_FOLDER
     return send_from_directory(results_dir, filename)
+
+
+@app.route('/apex_ai/exports/<path:filename>')
+def serve_apex_ai_exports(filename):
+    """提供 Apex AI 生成的 Word 文档下载"""
+    from pathlib import Path
+    exports_dir = Path(__file__).resolve().parent.parent / "frontend" / "apex_ai" / "exports"
+    return send_from_directory(str(exports_dir), filename)
 
 
 if __name__ == "__main__":

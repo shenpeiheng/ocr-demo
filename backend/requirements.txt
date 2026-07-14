@@ -18,5 +18,8 @@ addict==2.4.0
 # Whisper 语音转字幕依赖
 openai-whisper
 ffmpeg-python
+# Apex AI 需求文档生成依赖
+python-docx==1.2.0
+docxtpl==0.20.2
 # 生产级 WSGI 服务器，解决大文件上传 ERR_CONNECTION_RESET
 waitress==3.0.2
