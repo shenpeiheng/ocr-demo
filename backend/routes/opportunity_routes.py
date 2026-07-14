@@ -1,7 +1,6 @@
 """
 商机解析路由
 """
-import os
 import json
 import requests
 from flask import Blueprint, jsonify, request
@@ -32,14 +31,21 @@ def parse_opportunity():
                 'error': '输入文本不能为空'
             }), 400
 
-        # 从环境变量读取配置
-        modelscope_api_url = os.getenv('MODELSCOPE_API_URL', 'https://api-inference.modelscope.cn/v1/chat/completions')
-        modelscope_api_key = os.getenv('MODELSCOPE_API_KEY', '')
+        # 从请求中获取模型 key（可选），使用统一的 LLM 配置
+        model_key = data.get('model_key', '').strip()
+        api_url = Config.resolve_llm_url(model_key)
+        api_key = Config.resolve_llm_key(model_key)
 
-        if not modelscope_api_key:
+        if not api_url:
             return jsonify({
                 'success': False,
-                'error': 'ModelScope API Key 未配置，请在 .env 文件中设置 MODELSCOPE_API_KEY'
+                'error': 'LLM API URL 未配置，请检查 llm_models.json'
+            }), 500
+
+        if not api_key:
+            return jsonify({
+                'success': False,
+                'error': 'LLM API Key 未配置，请检查 llm_models.json'
             }), 500
 
         # 构造提示词
@@ -83,11 +89,11 @@ def parse_opportunity():
         # 调用 ModelScope API
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': f'Bearer {modelscope_api_key}'
+            'Authorization': f'Bearer {api_key}'
         }
 
         payload = {
-            'model': Config.resolve_llm_model(),
+            'model': Config.resolve_llm_model(model_key),
             'messages': [
                 {'role': 'system', 'content': system_prompt},
                 {'role': 'user', 'content': user_prompt}
@@ -96,9 +102,12 @@ def parse_opportunity():
             'max_tokens': 2000
         }
 
+        # 构造完整的 chat completions URL
+        chat_url = f"{api_url}/chat/completions"
+
         # 发送请求
         response = requests.post(
-            modelscope_api_url,
+            chat_url,
             headers=headers,
             json=payload,
             timeout=30
