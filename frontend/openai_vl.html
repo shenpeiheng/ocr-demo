@@ -6,11 +6,13 @@
     <title>OpenAI VL 机械图纸识别</title>
     <link rel="stylesheet" href="static/css/style.css">
     <link rel="stylesheet" href="static/css/all.min.css">
+    <link id="favicon" rel="icon" href="static/images/favicon.ico" type="image/x-icon">
     <style>
         .openai-vl-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0;
         }
         
         .engine-selector {
@@ -374,7 +376,14 @@
     <script src="https://unpkg.com/jquery.json-viewer@1.5.0/json-viewer/jquery.json-viewer.js"></script>
 </head>
 <body>
-    <div class="openai-vl-container">
+    <div class="container">
+        <div id="header-placeholder"></div>
+
+        <div class="main-layout">
+            <div id="sidebar-placeholder"></div>
+
+            <main class="main-content-area">
+                <div class="openai-vl-container">
         <div class="section-title">
             <i class="fas fa-robot"></i>
             <span>OpenAI VL 机械图纸识别系统</span>
@@ -517,8 +526,14 @@
                 </button>
             </div>
         </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="footer-placeholder"></div>
     </div>
 
+    <script src="static/js/layout.js"></script>
     <script>
         // 全局变量
         let currentFile = null;

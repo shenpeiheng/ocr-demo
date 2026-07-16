@@ -6129,6 +6129,88 @@ textarea:focus,
 .main-content-area .flowchart-sample-images .sample-item img {
     height: 40px;
     object-fit: cover;
+    cursor: zoom-in;
+}
+
+.flowchart-image-viewer {
+    width: min(96vw, 1440px);
+    height: min(92vh, 960px);
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 24px 64px rgba(16, 24, 40, 0.32);
+    overflow: hidden;
+}
+
+.flowchart-image-viewer::backdrop {
+    background: rgba(16, 24, 40, 0.82);
+}
+
+.flowchart-image-viewer-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.flowchart-image-viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 0 0 48px;
+    padding: 0 12px 0 16px;
+    border-bottom: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.flowchart-image-viewer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--admin-muted);
+    cursor: pointer;
+}
+
+.flowchart-image-viewer-close:hover {
+    background: var(--admin-surface-soft);
+    color: var(--admin-primary);
+}
+
+.flowchart-image-viewer-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+    padding: 16px;
+    overflow: auto;
+    background: #f2f4f7;
+}
+
+.flowchart-image-viewer-body img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    cursor: zoom-in;
+}
+
+.flowchart-image-viewer-body img.is-zoomed {
+    max-width: none;
+    max-height: none;
+    object-fit: none;
+    cursor: zoom-out;
 }
 
 .main-content-area .flowchart-file-panel {

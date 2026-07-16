@@ -46,6 +46,10 @@ const exportJsonBtn = document.getElementById('exportJsonBtn');
 const resultMeta = document.getElementById('resultMeta');
 const flowchartResultTabs = document.getElementById('flowchartResultTabs');
 const sampleImagesSection = document.getElementById('sampleImagesSection');
+const flowchartImageViewer = document.getElementById('flowchartImageViewer');
+const flowchartImageViewerImage = document.getElementById('flowchartImageViewerImage');
+const flowchartImageViewerTitle = document.getElementById('flowchartImageViewerTitle');
+const flowchartImageViewerClose = document.getElementById('flowchartImageViewerClose');
 
 function init() {
     bindEvents();
@@ -99,8 +103,28 @@ function bindEvents() {
             if (!sampleItem) {
                 return;
             }
+            if (event.target.closest('img')) {
+                openFlowchartImageViewer(
+                    sampleItem.getAttribute('data-sample-image'),
+                    sampleItem.getAttribute('data-sample-name')
+                );
+                return;
+            }
             loadSampleImage(sampleItem.getAttribute('data-sample-image'), sampleItem.getAttribute('data-sample-name'), true);
         });
+    }
+
+    if (flowchartImageViewer && flowchartImageViewerClose) {
+        flowchartImageViewerClose.addEventListener('click', closeFlowchartImageViewer);
+        flowchartImageViewer.addEventListener('click', function(event) {
+            if (event.target === flowchartImageViewer) {
+                closeFlowchartImageViewer();
+            }
+        });
+        flowchartImageViewerImage.addEventListener('click', function() {
+            flowchartImageViewerImage.classList.toggle('is-zoomed');
+        });
+        flowchartImageViewer.addEventListener('close', resetFlowchartImageViewer);
     }
 
     if (flowchartResultTabs) {
@@ -114,6 +138,29 @@ function bindEvents() {
             renderResultTabs(currentResults || {});
             renderResults(currentResults || {}, currentResultView);
         });
+    }
+}
+
+function openFlowchartImageViewer(imagePath, imageName) {
+    if (!flowchartImageViewer || !flowchartImageViewerImage) {
+        return;
+    }
+    flowchartImageViewerImage.src = toStaticUrl(imagePath);
+    flowchartImageViewerImage.alt = `${imageName || '流程图'}大图`;
+    flowchartImageViewerTitle.textContent = imageName || '流程图预览';
+    flowchartImageViewerImage.classList.remove('is-zoomed');
+    flowchartImageViewer.showModal();
+}
+
+function closeFlowchartImageViewer() {
+    if (flowchartImageViewer && flowchartImageViewer.open) {
+        flowchartImageViewer.close();
+    }
+}
+
+function resetFlowchartImageViewer() {
+    if (flowchartImageViewerImage) {
+        flowchartImageViewerImage.classList.remove('is-zoomed');
     }
 }
 

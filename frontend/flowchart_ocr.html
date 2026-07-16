@@ -175,6 +175,20 @@
         <div id="footer-placeholder"></div>
     </div>
 
+    <dialog class="flowchart-image-viewer" id="flowchartImageViewer" aria-label="流程图大图预览">
+        <div class="flowchart-image-viewer-content">
+            <div class="flowchart-image-viewer-header">
+                <span id="flowchartImageViewerTitle">流程图预览</span>
+                <button type="button" class="flowchart-image-viewer-close" id="flowchartImageViewerClose" aria-label="关闭预览" title="关闭预览">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flowchart-image-viewer-body">
+                <img id="flowchartImageViewerImage" src="" alt="流程图大图">
+            </div>
+        </div>
+    </dialog>
+
     <script src="static/js/layout.js"></script>
     <script src="static/js/flowchart_ocr.js"></script>
     <script src="static/js/json-viewer-helper.js"></script>
