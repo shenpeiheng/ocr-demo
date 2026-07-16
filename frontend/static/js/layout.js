@@ -112,25 +112,11 @@
                         '<div class="menu-text">首页</div>' +
                     '</a>' +
                 '</div>' +
-                /* RPA智能自动化 */
-                '<div class="menu-section">' +
-                    '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
-                        '<div class="menu-group-icon"><i class="fas fa-robot"></i></div>' +
-                        '<span class="menu-group-title">RPA智能自动化</span>' +
-                        '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
-                    '</div>' +
-                    '<div class="menu-sub-items expanded">' +
-                        '<a href="/rpa" class="menu-item  menu-sub-item" data-page="rpa">' +
-                                '<div class="menu-sub-dot"></div>' +
-                                '<div class="menu-text">星辰RPA</div>' +
-                            '</a>' +
-                    '</div>' +
-                '</div>' +
-                /* OCR识别 */
+                /* 文档智能 */
                 '<div class="menu-section">' +
                     '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
                         '<div class="menu-group-icon"><i class="fas fa-file-alt"></i></div>' +
-                        '<span class="menu-group-title">OCR 识别</span>' +
+                        '<span class="menu-group-title">文档智能</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
@@ -156,18 +142,14 @@
                         '</a>' +
                     '</div>' +
                 '</div>' +
-                /* AI视觉检测 */
+                /* 计算机视觉 */
                 '<div class="menu-section">' +
                     '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
                         '<div class="menu-group-icon"><i class="fas fa-eye"></i></div>' +
-                        '<span class="menu-group-title">AI 视觉检测</span>' +
+                        '<span class="menu-group-title">计算机视觉</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="/whisper" class="menu-item menu-sub-item" data-page="whisper">' +
-                            '<div class="menu-sub-dot"></div>' +
-                            '<div class="menu-text">语音转字幕</div>' +
-                        '</a>' +
                         '<a href="/safety-helmet-detection" class="menu-item menu-sub-item" data-page="safety_helmet_detection">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">实时安全帽检测</div>' +
@@ -190,51 +172,81 @@
                         '</a>' +
                     '</div>' +
                 '</div>' +
-                /* 业务应用 */
+                /* 多模态与语音 */
                 '<div class="menu-section">' +
                     '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
-                        '<div class="menu-group-icon"><i class="fas fa-briefcase"></i></div>' +
-                        '<span class="menu-group-title">业务应用</span>' +
+                        '<div class="menu-group-icon"><i class="fas fa-layer-group"></i></div>' +
+                        '<span class="menu-group-title">多模态与语音</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="/opportunity-entry" class="menu-item menu-sub-item" data-page="opportunity_entry">' +
+                        '<a href="/openai-vl" class="menu-item menu-sub-item" data-page="openai_vl">' +
                             '<div class="menu-sub-dot"></div>' +
-                            '<div class="menu-text">商机快速录入</div>' +
+                            '<div class="menu-text">视觉语言理解</div>' +
                         '</a>' +
-                        '<a href="/contract-recognition" class="menu-item menu-sub-item" data-page="contract_recognition">' +
+                        '<a href="/whisper" class="menu-item menu-sub-item" data-page="whisper">' +
                             '<div class="menu-sub-dot"></div>' +
-                            '<div class="menu-text">合同识别</div>' +
+                            '<div class="menu-text">语音识别与字幕</div>' +
                         '</a>' +
-                        '<a href="/item-code-generation" class="menu-item menu-sub-item" data-page="item_code_generation">' +
+                        '<a href="/paddle-ocr" class="menu-item menu-sub-item" data-page="paddle_ocr">' +
                             '<div class="menu-sub-dot"></div>' +
-                            '<div class="menu-text">物料编码生成</div>' +
+                            '<div class="menu-text">PaddleOCR</div>' +
                         '</a>' +
-                        '<a href="/price-comparison" class="menu-item menu-sub-item" data-page="price_comparison">' +
+                    '</div>' +
+                '</div>' +
+                /* 智能体与自动化 */
+                '<div class="menu-section">' +
+                    '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
+                        '<div class="menu-group-icon"><i class="fas fa-robot"></i></div>' +
+                        '<span class="menu-group-title">智能体与自动化</span>' +
+                        '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
+                    '</div>' +
+                    '<div class="menu-sub-items expanded">' +
+                        '<a href="/rpa" class="menu-item menu-sub-item" data-page="rpa">' +
                             '<div class="menu-sub-dot"></div>' +
-                            '<div class="menu-text">价格比较</div>' +
+                            '<div class="menu-text">RPA流程自动化</div>' +
                         '</a>' +
                         '<a href="/ai-agent-service-desk" class="menu-item menu-sub-item" data-page="ai_agent_service_desk">' +
                             '<div class="menu-sub-dot"></div>' +
                             '<div class="menu-text">AI Agent 服务台</div>' +
                         '</a>' +
-                        '<a href="/procurement-matching" class="menu-item menu-sub-item" data-page="procurement_matching">' +
+                        '<a href="/oracle-prd" class="menu-item menu-sub-item" data-page="oracle_prd">' +
                             '<div class="menu-sub-dot"></div>' +
-                            '<div class="menu-text">采购需求匹配</div>' +
+                            '<div class="menu-text">Oracle PRD 助手</div>' +
+                        '</a>' +
+                        '<a href="/apex-ai" class="menu-item menu-sub-item" data-page="apex_ai">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">需求文档生成</div>' +
                         '</a>' +
                     '</div>' +
                 '</div>' +
-                /* 其他 */
+                /* 自然语言生成式AI */
                 '<div class="menu-section">' +
                     '<div class="menu-group-header expanded" onclick="toggleSubMenu(this)">' +
-                        '<div class="menu-group-icon"><i class="fas fa-ellipsis-h"></i></div>' +
-                        '<span class="menu-group-title">其他</span>' +
+                        '<div class="menu-group-icon"><i class="fas fa-briefcase"></i></div>' +
+                        '<span class="menu-group-title">自然语言生成式AI</span>' +
                         '<i class="fas fa-chevron-left menu-group-arrow"></i>' +
                     '</div>' +
                     '<div class="menu-sub-items expanded">' +
-                        '<a href="/paddle-ocr" class="menu-item menu-sub-item" data-page="paddle_ocr">' +
+                        '<a href="/item-code-generation" class="menu-item menu-sub-item" data-page="item_code_generation">' +
                             '<div class="menu-sub-dot"></div>' +
-                            '<div class="menu-text">在线官方案例</div>' +
+                            '<div class="menu-text">物料编码生成</div>' +
+                        '</a>' +
+                        '<a href="/opportunity-entry" class="menu-item menu-sub-item" data-page="opportunity_entry">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">商机录入</div>' +
+                        '</a>' +
+                        '<a href="/price-comparison" class="menu-item menu-sub-item" data-page="price_comparison">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">比价</div>' +
+                        '</a>' +
+                        '<a href="/contract-recognition" class="menu-item menu-sub-item" data-page="contract_recognition">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">合同识别</div>' +
+                        '</a>' +
+                        '<a href="/procurement-matching" class="menu-item menu-sub-item" data-page="procurement_matching">' +
+                            '<div class="menu-sub-dot"></div>' +
+                            '<div class="menu-text">采购匹配</div>' +
                         '</a>' +
                     '</div>' +
                 '</div>' +

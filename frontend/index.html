@@ -460,15 +460,16 @@
             }
         }
 
-        /* 功能网格 */
+        /* 功能瀑布流 */
         .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
-            flex: 1;
+            position: relative;
+            width: 100%;
+            flex: 0 0 auto;
         }
 
         .feature-module {
+            position: absolute;
+            margin: 0;
             background: white;
             border-radius: 8px;
             border: 1px solid #e5e7eb;
@@ -492,6 +493,10 @@
 
         .feature-module:nth-child(4) {
             animation: dropDown 0.6s ease-out 0.4s forwards;
+        }
+
+        .feature-module:nth-child(5) {
+            animation: dropDown 0.6s ease-out 0.5s forwards;
         }
 
         .feature-module:hover {
@@ -532,6 +537,8 @@
             font-size: 1rem;
             font-weight: 600;
             color: #303133;
+            min-width: 0;
+            line-height: 1.35;
         }
 
         .module-count {
@@ -542,6 +549,7 @@
             background: #f4f4f5;
             border-radius: 10px;
             transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
         .feature-module:hover .module-count {
@@ -659,16 +667,7 @@
         }
 
         /* 响应式 - 多断点平滑过渡 */
-        @media (max-width: 1400px) {
-            .feature-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
         @media (max-width: 1100px) {
-            .feature-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
             .feature-module {
                 padding: 16px;
             }
@@ -702,10 +701,6 @@
                 padding: 18px 20px;
             }
 
-            .feature-grid {
-                grid-template-columns: 1fr;
-                gap: 14px;
-            }
             .feature-module {
                 padding: 14px;
             }
@@ -760,7 +755,7 @@
                     <div class="home-hero">
                         <div class="hero-text">
                             <h1><span class="brand-name">赛意AI</span> 智能平台<span class="ai-badge"><i class="fas fa-brain"></i>AI驱动</span></h1>
-                            <p>为企业提供专业的AI服务，包括文字识别、图像检测、智能分析等核心能力</p>
+                            <p>汇聚文档智能、计算机视觉、多模态、自然语言处理与智能自动化能力</p>
                         </div>
                         <div class="hero-stats">
                             <div class="stats-grid">
@@ -784,16 +779,16 @@
                         </div>
                     </div>
 
-                    <!-- 功能网格 -->
+                    <!-- 功能瀑布流 -->
                     <div class="feature-grid">
-                        <!-- OCR识别 -->
+                        <!-- 文档智能 -->
                         <div class="feature-module">
                             <div class="module-header">
                                 <div class="module-icon" style="background: linear-gradient(135deg, #e67e22, #d35400);">
                                     <i class="fas fa-file-alt"></i>
                                 </div>
-                                <div class="module-title">OCR 识别</div>
-                                <div class="module-count">6项</div>
+                                <div class="module-title">文档智能</div>
+                                <div class="module-count">5项</div>
                             </div>
                             <div class="module-list">
                                 <a href="/mechanical-drawing-ocr" class="module-item">
@@ -816,21 +811,17 @@
                                     <i class="fas fa-file-word"></i>
                                     <span>Word流程图识别</span>
                                 </a>
-                                <a href="/paddle-ocr" class="module-item">
-                                    <i class="fas fa-file-alt"></i>
-                                    <span>PaddleOCR</span>
-                                </a>
                             </div>
                         </div>
 
-                        <!-- AI视觉检测 -->
+                        <!-- 计算机视觉 -->
                         <div class="feature-module">
                             <div class="module-header">
                                 <div class="module-icon" style="background: linear-gradient(135deg, rgb(173, 6, 62), rgb(140, 5, 50));">
                                     <i class="fas fa-eye"></i>
                                 </div>
-                                <div class="module-title">AI 视觉检测</div>
-                                <div class="module-count">6项</div>
+                                <div class="module-title">计算机视觉</div>
+                                <div class="module-count">5项</div>
                             </div>
                             <div class="module-list">
                                 <a href="/safety-helmet-detection" class="module-item">
@@ -853,37 +844,70 @@
                                     <i class="fas fa-tachometer-alt"></i>
                                     <span>精密压力表检测</span>
                                 </a>
+                            </div>
+                        </div>
+
+                        <!-- 多模态与语音 -->
+                        <div class="feature-module">
+                            <div class="module-header">
+                                <div class="module-icon" style="background: linear-gradient(135deg, #8e44ad, #6c3483);">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                                <div class="module-title">多模态与语音</div>
+                                <div class="module-count">3项</div>
+                            </div>
+                            <div class="module-list">
                                 <a href="/openai-vl" class="module-item">
                                     <i class="fas fa-brain"></i>
-                                    <span>OpenAI 视觉</span>
+                                    <span>视觉语言理解</span>
+                                </a>
+                                <a href="/whisper" class="module-item">
+                                    <i class="fas fa-microphone-alt"></i>
+                                    <span>语音识别与字幕</span>
+                                </a>
+                                <a href="/paddle-ocr" class="module-item">
+                                    <i class="fas fa-file-alt"></i>
+                                    <span>PaddleOCR</span>
                                 </a>
                             </div>
                         </div>
 
-                        <!-- RPA自动化 -->
+                        <!-- 智能体与自动化 -->
                         <div class="feature-module">
                             <div class="module-header">
                                 <div class="module-icon" style="background: linear-gradient(135deg, #8e44ad, #6c3483);">
                                     <i class="fas fa-robot"></i>
                                 </div>
-                                <div class="module-title">RPA 自动化</div>
-                                <div class="module-count">1项</div>
+                                <div class="module-title">智能体与自动化</div>
+                                <div class="module-count">4项</div>
                             </div>
                             <div class="module-list">
                                 <a href="/rpa" class="module-item">
                                     <i class="fas fa-cogs"></i>
                                     <span>RPA流程自动化</span>
                                 </a>
+                                <a href="/ai-agent-service-desk" class="module-item">
+                                    <i class="fas fa-headset"></i>
+                                    <span>AI Agent 服务台</span>
+                                </a>
+                                <a href="/oracle-prd" class="module-item">
+                                    <i class="fas fa-file-code"></i>
+                                    <span>Oracle PRD 助手</span>
+                                </a>
+                                <a href="/apex-ai" class="module-item">
+                                    <i class="fas fa-file-contract"></i>
+                                    <span>需求文档生成</span>
+                                </a>
                             </div>
                         </div>
 
-                        <!-- 业务应用 -->
+                        <!-- 自然语言处理与生成式AI -->
                         <div class="feature-module">
                             <div class="module-header">
                                 <div class="module-icon" style="background: linear-gradient(135deg, #1a73e8, #0d47a1);">
                                     <i class="fas fa-briefcase"></i>
                                 </div>
-                                <div class="module-title">业务应用</div>
+                                <div class="module-title">自然语言生成式AI</div>
                                 <div class="module-count">5项</div>
                             </div>
                             <div class="module-list">
@@ -921,6 +945,41 @@
     <!-- JavaScript文件 -->
     <script src="static/js/layout.js"></script>
     <script>
+        function initFeatureMasonry() {
+            const grid = document.querySelector('.feature-grid');
+            const cards = Array.from(grid.querySelectorAll('.feature-module'));
+            const gap = 12;
+            const minCardWidth = 280;
+
+            function layoutCards() {
+                const gridWidth = grid.clientWidth;
+                if (!gridWidth) return;
+
+                const availableColumns = Math.max(1, Math.floor((gridWidth + gap) / (minCardWidth + gap)));
+                const columnCount = Math.min(cards.length, availableColumns);
+                const cardWidth = (gridWidth - gap * (columnCount - 1)) / columnCount;
+                const columnHeights = new Array(columnCount).fill(0);
+
+                cards.forEach((card) => {
+                    card.style.width = cardWidth + 'px';
+                });
+
+                cards.forEach((card) => {
+                    const columnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+                    card.style.left = columnIndex * (cardWidth + gap) + 'px';
+                    card.style.top = columnHeights[columnIndex] + 'px';
+                    columnHeights[columnIndex] += card.offsetHeight + gap;
+                });
+
+                grid.style.height = Math.max(...columnHeights) - gap + 'px';
+            }
+
+            const resizeObserver = new ResizeObserver(() => requestAnimationFrame(layoutCards));
+            resizeObserver.observe(grid);
+            requestAnimationFrame(layoutCards);
+            window.addEventListener('load', layoutCards, { once: true });
+        }
+
         // AI科技感粒子效果 - 增强版
         function createParticles() {
             const particleCount = 30; // 增加到30个
@@ -977,6 +1036,7 @@
 
         // 页面加载后立即创建效果
         window.addEventListener('DOMContentLoaded', function() {
+            initFeatureMasonry();
             createParticles();
             createDataStreams();
         });
